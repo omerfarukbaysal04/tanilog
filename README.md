@@ -119,12 +119,12 @@ tanilog/
 - [x] Günlük sağlık özeti görünümü
 - [x] Takvim bazlı geçmiş görüntüleme
 
-### Faz 4 — Tıbbi Belge Yönetimi
-- [ ] PDF / fotoğraf yükleme altyapısı
-- [ ] Belge arşivleme ve listeleme
-- [ ] Belge kategorilendirme (tahlil, MR, reçete, epikriz vb.)
-- [ ] Belge önizleme ve detay görünümü
-- [ ] Free paket: aylık 3 belge sınırı kontrolü
+### Faz 4 — Tıbbi Belge Yönetimi ✅
+- [x] PDF / fotoğraf yükleme altyapısı
+- [x] Belge arşivleme ve listeleme
+- [x] Belge kategorilendirme (tahlil, MR, reçete, epikriz vb.)
+- [x] Belge önizleme ve detay görünümü
+- [x] Free paket: aylık 3 belge sınırı kontrolü
 
 ### Faz 5 — Yapay Zeka Entegrasyonu
 - [ ] AI belge analizi (tahlil sonuçlarını Türkçe açıklama)

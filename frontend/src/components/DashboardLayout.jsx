@@ -15,7 +15,7 @@ import useAuthStore from '../stores/authStore';
 const navItems = [
   { icon: <FiHome size={20} />, label: 'Dashboard', path: '/dashboard' },
   { icon: <FiActivity size={20} />, label: 'Sağlık Takibi', path: '/health' },
-  { icon: <FiFileText size={20} />, label: 'Belgelerim', path: '/documents', badge: 'Yakında' },
+  { icon: <FiFileText size={20} />, label: 'Belgelerim', path: '/documents' },
   { icon: <FiUser size={20} />, label: 'Profil', path: '/profile' },
   { icon: <FiSettings size={20} />, label: 'Ayarlar', path: '/settings', badge: 'Yakında' },
 ];

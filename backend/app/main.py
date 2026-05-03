@@ -1,8 +1,9 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, health, health_tracking
+from app.routers import auth, health, health_tracking, documents
 
 # FastAPI uygulaması
 app = FastAPI(
@@ -23,10 +24,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Static files
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 # Router'ları kaydet
 app.include_router(health.router, tags=["Sistem"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Kimlik Doğrulama"])
 app.include_router(health_tracking.router, prefix="/api/v1/health", tags=["Sağlık Takibi"])
+app.include_router(documents.router, prefix="/api/v1/documents", tags=["Belgeler"])
 
 
 @app.get("/", tags=["Kök"])

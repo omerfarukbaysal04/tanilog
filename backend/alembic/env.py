@@ -16,6 +16,7 @@ from app.database import Base  # noqa: E402
 # Tüm modelleri import et (Alembic'in metadata'yı görmesi için)
 from app.models.user import User  # noqa: E402, F401
 from app.models.health import SymptomLog, MedicationLog, SleepLog, NutritionLog  # noqa: E402, F401
+from app.models.document import Document  # noqa: E402, F401
 
 # Alembic Config nesnesi
 config = context.config
