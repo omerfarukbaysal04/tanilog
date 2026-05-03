@@ -11,13 +11,10 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # Veritabanı
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql://tanilog_user:tanilog_secret_2026@db:5432/tanilog"
-    )
+    DATABASE_URL: str
 
     # JWT Kimlik Doğrulama
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
@@ -26,6 +23,9 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://localhost:5173",
     ]
+
+    # Yapay Zeka
+    GEMINI_API_KEY: str | None = None
 
     class Config:
         env_file = ".env"

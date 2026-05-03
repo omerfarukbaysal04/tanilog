@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from 'react-icons/fi';
+import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import useAuthStore from '../stores/authStore';
+import AnimatedHeroBackground from '../components/ui/AnimatedHeroBackground';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -30,45 +32,42 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900 flex items-center justify-center px-4 py-12">
-      {/* Arka plan efektleri */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/3 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-navy-900 flex items-center justify-center px-4 py-12 relative overflow-hidden font-poppins">
+      <AnimatedHeroBackground />
 
-      <div className="w-full max-w-md relative z-10">
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="w-full max-w-md relative z-10"
+      >
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-11 h-11 bg-teal-500 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">T</span>
-            </div>
-            <span className="text-white font-semibold text-2xl tracking-tight">
-              Tanı<span className="text-teal-500">Log</span>
-            </span>
+          <Link to="/" className="inline-flex items-center gap-2 mb-4 group">
+            <img src="/logos/logo-white-text.png" alt="TanıLog Logo" className="h-16 w-auto group-hover:scale-105 transition-transform" />
           </Link>
           <h1 className="text-2xl font-bold text-white mb-2">Tekrar Hoş Geldiniz</h1>
           <p className="text-navy-300 text-sm">Hesabınıza giriş yapın</p>
         </div>
 
         {/* Form Kartı */}
-        <div className="bg-navy-800/60 backdrop-blur-xl border border-navy-700/50 rounded-2xl p-8">
+        <div className="glass-card rounded-2xl p-8 relative overflow-hidden shadow-2xl">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-400 to-blue-500" />
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* E-posta */}
             <div>
               <label htmlFor="login-email" className="block text-navy-200 text-sm font-medium mb-2">
                 E-posta Adresi
               </label>
-              <div className="relative">
-                <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400" size={18} />
+              <div className="relative group">
+                <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 group-focus-within:text-teal-400 transition-colors" size={18} />
                 <input
                   id="login-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="ornek@email.com"
-                  className="w-full bg-navy-900/60 border border-navy-600/50 rounded-xl pl-12 pr-4 py-3 text-white text-sm placeholder-navy-500 focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/20 transition-all"
+                  className="w-full bg-navy-900/60 border border-navy-600/50 rounded-xl pl-12 pr-4 py-3 text-white text-sm placeholder-navy-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50 transition-all shadow-inner"
                 />
               </div>
             </div>
@@ -78,20 +77,20 @@ function LoginPage() {
               <label htmlFor="login-password" className="block text-navy-200 text-sm font-medium mb-2">
                 Şifre
               </label>
-              <div className="relative">
-                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400" size={18} />
+              <div className="relative group">
+                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 group-focus-within:text-teal-400 transition-colors" size={18} />
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-navy-900/60 border border-navy-600/50 rounded-xl pl-12 pr-12 py-3 text-white text-sm placeholder-navy-500 focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/20 transition-all"
+                  className="w-full bg-navy-900/60 border border-navy-600/50 rounded-xl pl-12 pr-12 py-3 text-white text-sm placeholder-navy-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50 transition-all shadow-inner"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-400 hover:text-navy-200 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-400 hover:text-teal-400 transition-colors"
                 >
                   {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                 </button>
@@ -102,7 +101,7 @@ function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-teal-500 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-semibold text-sm transition-all hover:shadow-lg hover:shadow-teal-500/25 flex items-center justify-center gap-2"
+              className="w-full btn-shimmer bg-gradient-to-r from-teal-400 to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-bold text-sm transition-all hover:shadow-lg hover:shadow-teal-500/30 flex items-center justify-center gap-2 mt-4"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -127,13 +126,13 @@ function LoginPage() {
             Hesabınız yok mu?{' '}
             <Link
               to="/register"
-              className="text-teal-400 hover:text-teal-300 font-medium transition-colors"
+              className="text-teal-400 hover:text-teal-300 font-semibold transition-colors"
             >
               Ücretsiz Kayıt Ol
             </Link>
           </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

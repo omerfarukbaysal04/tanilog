@@ -75,7 +75,8 @@ function HealthTrackingPage() {
             <Calendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
             
             {/* Lottie Animasyonlu Motivasyon Kartı */}
-            <div className="bg-gradient-to-br from-teal-500/10 to-transparent border border-teal-500/20 rounded-2xl p-6 relative overflow-hidden">
+            <div className="glass-card bg-gradient-to-br from-teal-500/10 to-transparent border border-teal-500/20 rounded-2xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 animate-pulse-glow" />
               <div className="relative z-10">
                 <h3 className="text-white font-semibold mb-2">Harika Gidiyorsun!</h3>
                 <p className="text-navy-300 text-sm">Sağlık verilerini düzenli kaydetmek, yapay zekanın sana daha doğru içgörüler sunmasını sağlar.</p>
@@ -90,7 +91,8 @@ function HealthTrackingPage() {
 
           {/* Sağ Kolon: Veri Girişi ve Gösterimi */}
           <div className="lg:col-span-8">
-            <div className="bg-navy-800/60 border border-navy-700/50 rounded-2xl overflow-hidden flex flex-col h-full min-h-[500px]">
+            <div className="glass-card rounded-2xl overflow-hidden flex flex-col h-full min-h-[500px] relative">
+              <div className="absolute bottom-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl translate-x-1/4 translate-y-1/4 pointer-events-none" />
               
               {/* Sekmeler */}
               <div className="flex overflow-x-auto border-b border-navy-700/50 hide-scrollbar">
@@ -151,7 +153,8 @@ function HealthTrackingPage() {
                       dailyData.symptoms.length === 0 ? renderEmptyState('Bu gün için kaydedilmiş bir semptom bulunmuyor.') : (
                         <div className="space-y-3">
                           {dailyData.symptoms.map(item => (
-                            <div key={item.id} className="bg-navy-900/50 border border-navy-700 rounded-xl p-4 flex justify-between items-start group hover:border-navy-600 transition-colors">
+                            <div key={item.id} className="glass bg-navy-900/50 rounded-xl p-4 flex justify-between items-start group hover:border-teal-500/30 transition-colors relative overflow-hidden">
+                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500/50" />
                               <div>
                                 <h4 className="text-white font-medium flex items-center gap-2">
                                   {item.symptom_name}
@@ -173,7 +176,8 @@ function HealthTrackingPage() {
                       dailyData.medications.length === 0 ? renderEmptyState('Bu gün için kaydedilmiş bir ilaç bulunmuyor.') : (
                         <div className="space-y-3">
                           {dailyData.medications.map(item => (
-                            <div key={item.id} className="bg-navy-900/50 border border-navy-700 rounded-xl p-4 flex justify-between items-start group hover:border-navy-600 transition-colors">
+                            <div key={item.id} className="glass bg-navy-900/50 rounded-xl p-4 flex justify-between items-start group hover:border-teal-500/30 transition-colors relative overflow-hidden">
+                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500/50" />
                               <div>
                                 <h4 className="text-white font-medium flex items-center gap-2">
                                   {item.name} <span className="text-navy-400 text-sm font-normal">({item.dosage})</span>
@@ -201,7 +205,8 @@ function HealthTrackingPage() {
                       dailyData.sleep.length === 0 ? renderEmptyState('Bu gün için uyku kaydı bulunmuyor.') : (
                         <div className="space-y-3">
                           {dailyData.sleep.map(item => (
-                            <div key={item.id} className="bg-navy-900/50 border border-navy-700 rounded-xl p-4 flex justify-between items-start group hover:border-navy-600 transition-colors">
+                            <div key={item.id} className="glass bg-navy-900/50 rounded-xl p-4 flex justify-between items-start group hover:border-teal-500/30 transition-colors relative overflow-hidden">
+                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-pink-500/50" />
                               <div>
                                 <h4 className="text-white font-medium flex items-center gap-2">
                                   {item.hours_slept} Saat Uyku
@@ -230,7 +235,8 @@ function HealthTrackingPage() {
                       dailyData.nutrition.length === 0 ? renderEmptyState('Bu gün için beslenme kaydı bulunmuyor.') : (
                         <div className="space-y-3">
                           {dailyData.nutrition.map(item => (
-                            <div key={item.id} className="bg-navy-900/50 border border-navy-700 rounded-xl p-4 flex justify-between items-start group hover:border-navy-600 transition-colors">
+                            <div key={item.id} className="glass bg-navy-900/50 rounded-xl p-4 flex justify-between items-start group hover:border-teal-500/30 transition-colors relative overflow-hidden">
+                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/50" />
                               <div>
                                 <h4 className="text-white font-medium capitalize flex items-center gap-2">
                                   {item.meal_type === 'breakfast' ? 'Kahvaltı' : item.meal_type === 'lunch' ? 'Öğle Yemeği' : item.meal_type === 'dinner' ? 'Akşam Yemeği' : 'Atıştırmalık'}

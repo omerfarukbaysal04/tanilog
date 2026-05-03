@@ -100,8 +100,9 @@ function ProfilePage() {
         </div>
 
         {/* Profil kartı */}
-        <div className="bg-navy-800/60 border border-navy-700/50 rounded-2xl p-8">
-          <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
+        <div className="glass-card rounded-2xl p-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+          <div className="flex flex-col sm:flex-row items-center gap-6 mb-8 relative z-10">
             {/* Avatar */}
             <div className="w-20 h-20 bg-teal-500/20 rounded-2xl flex items-center justify-center text-teal-400 text-2xl font-bold">
               {getInitials(user?.full_name)}
@@ -145,7 +146,7 @@ function ProfilePage() {
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="flex-1 bg-navy-900/60 border border-navy-600/50 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/20 transition-all"
+                    className="flex-1 bg-navy-900/60 border border-navy-600/50 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50 transition-all shadow-inner"
                   />
                   <button
                     type="submit"
@@ -209,7 +210,7 @@ function ProfilePage() {
         </div>
 
         {/* Şifre değiştirme */}
-        <div className="bg-navy-800/60 border border-navy-700/50 rounded-2xl p-8">
+        <div className="glass-card rounded-2xl p-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-navy-700/50 rounded-xl flex items-center justify-center text-navy-300">
@@ -238,7 +239,7 @@ function ProfilePage() {
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full bg-navy-900/60 border border-navy-600/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/20 transition-all"
+                  className="w-full bg-navy-900/60 border border-navy-600/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50 transition-all shadow-inner"
                   placeholder="Mevcut şifreniz"
                 />
               </div>
@@ -248,7 +249,7 @@ function ProfilePage() {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-navy-900/60 border border-navy-600/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/20 transition-all"
+                  className="w-full bg-navy-900/60 border border-navy-600/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50 transition-all shadow-inner"
                   placeholder="En az 8 karakter"
                 />
               </div>
@@ -258,7 +259,7 @@ function ProfilePage() {
                   type="password"
                   value={confirmNewPassword}
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
-                  className="w-full bg-navy-900/60 border border-navy-600/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/20 transition-all"
+                  className="w-full bg-navy-900/60 border border-navy-600/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50 transition-all shadow-inner"
                   placeholder="Yeni şifrenizi tekrar girin"
                 />
               </div>

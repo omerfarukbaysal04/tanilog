@@ -4,6 +4,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import UploadZone from '../components/documents/UploadZone';
 import DocumentCard from '../components/documents/DocumentCard';
 import DocumentPreviewModal from '../components/documents/DocumentPreviewModal';
+import AIAnalysisModal from '../components/documents/AIAnalysisModal';
 import useDocumentStore from '../stores/documentStore';
 import useAuthStore from '../stores/authStore';
 
@@ -22,6 +23,7 @@ function DocumentsPage() {
   const [activeTab, setActiveTab] = useState('all');
   
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [analyzeDoc, setAnalyzeDoc] = useState(null);
 
   useEffect(() => {
     fetchDocuments(activeTab);
@@ -42,7 +44,7 @@ function DocumentsPage() {
           
           {/* Limit Badge */}
           {!user?.is_premium && (
-            <div className="bg-navy-800 border border-navy-700 rounded-xl px-4 py-2 flex items-center gap-3">
+            <div className="glass border border-navy-700/50 rounded-xl px-4 py-2.5 flex items-center gap-3 shadow-lg">
               <div className="text-sm">
                 <span className="text-navy-400">Ücretsiz Plan:</span>{' '}
                 <span className="text-white font-medium">Aylık 3 belge</span>
@@ -61,7 +63,8 @@ function DocumentsPage() {
               <UploadZone onUpload={handleUpload} uploading={uploading} />
               
               {/* İpucu Kartı */}
-              <div className="bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 rounded-2xl p-6 relative overflow-hidden">
+              <div className="glass-card bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 rounded-2xl p-6 relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 w-20 h-20 bg-blue-500/20 rounded-full blur-xl animate-pulse-glow" />
                 <div className="relative z-10">
                   <h3 className="text-white font-semibold mb-2">Yapay Zeka Hazırlığı</h3>
                   <p className="text-navy-300 text-sm">
@@ -74,7 +77,8 @@ function DocumentsPage() {
 
           {/* Sağ Kolon: Belge Listesi */}
           <div className="lg:col-span-8">
-            <div className="bg-navy-800/60 border border-navy-700/50 rounded-2xl overflow-hidden min-h-[500px] flex flex-col">
+            <div className="glass-card rounded-2xl overflow-hidden min-h-[500px] flex flex-col relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl translate-x-1/4 -translate-y-1/4 pointer-events-none" />
               
               {/* Filtreleme */}
               <div className="flex overflow-x-auto border-b border-navy-700/50 hide-scrollbar p-2">
@@ -122,7 +126,8 @@ function DocumentsPage() {
                         key={doc.id} 
                         document={doc} 
                         onDelete={deleteDocument} 
-                        onPreview={setPreviewDoc} 
+                        onPreview={setPreviewDoc}
+                        onAnalyze={setAnalyzeDoc}
                       />
                     ))}
                   </motion.div>
@@ -138,6 +143,12 @@ function DocumentsPage() {
         isOpen={!!previewDoc} 
         onClose={() => setPreviewDoc(null)} 
         document={previewDoc} 
+      />
+
+      <AIAnalysisModal
+        isOpen={!!analyzeDoc}
+        onClose={() => setAnalyzeDoc(null)}
+        document={analyzeDoc}
       />
 
     </DashboardLayout>

@@ -19,3 +19,6 @@ pydantic-settings==2.5.2
 
 # CORS
 starlette==0.38.6
+
+# Yapay Zeka
+google-genai==0.2.0

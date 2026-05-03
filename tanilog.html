@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TanıLog — AI Destekli Sağlık Takip ve Tıbbi Belge Analiz Platformu</title>
+  <style>
+    :root {
+      --teal: #0fb8a5;
+      --navy: #1d3b4f;
+      --soft: #f4f6f8;
+      --white: #ffffff;
+      --text: #243746;
+      --muted: #657786;
+      --line: #e5edf2;
+      --danger: #ef5b5b;
+      --warning: #f5a623;
+      --success: #18a058;
+      --shadow: 0 18px 45px rgba(29,59,79,.12);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: "Poppins", "Inter", "Segoe UI", Arial, sans-serif;
+      background: var(--soft);
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 99;
+      backdrop-filter: blur(18px);
+      background: rgba(255,255,255,.86);
+      border-bottom: 1px solid rgba(229,237,242,.9);
+    }
+
+    .nav-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -.03em;
+      font-size: 20px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 13px;
+      background: linear-gradient(135deg, var(--teal), #1388b6);
+      display: grid;
+      place-items: center;
+      color: white;
+      box-shadow: 0 10px 25px rgba(15,184,165,.35);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .nav-links a:hover { color: var(--teal); }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 85% 20%, rgba(15,184,165,.35), transparent 34%),
+        radial-gradient(circle at 20% 15%, rgba(255,255,255,.18), transparent 28%),
+        linear-gradient(135deg, var(--navy), #123246 52%, #0d716e);
+      color: white;
+      padding: 86px 22px 74px;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+      background-size: 42px 42px;
+      opacity: .3;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 42px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 13px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      background: rgba(255,255,255,.1);
+      color: rgba(255,255,255,.92);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: clamp(42px, 6vw, 72px);
+      line-height: .98;
+      letter-spacing: -.06em;
+      margin: 0 0 22px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: rgba(255,255,255,.84);
+      max-width: 680px;
+      margin: 0 0 28px;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      border-radius: 14px;
+      padding: 13px 18px;
+      font-weight: 800;
+      border: 1px solid transparent;
+      transition: .2s ease;
+    }
+
+    .btn-primary {
+      background: var(--teal);
+      color: white;
+      box-shadow: 0 14px 32px rgba(15,184,165,.34);
+    }
+
+    .btn-primary:hover { transform: translateY(-2px); }
+
+    .btn-ghost {
+      border-color: rgba(255,255,255,.24);
+      color: white;
+      background: rgba(255,255,255,.08);
+    }
+
+    .hero-card {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 30px;
+      padding: 22px;
+      box-shadow: 0 28px 80px rgba(0,0,0,.22);
+      backdrop-filter: blur(18px);
+    }
+
+    .phone {
+      max-width: 390px;
+      margin: 0 auto;
+      border-radius: 36px;
+      background: #f8fbfc;
+      color: var(--text);
+      padding: 18px;
+      box-shadow: 0 24px 65px rgba(0,0,0,.25);
+      border: 8px solid rgba(255,255,255,.26);
+    }
+
+    .phone-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      color: var(--navy);
+      font-weight: 800;
+    }
+
+    .status-card {
+      background: white;
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 25px rgba(29,59,79,.08);
+      border: 1px solid var(--line);
+    }
+
+    .small-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+
+    .value-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      margin-top: 8px;
+      gap: 14px;
+    }
+
+    .value-row b {
+      color: var(--navy);
+      font-size: 26px;
+      letter-spacing: -.04em;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      background: rgba(15,184,165,.12);
+      color: var(--teal);
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #e8f0f3;
+      overflow: hidden;
+      margin-top: 14px;
+    }
+
+    .bar span {
+      display: block;
+      width: 74%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), #38c4ff);
+      border-radius: inherit;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 70px 22px;
+    }
+
+    .section-head {
+      max-width: 760px;
+      margin: 0 0 34px;
+    }
+
+    .section-head.center {
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+    }
+
+    .section-kicker {
+      color: var(--teal);
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      color: var(--navy);
+      font-size: clamp(30px, 4vw, 46px);
+      line-height: 1.08;
+      letter-spacing: -.045em;
+      margin: 0 0 14px;
+    }
+
+    .section-head p {
+      color: var(--muted);
+      font-size: 17px;
+      margin: 0;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .card h3 {
+      color: var(--navy);
+      margin: 10px 0 10px;
+      font-size: 21px;
+      letter-spacing: -.025em;
+    }
+
+    .card p, .card li { color: var(--muted); }
+
+    .icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      background: rgba(15,184,165,.11);
+      color: var(--teal);
+      font-size: 22px;
+    }
+
+    .feature-list {
+      padding: 0;
+      margin: 14px 0 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .feature-list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .feature-list li::before {
+      content: "✓";
+      color: white;
+      background: var(--teal);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      flex: 0 0 20px;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 900;
+      margin-top: 2px;
+    }
+
+    .highlight-section {
+      background: white;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      counter-reset: step;
+    }
+
+    .step {
+      position: relative;
+      padding: 24px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, white, #f9fcfd);
+      border: 1px solid var(--line);
+      box-shadow: 0 12px 30px rgba(29,59,79,.06);
+      counter-increment: step;
+    }
+
+    .step::before {
+      content: counter(step);
+      width: 36px;
+      height: 36px;
+      border-radius: 13px;
+      background: var(--navy);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    .step h3 { margin: 0 0 8px; color: var(--navy); }
+
+    .pricing {
+      align-items: stretch;
+    }
+
+    .price-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .price-card.premium {
+      border: 2px solid var(--teal);
+      transform: scale(1.015);
+    }
+
+    .ribbon {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: var(--teal);
+      color: white;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .price {
+      color: var(--navy);
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: -.06em;
+      margin: 8px 0 4px;
+    }
+
+    .price small { font-size: 14px; color: var(--muted); letter-spacing: 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 18px;
+      background: white;
+      box-shadow: var(--shadow);
+    }
+
+    th, td {
+      padding: 16px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--navy);
+      background: #eef8f7;
+      font-size: 14px;
+    }
+
+    td { color: var(--muted); }
+
+    tr:last-child td { border-bottom: none; }
+
+    .check { color: var(--success); font-weight: 900; }
+    .cross { color: var(--danger); font-weight: 900; }
+
+    .persona {
+      display: grid;
+      grid-template-columns: .82fr 1.18fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .persona-profile {
+      background: linear-gradient(135deg, var(--navy), #0c6c6c);
+      color: white;
+    }
+
+    .persona-profile p { color: rgba(255,255,255,.8); }
+    .persona-profile h3 { color: white; font-size: 30px; }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .tech {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 10px 22px rgba(29,59,79,.05);
+    }
+
+    .tech b {
+      display: block;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+
+    .tech span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .warning {
+      background: #fff8ec;
+      border: 1px solid #ffe2ad;
+      border-left: 6px solid var(--warning);
+      border-radius: 22px;
+      padding: 22px;
+      color: #66420b;
+    }
+
+    .footer {
+      background: var(--navy);
+      color: white;
+      padding: 34px 22px;
+      text-align: center;
+    }
+
+    .footer p {
+      margin: 4px 0 0;
+      color: rgba(255,255,255,.68);
+    }
+
+    @media (max-width: 900px) {
+      .hero-inner,
+      .grid-2,
+      .grid-3,
+      .workflow,
+      .persona,
+      .tech-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-links { display: none; }
+
+      .hero { padding-top: 58px; }
+
+      .price-card.premium { transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#top">
+        <span class="brand-mark">♡</span>
+        <span>TanıLog</span>
+      </a>
+      <div class="nav-links">
+        <a href="#problem">Problem</a>
+        <a href="#solution">Çözüm</a>
+        <a href="#features">Özellikler</a>
+        <a href="#pricing">Paketler</a>
+        <a href="#tech">Teknoloji</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="hero-inner">
+      <div>
+        <div class="eyebrow">BaysalCare tarafından geliştirilen AI sağlık platformu</div>
+        <h1>Sağlığını anla, hayatını yönet.</h1>
+        <p>
+          TanıLog; günlük sağlık kaydı, tıbbi belge analizi, ilaç takibi ve doktor öncesi raporlamayı tek platformda birleştiren yapay zeka destekli kişisel sağlık asistanıdır.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#features">Özellikleri İncele</a>
+          <a class="btn btn-ghost" href="#pricing">Paketleri Gör</a>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <div class="phone">
+          <div class="phone-top">
+            <span>TanıLog</span>
+            <span class="pill">AI Analiz</span>
+          </div>
+          <div class="status-card">
+            <div class="small-label">Son Tahlil Özeti</div>
+            <div class="value-row">
+              <b>HbA1c %7.4</b>
+              <span class="pill">İyileşme var</span>
+            </div>
+            <div class="bar"><span></span></div>
+          </div>
+          <div class="status-card">
+            <div class="small-label">AI İçgörü</div>
+            <p style="margin:8px 0 0;color:#657786;">Son 6 ayda şeker değeriniz düşüş eğiliminde. Beslenme notlarındaki düzenlilikle örtüşüyor.</p>
+          </div>
+          <div class="status-card">
+            <div class="small-label">Doktora Hazırlan</div>
+            <p style="margin:8px 0 0;color:#657786;">30 günlük PDF raporu ve doktora sorulacak 5 soru hazırlandı.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="container" id="problem">
+      <div class="section-head center">
+        <div class="section-kicker">Problem</div>
+        <h2>Sağlık verileri dağınık, tahlil sonuçları anlaşılmaz.</h2>
+        <p>
+          Kullanıcılar tahlil değerlerini anlamakta, semptomlarını hatırlamakta ve doktor randevusuna düzenli veriyle gitmekte zorlanır.
+        </p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="icon">📄</div>
+          <h3>Anlaşılmayan Raporlar</h3>
+          <p>Kan tahlili, MR, reçete ve epikriz gibi belgelerdeki teknik ifadeler kullanıcı için karmaşıktır.</p>
+        </div>
+        <div class="card">
+          <div class="icon">🧠</div>
+          <h3>Hatırlanmayan Geçmiş</h3>
+          <p>Doktor “geçen ay nasıldınız?” diye sorduğunda çoğu kullanıcının net cevabı yoktur.</p>
+        </div>
+        <div class="card">
+          <div class="icon">💊</div>
+          <h3>Dağınık Takip</h3>
+          <p>İlaç, semptom, uyku, beslenme ve tahlil verileri farklı yerlerde tutulduğu için ilişki kurmak zordur.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="highlight-section" id="solution">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-kicker">Çözüm</div>
+          <h2>TanıLog, günlük sağlık takibini tıbbi belge analiziyle birleştirir.</h2>
+          <p>
+            Kullanıcı hem günlük semptom, ilaç, uyku ve beslenme kayıtlarını tutar hem de tahlil ve raporlarını platforma yükler. Yapay zeka bu iki veri kaynağını çapraz analiz ederek anlamlı bağlantılar üretir.
+          </p>
+        </div>
+
+        <div class="workflow">
+          <div class="step">
+            <h3>Kaydet</h3>
+            <p>Semptom, ilaç, uyku ve beslenme notlarını yazılı veya sesli gir.</p>
+          </div>
+          <div class="step">
+            <h3>Yükle</h3>
+            <p>Kan tahlili, MR raporu, reçete veya epikriz belgesini PDF/fotoğraf olarak ekle.</p>
+          </div>
+          <div class="step">
+            <h3>Analiz Et</h3>
+            <p>AI tıbbi değerleri sade Türkçeyle açıklar ve geçmiş kayıtlarla ilişkilendirir.</p>
+          </div>
+          <div class="step">
+            <h3>Hazırlan</h3>
+            <p>Randevu öncesi PDF doktor raporu ve “doktoruna sor” listesi oluşturulur.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container" id="features">
+      <div class="section-head center">
+        <div class="section-kicker">Öne Çıkan Özellikler</div>
+        <h2>Sadece kayıt tutmaz, sağlık verisini anlamlandırır.</h2>
+        <p>
+          TanıLog’un farkı, tıbbi belge analizi ile günlük sağlık günlüğünü tek bir AI analiz katmanında birleştirmesidir.
+        </p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="icon">🤖</div>
+          <h3>AI Tıbbi Belge Analizi</h3>
+          <ul class="feature-list">
+            <li>Tahlil ve raporları sade Türkçeyle açıklar</li>
+            <li>Referans aralıklarını yorumlar</li>
+            <li>Kritik değerlerde uyarı verir</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="icon">🔁</div>
+          <h3>Çapraz Sağlık Analizi</h3>
+          <ul class="feature-list">
+            <li>Semptom ve tahlil değerlerini birlikte değerlendirir</li>
+            <li>Uyku, beslenme ve ilaç kayıtlarıyla ilişki kurar</li>
+            <li>Trendleri zaman içinde takip eder</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="icon">🩺</div>
+          <h3>Doktora Hazırlan Modu</h3>
+          <ul class="feature-list">
+            <li>Son 30/60 günün PDF özetini hazırlar</li>
+            <li>Önemli değişimleri vurgular</li>
+            <li>Doktora sorulacak soruları önerir</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="icon">💊</div>
+          <h3>İlaç Takibi ve Etkileşim Kontrolü</h3>
+          <ul class="feature-list">
+            <li>İlaç hatırlatmaları gönderir</li>
+            <li>Reçete ve girilen ilaçları karşılaştırır</li>
+            <li>Olası etkileşimlerde kullanıcıyı uyarır</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="icon">🎙️</div>
+          <h3>Türkçe Sesli Asistan</h3>
+          <ul class="feature-list">
+            <li>Konuşarak semptom kaydı oluşturur</li>
+            <li>Sesli soru-cevap desteği sunar</li>
+            <li>Yaşlı kullanıcılar için giriş sürecini kolaylaştırır</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="icon">👨‍👩‍👧</div>
+          <h3>Aile Üyesi Takibi</h3>
+          <ul class="feature-list">
+            <li>Yaşlı ebeveyn veya yakının kayıtlarını takip et</li>
+            <li>Belgeleri ve günlük notları tek panelde gör</li>
+            <li>Randevu öncesi aile için rapor oluştur</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="highlight-section">
+      <div class="container">
+        <div class="section-head center">
+          <div class="section-kicker">Gerçek Kullanım Senaryosu</div>
+          <h2>“Son 6 ayda HbA1c değerin iyileşiyor.”</h2>
+          <p>
+            TanıLog, yalnızca tek bir sonucu açıklamakla kalmaz; geçmiş tahlilleri, günlük notları ve ilaç kayıtlarını birlikte inceleyerek anlamlı sağlık içgörüleri üretir.
+          </p>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>Tek Seferlik AI Açıklaması</h3>
+            <p>“HbA1c değeri diyabet takibinde kullanılan bir değerdir.”</p>
+            <p class="small-label">Bu, genel bir açıklamadır.</p>
+          </div>
+          <div class="card" style="border:2px solid var(--teal);">
+            <h3>TanıLog İçgörüsü</h3>
+            <p>“Son 6 ayda HbA1c değerin %8.2’den %7.4’e geriledi. Bu düşüş, beslenme notlarındaki düzenli kahvaltı ve ilaç kullanım kayıtlarınla örtüşüyor.”</p>
+            <p class="small-label">Bu, kişisel ve bağlama duyarlı analizdir.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container" id="pricing">
+      <div class="section-head center">
+        <div class="section-kicker">Paketleme Modeli</div>
+        <h2>Free ile başla, Premium ile sağlık geçmişini gerçekten yönet.</h2>
+        <p>Free paket alışkanlık kazandırır; Premium ise sınırsız geçmiş, gelişmiş AI analiz ve doktor öncesi raporlama sunar.</p>
+      </div>
+
+      <div class="grid-2 pricing">
+        <div class="card price-card">
+          <h3>Free</h3>
+          <div class="price">₺0 <small>/ ay</small></div>
+          <ul class="feature-list">
+            <li>Günlük semptom, ilaç, uyku ve beslenme kaydı</li>
+            <li>Aylık 3 tıbbi belge yükleme</li>
+            <li>Günlük 1 temel AI analizi</li>
+            <li>Günde 3 ilaca kadar hatırlatma</li>
+            <li>7 günlük geçmiş erişimi</li>
+          </ul>
+        </div>
+
+        <div class="card price-card premium">
+          <span class="ribbon">Önerilen</span>
+          <h3>Premium</h3>
+          <div class="price">₺119 <small>/ ay</small></div>
+          <p style="color:var(--muted);margin-top:0;">Yıllık ₺1.100 — yaklaşık %30 avantaj</p>
+          <ul class="feature-list">
+            <li>Sınırsız tıbbi belge yükleme ve arşivleme</li>
+            <li>Sınırsız AI analizi ve aylık sağlık raporu</li>
+            <li>Doktora Hazırlan modu ve PDF rapor</li>
+            <li>İlaç etkileşim kontrolü</li>
+            <li>Kritik değerlerde acil uyarı</li>
+            <li>Türkçe sesli asistan ve aile üyesi ekleme</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="container">
+      <div class="section-head center">
+        <div class="section-kicker">Rakiplerden Farkı</div>
+        <h2>TanıLog, sadece “raporu açıklayan” değil, sürekli analiz eden bir sistemdir.</h2>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Özellik</th>
+            <th>Genel AI Araçları</th>
+            <th>Health Log Uygulamaları</th>
+            <th>TanıLog</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Tıbbi belge açıklama</td>
+            <td><span class="check">Var</span></td>
+            <td><span class="cross">Yok / sınırlı</span></td>
+            <td><span class="check">Var</span></td>
+          </tr>
+          <tr>
+            <td>Uzun vadeli sağlık geçmişi</td>
+            <td><span class="cross">Yok</span></td>
+            <td><span class="check">Var</span></td>
+            <td><span class="check">Var</span></td>
+          </tr>
+          <tr>
+            <td>Semptom + tahlil çapraz analizi</td>
+            <td><span class="cross">Yok</span></td>
+            <td><span class="cross">Yok</span></td>
+            <td><span class="check">Var</span></td>
+          </tr>
+          <tr>
+            <td>Doktor randevusu için PDF rapor</td>
+            <td><span class="cross">Yok</span></td>
+            <td><span class="cross">Sınırlı</span></td>
+            <td><span class="check">Var</span></td>
+          </tr>
+          <tr>
+            <td>Türkçe sesli asistan</td>
+            <td><span class="cross">Sınırlı</span></td>
+            <td><span class="cross">Yok</span></td>
+            <td><span class="check">Var</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="highlight-section">
+      <div class="container">
+        <div class="persona">
+          <div class="card persona-profile">
+            <div class="icon" style="background:rgba(255,255,255,.16);color:white;">👤</div>
+            <h3>Mehmet Bey, 54</h3>
+            <p>Muhasebe müdürü, Ankara</p>
+            <p>Tip 2 diyabet, kolesterol ve tansiyon takibi yapıyor. Her 2 ayda bir tahlil, her 3 ayda bir doktor kontrolü var.</p>
+          </div>
+          <div class="card">
+            <h3>TanıLog’u nasıl kullanır?</h3>
+            <ul class="feature-list">
+              <li>Tahlil sonucunu fotoğraflar, AI sade Türkçe açıklama üretir.</li>
+              <li>Gün içinde yorgunluk veya baş dönmesini sesli asistana söyler.</li>
+              <li>Geçmiş tahlilleriyle yeni sonuçları karşılaştırır.</li>
+              <li>Doktor randevusundan önce PDF rapor ve soru listesi oluşturur.</li>
+              <li>İlaç kayıtlarını takip ederek olası riskleri daha erken fark eder.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container" id="tech">
+      <div class="section-head center">
+        <div class="section-kicker">Teknolojik Altyapı</div>
+        <h2>Web + Android odaklı, AI uyumlu teknik yapı.</h2>
+        <p>Backend tarafında FastAPI, web arayüzünde React, mobil uygulamada React Native kullanılacaktır.</p>
+      </div>
+
+      <div class="tech-grid">
+        <div class="tech"><b>Backend</b><span>Python + FastAPI</span></div>
+        <div class="tech"><b>Veritabanı</b><span>PostgreSQL</span></div>
+        <div class="tech"><b>Web</b><span>React + Tailwind CSS</span></div>
+        <div class="tech"><b>Mobil</b><span>React Native</span></div>
+        <div class="tech"><b>Altyapı</b><span>Docker + GitHub</span></div>
+      </div>
+    </section>
+
+    <section class="container">
+      <div class="warning">
+        <strong>Önemli Sorumluluk Reddi:</strong>
+        TanıLog tıbbi teşhis koymaz ve doktor yerine geçmez. Sunulan analizler yalnızca bilgilendirme, kişisel takip ve doktor randevusuna hazırlık amacı taşır. Kritik veya şüpheli durumlarda kullanıcı mutlaka bir sağlık profesyoneline yönlendirilir.
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <strong>TanıLog — Sağlığını anla, hayatını yönet.</strong>
+    <p>© 2026 BaysalCare · AI Destekli Sağlık Takip ve Tıbbi Belge Analiz Platformu</p>
+  </footer>
+</body>
+</html>

@@ -37,22 +37,22 @@ async def upload_document(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Free tier control (aylık 3 belge sınırı)
-    if not current_user.is_premium:
-        current_month = datetime.utcnow().month
-        current_year = datetime.utcnow().year
-        
-        doc_count = db.query(Document).filter(
-            Document.user_id == current_user.id,
-            extract('month', Document.created_at) == current_month,
-            extract('year', Document.created_at) == current_year
-        ).count()
-        
-        if doc_count >= 3:
-            raise HTTPException(
-                status_code=403, 
-                detail="Aylık ücretsiz yükleme limitine (3 belge) ulaştınız. Sınırsız yükleme için Premium'a geçin."
-            )
+    # Free tier control (aylık 3 belge sınırı) - TEST İÇİN KALDIRILDI
+    # if not current_user.is_premium:
+    #     current_month = datetime.utcnow().month
+    #     current_year = datetime.utcnow().year
+    #     
+    #     doc_count = db.query(Document).filter(
+    #         Document.user_id == current_user.id,
+    #         extract('month', Document.created_at) == current_month,
+    #         extract('year', Document.created_at) == current_year
+    #     ).count()
+    #     
+    #     if doc_count >= 3:
+    #         raise HTTPException(
+    #             status_code=403, 
+    #             detail="Aylık ücretsiz yükleme limitine (3 belge) ulaştınız. Sınırsız yükleme için Premium'a geçin."
+    #         )
 
     # Validate file type
     if file.content_type not in ALLOWED_TYPES:
@@ -146,3 +146,79 @@ async def delete_document(
     # Soft delete
     doc.is_deleted = True
     db.commit()
+
+from app.models.ai_analysis import AIAnalysis
+from app.services.ai_service import analyze_medical_document
+
+@router.post("/{doc_id}/analyze")
+async def analyze_document(
+    doc_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    doc = db.query(Document).filter(
+        Document.id == doc_id, 
+        Document.user_id == current_user.id,
+        Document.is_deleted == False
+    ).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        
+    # Zaten analiz edilmiş mi?
+    existing_analysis = db.query(AIAnalysis).filter(AIAnalysis.document_id == doc.id).first()
+    if existing_analysis:
+        return existing_analysis
+        
+    # Free tier control (günlük 1 analiz sınırı) - TEST İÇİN KALDIRILDI
+    # if not current_user.is_premium:
+    #     today = datetime.utcnow().date()
+    #     daily_count = db.query(AIAnalysis).join(Document).filter(
+    #         Document.user_id == current_user.id,
+    #         extract('year', AIAnalysis.created_at) == today.year,
+    #         extract('month', AIAnalysis.created_at) == today.month,
+    #         extract('day', AIAnalysis.created_at) == today.day
+    #     ).count()
+    #     
+    #     if daily_count >= 1:
+    #         raise HTTPException(
+    #             status_code=403, 
+    #             detail="Günlük ücretsiz yapay zeka analiz limitine (1 adet) ulaştınız. Sınırsız analiz için Premium'a geçin."
+    #         )
+            
+    # AI servisi çağır
+    if not os.path.exists(doc.file_path):
+        raise HTTPException(status_code=404, detail="Fiziksel belge bulunamadı")
+        
+    ai_result = analyze_medical_document(doc.file_path, doc.file_type)
+    
+    # DB'ye kaydet
+    db_analysis = AIAnalysis(
+        document_id=doc.id,
+        summary=ai_result.get("summary", "Özet alınamadı."),
+        critical_findings=ai_result.get("critical_findings"),
+        full_analysis=ai_result.get("full_analysis", "Detaylı analiz alınamadı."),
+        has_critical_alert=ai_result.get("has_critical_alert", False)
+    )
+    db.add(db_analysis)
+    db.commit()
+    db.refresh(db_analysis)
+    
+    return db_analysis
+
+
+@router.get("/{doc_id}/analysis")
+async def get_document_analysis(
+    doc_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    doc = db.query(Document).filter(Document.id == doc_id, Document.user_id == current_user.id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        
+    analysis = db.query(AIAnalysis).filter(AIAnalysis.document_id == doc.id).first()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Bu belge için henüz yapay zeka analizi yapılmamış")
+        
+    return analysis
+

@@ -2,7 +2,7 @@ import { FiFileText, FiImage, FiDownload, FiTrash2, FiEye } from 'react-icons/fi
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
-function DocumentCard({ document, onDelete, onPreview }) {
+function DocumentCard({ document, onDelete, onPreview, onAnalyze }) {
   const isPdf = document.file_type === 'application/pdf';
 
   return (
@@ -12,6 +12,13 @@ function DocumentCard({ document, onDelete, onPreview }) {
           {isPdf ? <FiFileText size={20} /> : <FiImage size={20} />}
         </div>
         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button 
+            onClick={() => onAnalyze(document)}
+            className="h-8 px-2 rounded-lg bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 hover:bg-teal-500 hover:text-white transition-colors text-xs font-medium"
+            title="AI ile Analiz Et"
+          >
+            ✨ AI Analiz
+          </button>
           <button 
             onClick={() => onPreview(document)}
             className="w-8 h-8 rounded-lg bg-navy-800 flex items-center justify-center text-teal-400 hover:bg-teal-500 hover:text-white transition-colors"
