@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
+import HealthTrackingPage from './pages/HealthTrackingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -55,6 +56,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/health"
+          element={
+            <ProtectedRoute>
+              <HealthTrackingPage />
             </ProtectedRoute>
           }
         />

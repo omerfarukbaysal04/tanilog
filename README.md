@@ -111,13 +111,13 @@ tanilog/
 - [x] Premium / Free kullanıcı ayrımı (backend)
 - [x] Alembic veritabanı migration yapısı
 
-### Faz 3 — Günlük Sağlık Takibi
-- [ ] Semptom kayıt modülü (CRUD)
-- [ ] İlaç kayıt ve takip modülü
-- [ ] Uyku düzeni kaydı
-- [ ] Beslenme notu kaydı
-- [ ] Günlük sağlık özeti görünümü
-- [ ] Takvim bazlı geçmiş görüntüleme
+### Faz 3 — Günlük Sağlık Takibi ✅
+- [x] Semptom kayıt modülü (CRUD)
+- [x] İlaç kayıt ve takip modülü
+- [x] Uyku düzeni kaydı
+- [x] Beslenme notu kaydı
+- [x] Günlük sağlık özeti görünümü
+- [x] Takvim bazlı geçmiş görüntüleme
 
 ### Faz 4 — Tıbbi Belge Yönetimi
 - [ ] PDF / fotoğraf yükleme altyapısı
