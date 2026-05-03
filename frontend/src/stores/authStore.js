@@ -5,11 +5,25 @@ import api from '../lib/api';
  * Kimlik doğrulama state yönetimi.
  * Zustand ile global auth state.
  */
-const useAuthStore = create((set) => ({
+const useAuthStore = create((set, get) => ({
   user: null,
   token: localStorage.getItem('tanilog_token'),
   isLoading: false,
   isAuthenticated: !!localStorage.getItem('tanilog_token'),
+
+  // Uygulama başlangıcında auth durumunu kontrol et
+  initAuth: async () => {
+    const token = localStorage.getItem('tanilog_token');
+    if (token) {
+      try {
+        const { data } = await api.get('/auth/me');
+        set({ user: data, isAuthenticated: true, token });
+      } catch {
+        localStorage.removeItem('tanilog_token');
+        set({ user: null, isAuthenticated: false, token: null });
+      }
+    }
+  },
 
   // Kullanıcı kaydı
   register: async (email, password, fullName) => {
@@ -47,6 +61,9 @@ const useAuthStore = create((set) => ({
         isLoading: false,
       });
 
+      // Kullanıcı bilgilerini çek
+      await get().fetchUser();
+
       return data;
     } catch (error) {
       set({ isLoading: false });
@@ -62,6 +79,35 @@ const useAuthStore = create((set) => ({
     } catch {
       set({ user: null, isAuthenticated: false, token: null });
       localStorage.removeItem('tanilog_token');
+    }
+  },
+
+  // Profil güncelleme
+  updateProfile: async (fullName) => {
+    set({ isLoading: true });
+    try {
+      const { data } = await api.put('/auth/me', { full_name: fullName });
+      set({ user: data, isLoading: false });
+      return data;
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  // Şifre değiştirme
+  changePassword: async (currentPassword, newPassword) => {
+    set({ isLoading: true });
+    try {
+      const { data } = await api.put('/auth/me/password', {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+      set({ isLoading: false });
+      return data;
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
     }
   },
 

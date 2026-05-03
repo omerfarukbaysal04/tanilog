@@ -74,13 +74,15 @@ tanilog/
 
 ## 📦 API Endpoint'leri
 
-| Metot  | Endpoint              | Açıklama                  |
-| ------ | --------------------- | ------------------------- |
-| GET    | `/`                   | API bilgisi               |
-| GET    | `/health`             | Sistem sağlık kontrolü    |
-| POST   | `/api/v1/auth/register` | Yeni kullanıcı kaydı    |
-| POST   | `/api/v1/auth/login`    | Kullanıcı girişi (JWT)  |
-| GET    | `/api/v1/auth/me`       | Mevcut kullanıcı bilgisi |
+| Metot  | Endpoint                   | Açıklama                  |
+| ------ | -------------------------- | ------------------------- |
+| GET    | `/`                        | API bilgisi               |
+| GET    | `/health`                  | Sistem sağlık kontrolü    |
+| POST   | `/api/v1/auth/register`    | Yeni kullanıcı kaydı      |
+| POST   | `/api/v1/auth/login`       | Kullanıcı girişi (JWT)    |
+| GET    | `/api/v1/auth/me`          | Mevcut kullanıcı bilgisi  |
+| PUT    | `/api/v1/auth/me`          | Profil güncelleme         |
+| PUT    | `/api/v1/auth/me/password` | Şifre değiştirme          |
 
 ## 🎨 Marka
 
@@ -101,13 +103,13 @@ tanilog/
 - [x] Landing page (tanıtım sayfası)
 - [x] API proxy ve CORS yapılandırması
 
-### Faz 2 — Kullanıcı Yönetimi & Dashboard
-- [ ] Kayıt ve giriş sayfaları (frontend)
-- [ ] Kullanıcı profil sayfası ve düzenleme
-- [ ] Dashboard ana ekran tasarımı
-- [ ] Şifre sıfırlama / değiştirme
-- [ ] Premium / Free kullanıcı ayrımı (backend)
-- [ ] Alembic veritabanı migration yapısı
+### Faz 2 — Kullanıcı Yönetimi & Dashboard ✅
+- [x] Kayıt ve giriş sayfaları (frontend)
+- [x] Kullanıcı profil sayfası ve düzenleme
+- [x] Dashboard ana ekran tasarımı
+- [x] Şifre sıfırlama / değiştirme
+- [x] Premium / Free kullanıcı ayrımı (backend)
+- [x] Alembic veritabanı migration yapısı
 
 ### Faz 3 — Günlük Sağlık Takibi
 - [ ] Semptom kayıt modülü (CRUD)

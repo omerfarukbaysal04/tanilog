@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   FiFileText,
   FiMic,
@@ -6,6 +8,7 @@ import {
   FiCalendar,
   FiHeart,
 } from 'react-icons/fi';
+import useAuthStore from '../stores/authStore';
 
 const features = [
   {
@@ -41,6 +44,16 @@ const features = [
 ];
 
 function LandingPage() {
+  const { isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+
+  // Giriş yapmış kullanıcıyı dashboard'a yönlendir
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900 font-poppins">
       {/* Navbar */}
@@ -57,9 +70,12 @@ function LandingPage() {
           <a href="#features" className="hover:text-teal-400 transition-colors">Özellikler</a>
           <a href="#pricing" className="hover:text-teal-400 transition-colors">Fiyatlandırma</a>
         </div>
-        <button className="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:shadow-lg hover:shadow-teal-500/25">
-          Başla
-        </button>
+        <Link
+          to="/login"
+          className="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:shadow-lg hover:shadow-teal-500/25"
+        >
+          Giriş Yap
+        </Link>
       </nav>
 
       {/* Hero */}
@@ -78,12 +94,18 @@ function LandingPage() {
             TanıLog yapay zeka ile verilerinizi analiz ederek size anlamlı içgörüler sunar.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3.5 rounded-xl font-semibold text-lg transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:-translate-y-0.5">
+            <Link
+              to="/register"
+              className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3.5 rounded-xl font-semibold text-lg transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:-translate-y-0.5"
+            >
               Ücretsiz Başla
-            </button>
-            <button className="border border-navy-600 hover:border-teal-500/50 text-white px-8 py-3.5 rounded-xl font-medium text-lg transition-all hover:bg-navy-800">
+            </Link>
+            <a
+              href="#features"
+              className="border border-navy-600 hover:border-teal-500/50 text-white px-8 py-3.5 rounded-xl font-medium text-lg transition-all hover:bg-navy-800"
+            >
               Nasıl Çalışır?
-            </button>
+            </a>
           </div>
         </div>
       </section>
@@ -148,9 +170,12 @@ function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <button className="w-full border border-navy-600 hover:border-teal-500/50 text-white py-3 rounded-xl font-medium transition-all hover:bg-navy-700">
+              <Link
+                to="/register"
+                className="block w-full text-center border border-navy-600 hover:border-teal-500/50 text-white py-3 rounded-xl font-medium transition-all hover:bg-navy-700"
+              >
                 Ücretsiz Başla
-              </button>
+              </Link>
             </div>
 
             {/* Premium */}
@@ -180,9 +205,12 @@ function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <button className="w-full bg-teal-500 hover:bg-teal-600 text-white py-3 rounded-xl font-semibold transition-all hover:shadow-lg hover:shadow-teal-500/25">
+              <Link
+                to="/register"
+                className="block w-full text-center bg-teal-500 hover:bg-teal-600 text-white py-3 rounded-xl font-semibold transition-all hover:shadow-lg hover:shadow-teal-500/25"
+              >
                 Premium'a Geç
-              </button>
+              </Link>
             </div>
           </div>
         </div>
