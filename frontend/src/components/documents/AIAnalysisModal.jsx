@@ -48,7 +48,7 @@ function AIAnalysisModal({ isOpen, onClose, document, onAnalyzeComplete }) {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-navy-800 border border-navy-700/50 rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col relative z-10 shadow-2xl"
+          className="bg-navy-800 border border-navy-700/50 rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col relative z-10 shadow-2xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-navy-700/50 bg-navy-900/30">
@@ -102,6 +102,9 @@ function AIAnalysisModal({ isOpen, onClose, document, onAnalyzeComplete }) {
             ) : analysis ? (
               <div className="space-y-6">
                 {/* Critical Findings Alert */}
+                <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                  Kritik Bulgular
+                </h4>
                 {analysis.has_critical_alert && analysis.critical_findings && (
                   <motion.div 
                     initial={{ opacity: 0, x: -20 }}
@@ -131,17 +134,17 @@ function AIAnalysisModal({ isOpen, onClose, document, onAnalyzeComplete }) {
                 )}
 
                 {/* Summary */}
-                <div className="bg-navy-900/50 rounded-xl p-5 border border-navy-700/50">
+                <section className="bg-navy-900/50 rounded-xl p-5 border border-navy-700/50">
                   <h4 className="text-white font-medium mb-3 flex items-center gap-2">
                     Özet Değerlendirme
                   </h4>
                   <p className="text-navy-300 text-sm leading-relaxed">
                     {analysis.summary}
                   </p>
-                </div>
+                </section>
 
                 {/* Full Analysis Markdown */}
-                <div className="bg-navy-900/50 rounded-xl p-6 border border-navy-700/50">
+                <section className="bg-navy-900/50 rounded-xl p-6 border border-navy-700/50">
                   <h4 className="text-white font-medium mb-4 border-b border-navy-700/50 pb-2">
                     Detaylı Analiz
                   </h4>
@@ -155,7 +158,7 @@ function AIAnalysisModal({ isOpen, onClose, document, onAnalyzeComplete }) {
                   >
                     <ReactMarkdown>{analysis.full_analysis}</ReactMarkdown>
                   </div>
-                </div>
+                </section>
                 
                 <div className="text-center">
                    <p className="text-xs text-navy-500 italic">

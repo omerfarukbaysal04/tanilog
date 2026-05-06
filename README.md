@@ -126,12 +126,12 @@ tanilog/
 - [x] Belge önizleme ve detay görünümü
 - [x] Free paket: aylık 3 belge sınırı kontrolü
 
-### Faz 5 — Yapay Zeka Entegrasyonu
-- [ ] AI belge analizi (tahlil sonuçlarını Türkçe açıklama)
-- [ ] Semptom-tahlil çapraz analiz
-- [ ] Haftalık / aylık sağlık raporu oluşturma
-- [ ] Free paket: günlük 1 AI analiz sınırı kontrolü
-- [ ] Kritik değer tespiti ve acil uyarı sistemi
+### Faz 5 — Yapay Zeka Entegrasyonu ✅
+- [x] AI belge analizi (tahlil sonuçlarını Türkçe açıklama)
+- [x] Semptom-tahlil çapraz analiz
+- [x] Haftalık / aylık sağlık raporu oluşturma
+- [ ] Free paket: günlük 1 AI analiz sınırı kontrolü (test için kapalı)
+- [x] Kritik değer tespiti ve acil uyarı sistemi
 
 ### Faz 6 — İlaç Hatırlatma & Etkileşim
 - [ ] İlaç hatırlatma bildirimleri

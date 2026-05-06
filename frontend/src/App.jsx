@@ -10,6 +10,7 @@ import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import HealthTrackingPage from './pages/HealthTrackingPage';
 import DocumentsPage from './pages/DocumentsPage';
+import AIPage from './pages/AIPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -73,6 +74,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DocumentsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ai"
+          element={
+            <ProtectedRoute>
+              <AIPage />
             </ProtectedRoute>
           }
         />
