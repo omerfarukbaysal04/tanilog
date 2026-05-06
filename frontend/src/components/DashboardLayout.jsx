@@ -25,6 +25,15 @@ const navItems = [
   { icon: <FiSettings size={20} />, label: 'Ayarlar', path: '/settings', badge: 'Yakında' },
 ];
 
+const pageTitles = {
+  '/dashboard': 'Dashboard',
+  '/health': 'Sağlık Takibi',
+  '/documents': 'Belgelerim',
+  '/ai': 'AI Analiz',
+  '/profile': 'Profil',
+  '/settings': 'Ayarlar',
+};
+
 /**
  * Dashboard layout bileşeni.
  * Sol sidebar + üst header + ana içerik alanı.
@@ -34,6 +43,7 @@ function DashboardLayout({ children }) {
   const { user, logout } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
+  const pageTitle = pageTitles[location.pathname] || 'TanıLog';
 
   const handleLogout = () => {
     logout();
@@ -143,6 +153,19 @@ function DashboardLayout({ children }) {
             <div className="flex-1 min-w-0">
               <p className="text-white text-sm font-semibold truncate">{user?.full_name || 'Kullanıcı'}</p>
               <p className="text-navy-400 text-xs truncate">{user?.email || ''}</p>
+              <span
+                className={`inline-flex items-center gap-1.5 mt-2 text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                  user?.is_premium
+                    ? 'bg-gradient-to-r from-teal-500/10 to-blue-500/10 text-teal-300 border border-teal-500/30'
+                    : 'bg-navy-800 text-navy-300 border border-navy-700'
+                }`}
+              >
+                {user?.is_premium ? (
+                  <><FiStar className="fill-current text-yellow-400" size={11}/> Premium Plan</>
+                ) : (
+                  'Ücretsiz Plan'
+                )}
+              </span>
             </div>
           </div>
           <button
@@ -159,30 +182,17 @@ function DashboardLayout({ children }) {
       <div className="flex-1 flex flex-col h-screen relative z-10">
         {/* Üst header */}
         <header className="sticky top-0 z-30 glass border-b border-navy-700/50 px-6 py-4 transition-all">
-          <div className="flex items-center justify-between lg:justify-end">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden text-navy-300 hover:text-white transition-colors bg-navy-800/50 p-2 rounded-lg"
             >
               <FiMenu size={22} />
             </button>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm ${
-                    user?.is_premium
-                      ? 'bg-gradient-to-r from-teal-500/10 to-blue-500/10 text-teal-400 border border-teal-500/30 shadow-teal-500/10'
-                      : 'bg-navy-800 text-navy-300 border border-navy-700'
-                  }`}
-                >
-                  {user?.is_premium ? (
-                    <><FiStar className="fill-current text-yellow-400" size={12}/> Premium Plan</>
-                  ) : (
-                    'Ücretsiz Plan'
-                  )}
-                </span>
-              </div>
+            <div className="text-center">
+              <h1 className="text-lg md:text-xl font-bold text-white">{pageTitle}</h1>
             </div>
+            <div className="hidden lg:block" />
           </div>
         </header>
 
@@ -194,7 +204,7 @@ function DashboardLayout({ children }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="max-w-6xl mx-auto h-full"
+            className="max-w-[92rem] mx-auto h-full"
           >
             {children}
           </motion.div>

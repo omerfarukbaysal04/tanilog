@@ -166,3 +166,96 @@ def generate_health_report(health_context: dict, period: str, start_date: str, e
     """
 
     return _json_from_gemini(prompt, fallback, temperature=0.25)
+
+
+def analyze_medication_interactions(medication_context: dict) -> dict:
+    """Review active medications and prescription analyses for possible interaction warnings."""
+    fallback = {
+        "summary": "Ilac etkilesim kontrolu su anda tamamlanamadi.",
+        "risk_level": "unknown",
+        "interactions": [],
+        "recommendations": [
+            "Birden fazla ilac kullaniyorsaniz ilac listenizi doktor veya eczacinizla paylasin."
+        ],
+        "doctor_questions": [],
+        "has_critical_alert": False,
+        "full_analysis": "Analiz sirasinda teknik bir sorun olustu. Lutfen daha sonra tekrar deneyin."
+    }
+
+    prompt = f"""
+    Sen Tanilog icinde calisan Turkce bir ilac guvenligi asistanisin.
+    Teshis koyma, tedavi degisikligi onerme, doz degistirme veya ilac biraktirma.
+    Kullaniciya sadece olasi ilac etkilesimi, tekrar eden etken madde riski ve doktora/eczaciya sorulacak noktalar hakkinda guvenli bilgi ver.
+
+    Asagida kullanicinin son kayitli ilaclari ve varsa analiz edilmis recete belgeleri var:
+    {json.dumps(medication_context, ensure_ascii=False, default=str)}
+
+    Veri yetersizse bunu acikca soyle. Ilac adlari ticari marka olabilir; emin olmadigin durumda kesin hukum verme.
+
+    Sadece su JSON formatinda cevap ver:
+    {{
+      "summary": "1-2 cumlelik genel ilac guvenligi ozeti.",
+      "risk_level": "low, medium, high veya unknown",
+      "interactions": ["Olası etkilesim veya dikkat edilmesi gereken somut noktalar."],
+      "recommendations": ["Guvenli takip ve doktor/eczaciya danisma onerileri."],
+      "doctor_questions": ["Doktora veya eczaciya sorulabilecek net sorular."],
+      "has_critical_alert": true veya false,
+      "full_analysis": "Markdown formatinda detayli Turkce analiz."
+    }}
+    """
+
+    return _json_from_gemini(prompt, fallback, temperature=0.2)
+
+
+def scan_medications_from_file(file_bytes: bytes, mime_type: str) -> dict:
+    """Extract medication candidates from a prescription or medication box image/PDF."""
+    client = get_genai_client()
+    fallback = {
+        "summary": "Dosyadan ilaç bilgisi çıkarılamadı.",
+        "medications": [],
+        "warnings": [
+            "Görüntü net değilse daha aydınlık ve okunabilir bir fotoğrafla tekrar deneyin."
+        ]
+    }
+
+    prompt = """
+    Sen TanıLog içinde çalışan Türkçe bir reçete ve ilaç kutusu okuma asistanısın.
+    Gönderilen reçete, ilaç kutusu veya prospektüs görselinden ilaç adaylarını çıkar.
+    Teşhis koyma, doz önerme, tedavi değiştirme. Yalnızca görüntüde yazan bilgileri yapılandır.
+    Emin olmadığın alanları null bırak ve confidence değerini düşük ver.
+
+    Sadece şu JSON formatında cevap ver:
+    {
+      "summary": "Dosyada kaç ilaç adayı bulunduğunu ve güven düzeyini özetle.",
+      "medications": [
+        {
+          "name": "İlaç adı",
+          "dosage": "Doz / form bilgisi, örn 500 mg tablet",
+          "usage": "Reçetede yazıyorsa kullanım sıklığı, örn günde 2 kez",
+          "suggested_time": "Metinden çıkarılabiliyorsa HH:MM formatında saat, yoksa null",
+          "notes": "Tok/aç, sabah/akşam gibi ek bilgi",
+          "barcode": "Kutuda barkod okunuyorsa barkod, yoksa null",
+          "confidence": 0.0 ile 1.0 arasında sayı
+        }
+      ],
+      "warnings": ["Belirsiz veya kullanıcı onayı gerektiren noktalar."]
+    }
+    """
+
+    try:
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=[
+                types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
+                prompt
+            ],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.1
+            )
+        )
+        return json.loads(response.text)
+    except Exception as e:
+        print(f"Medication Scan Error: {str(e)}")
+        fallback["warnings"].append(f"Sistem hatası: {str(e)}")
+        return fallback

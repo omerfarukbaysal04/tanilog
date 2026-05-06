@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,7 +9,7 @@ from app.models.user import User
 from app.models.health import SymptomLog, MedicationLog, SleepLog, NutritionLog
 from app.schemas.health import (
     SymptomCreate, SymptomResponse,
-    MedicationCreate, MedicationResponse,
+    MedicationCreate, MedicationResponse, MedicationUpdate,
     SleepCreate, SleepResponse,
     NutritionCreate, NutritionResponse,
     DailySummaryResponse
@@ -64,6 +64,18 @@ async def create_medication(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not current_user.is_premium:
+        medication_count = db.query(MedicationLog).filter(
+            MedicationLog.user_id == current_user.id,
+            MedicationLog.date == data.date
+        ).count()
+
+        if medication_count >= 3:
+            raise HTTPException(
+                status_code=403,
+                detail="Ücretsiz planda günlük en fazla 3 ilaç kaydı ekleyebilirsiniz. Sınırsız ilaç takibi için Premium'a geçin."
+            )
+
     db_item = MedicationLog(**data.model_dump(), user_id=current_user.id)
     db.add(db_item)
     db.commit()
@@ -80,6 +92,46 @@ async def get_medications(
     if target_date:
         query = query.filter(MedicationLog.date == target_date)
     return query.order_by(MedicationLog.created_at.desc()).all()
+
+@router.patch("/medications/{item_id}/taken", response_model=MedicationResponse)
+async def mark_medication_taken(
+    item_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    db_item = db.query(MedicationLog).filter(
+        MedicationLog.id == item_id,
+        MedicationLog.user_id == current_user.id
+    ).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Kayıt bulunamadı")
+
+    db_item.is_taken = True
+    db_item.taken_at = datetime.utcnow()
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+@router.patch("/medications/{item_id}", response_model=MedicationResponse)
+async def update_medication(
+    item_id: int,
+    data: MedicationUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    db_item = db.query(MedicationLog).filter(
+        MedicationLog.id == item_id,
+        MedicationLog.user_id == current_user.id
+    ).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="KayÄ±t bulunamadÄ±")
+
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(db_item, field, value)
+
+    db.commit()
+    db.refresh(db_item)
+    return db_item
 
 @router.delete("/medications/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_medication(

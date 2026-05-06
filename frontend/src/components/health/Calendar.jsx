@@ -2,7 +2,7 @@ import { format, addDays, subDays, isSameDay } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
-function Calendar({ selectedDate, onDateSelect }) {
+function Calendar({ selectedDate, onDateSelect, compact = false }) {
   // Gösterilecek günleri hesapla (seçili günden 3 gün önce, 3 gün sonra)
   const days = [];
   for (let i = -3; i <= 3; i++) {
@@ -14,9 +14,9 @@ function Calendar({ selectedDate, onDateSelect }) {
   const handleToday = () => onDateSelect(new Date());
 
   return (
-    <div className="bg-navy-800/60 border border-navy-700/50 rounded-2xl p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-white font-semibold text-lg">
+    <div className={`bg-navy-800/60 border border-navy-700/50 rounded-2xl ${compact ? 'p-4 h-full' : 'p-6'}`}>
+      <div className={`flex items-center justify-between ${compact ? 'mb-3' : 'mb-6'}`}>
+        <h3 className={`text-white font-semibold ${compact ? 'text-base' : 'text-lg'}`}>
           {format(selectedDate, 'MMMM yyyy', { locale: tr })}
         </h3>
         <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ function Calendar({ selectedDate, onDateSelect }) {
         </div>
       </div>
 
-      <div className="flex justify-between items-center gap-2 overflow-x-auto pb-2 hide-scrollbar">
+      <div className={`flex justify-between items-center overflow-x-auto hide-scrollbar ${compact ? 'gap-1 pb-1' : 'gap-2 pb-2'}`}>
         {days.map((day, index) => {
           const isSelected = isSameDay(day, selectedDate);
           const isToday = isSameDay(day, new Date());
@@ -52,7 +52,7 @@ function Calendar({ selectedDate, onDateSelect }) {
             <button
               key={index}
               onClick={() => onDateSelect(day)}
-              className={`flex flex-col items-center justify-center min-w-[3rem] p-3 rounded-xl transition-all ${
+              className={`flex flex-col items-center justify-center rounded-xl transition-all ${compact ? 'min-w-[2.6rem] p-2' : 'min-w-[3rem] p-3'} ${
                 isSelected
                   ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/25'
                   : isToday
@@ -63,7 +63,7 @@ function Calendar({ selectedDate, onDateSelect }) {
               <span className={`text-xs mb-1 ${isSelected ? 'text-teal-100' : 'text-navy-500'}`}>
                 {format(day, 'EEE', { locale: tr })}
               </span>
-              <span className="text-lg font-semibold">{format(day, 'd')}</span>
+              <span className={`${compact ? 'text-base' : 'text-lg'} font-semibold`}>{format(day, 'd')}</span>
             </button>
           );
         })}

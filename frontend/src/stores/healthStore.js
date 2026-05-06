@@ -56,6 +56,22 @@ const useHealthStore = create((set, get) => ({
       throw error;
     }
   },
+  markMedicationTaken: async (id) => {
+    try {
+      await api.patch(`/health/medications/${id}/taken`);
+      get().fetchDailySummary(get().selectedDate);
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateMedication: async (id, medicationData) => {
+    try {
+      await api.patch(`/health/medications/${id}`, medicationData);
+      get().fetchDailySummary(get().selectedDate);
+    } catch (error) {
+      throw error;
+    }
+  },
   deleteMedication: async (id) => {
     try {
       await api.delete(`/health/medications/${id}`);
@@ -96,6 +112,28 @@ const useHealthStore = create((set, get) => ({
     try {
       await api.delete(`/health/nutrition/${id}`);
       get().fetchDailySummary(get().selectedDate);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  checkMedicationInteractions: async () => {
+    try {
+      const { data } = await api.post('/ai/medication-interactions', { days: 30 });
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  scanMedicationFile: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await api.post('/ai/medication-scan', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data;
     } catch (error) {
       throw error;
     }

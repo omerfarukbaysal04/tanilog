@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Text, Date, Time, Float, ForeignKey, DateTime
+from sqlalchemy import Boolean, Column, Integer, String, Text, Date, Time, Float, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -31,7 +31,14 @@ class MedicationLog(Base):
     name = Column(String(150), nullable=False)
     dosage = Column(String(50), nullable=False)
     time_taken = Column(Time, nullable=True)
+    reminder_enabled = Column(Boolean, default=False, nullable=False)
+    reminder_time = Column(Time, nullable=True)
+    is_taken = Column(Boolean, default=False, nullable=False)
+    taken_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
+    image_data_url = Column(Text, nullable=True)
+    ai_scan_summary = Column(Text, nullable=True)
+    ai_scan_details = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

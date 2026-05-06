@@ -31,16 +31,36 @@ class MedicationBase(BaseModel):
     name: str = Field(..., max_length=150)
     dosage: str = Field(..., max_length=50)
     time_taken: Optional[time] = None
+    reminder_enabled: bool = False
+    reminder_time: Optional[time] = None
     notes: Optional[str] = None
+    image_data_url: Optional[str] = None
+    ai_scan_summary: Optional[str] = None
+    ai_scan_details: Optional[str] = None
 
 
 class MedicationCreate(MedicationBase):
     pass
 
 
+class MedicationUpdate(BaseModel):
+    date: Optional[date] = None
+    name: Optional[str] = Field(None, max_length=150)
+    dosage: Optional[str] = Field(None, max_length=50)
+    time_taken: Optional[time] = None
+    reminder_enabled: Optional[bool] = None
+    reminder_time: Optional[time] = None
+    notes: Optional[str] = None
+    image_data_url: Optional[str] = None
+    ai_scan_summary: Optional[str] = None
+    ai_scan_details: Optional[str] = None
+
+
 class MedicationResponse(MedicationBase):
     id: int
     user_id: int
+    is_taken: bool
+    taken_at: Optional[datetime] = None
     created_at: datetime
 
     class Config:

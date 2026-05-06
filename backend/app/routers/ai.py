@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -11,9 +11,17 @@ from app.models.document import Document
 from app.models.health import MedicationLog, NutritionLog, SleepLog, SymptomLog
 from app.models.user import User
 from app.routers.auth import get_current_user
-from app.services.ai_service import analyze_symptoms_with_document, generate_health_report
+from app.services.ai_service import (
+    analyze_medication_interactions,
+    analyze_symptoms_with_document,
+    generate_health_report,
+    scan_medications_from_file,
+)
 
 router = APIRouter()
+
+ALLOWED_SCAN_TYPES = {"application/pdf", "image/jpeg", "image/png", "image/jpg"}
+MAX_SCAN_SIZE = 5 * 1024 * 1024
 
 
 class CrossAnalysisRequest(BaseModel):
@@ -23,6 +31,10 @@ class CrossAnalysisRequest(BaseModel):
 
 class HealthReportRequest(BaseModel):
     period: Literal["weekly", "monthly"] = "weekly"
+
+
+class MedicationInteractionRequest(BaseModel):
+    days: int = Field(30, ge=1, le=90)
 
 
 def _date_or_datetime(value):
@@ -69,6 +81,42 @@ def _health_context(db: Session, user_id: int, start_date: date, end_date: date)
         "medications": _serialize_items(medications, ["date", "name", "dosage", "time_taken", "notes"]),
         "sleep": _serialize_items(sleep, ["date", "hours_slept", "quality", "notes"]),
         "nutrition": _serialize_items(nutrition, ["date", "meal_type", "notes", "water_ml"]),
+    }
+
+
+def _medication_context(db: Session, user_id: int, start_date: date, end_date: date) -> dict:
+    medications = db.query(MedicationLog).filter(
+        MedicationLog.user_id == user_id,
+        MedicationLog.date >= start_date,
+        MedicationLog.date <= end_date
+    ).order_by(MedicationLog.date.asc()).all()
+
+    prescription_rows = db.query(Document, AIAnalysis).join(
+        AIAnalysis,
+        AIAnalysis.document_id == Document.id
+    ).filter(
+        Document.user_id == user_id,
+        Document.is_deleted == False,
+        Document.category == "recete"
+    ).order_by(AIAnalysis.created_at.desc()).limit(5).all()
+
+    return {
+        "date_range": {"start": start_date.isoformat(), "end": end_date.isoformat()},
+        "medications": _serialize_items(
+            medications,
+            ["date", "name", "dosage", "time_taken", "reminder_time", "is_taken", "notes"]
+        ),
+        "prescription_analyses": [
+            {
+                "document_id": document.id,
+                "filename": document.original_filename,
+                "summary": analysis.summary,
+                "critical_findings": analysis.critical_findings,
+                "full_analysis": analysis.full_analysis,
+                "analysis_created_at": analysis.created_at,
+            }
+            for document, analysis in prescription_rows
+        ],
     }
 
 
@@ -163,3 +211,47 @@ async def create_health_report(
         start_date.isoformat(),
         end_date.isoformat()
     )
+
+
+@router.post("/medication-interactions")
+async def check_medication_interactions(
+    payload: MedicationInteractionRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not current_user.is_premium:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="İlaç etkileşim kontrolü Premium kullanıcılar için kullanılabilir."
+        )
+
+    end_date = datetime.utcnow().date()
+    start_date = end_date - timedelta(days=payload.days - 1)
+    medication_context = _medication_context(db, current_user.id, start_date, end_date)
+
+    result = analyze_medication_interactions(medication_context)
+    result["date_range"] = medication_context["date_range"]
+    return result
+
+
+@router.post("/medication-scan")
+async def scan_medication_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    if file.content_type not in ALLOWED_SCAN_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Sadece PDF, JPG ve PNG reçete/kutu görselleri desteklenir."
+        )
+
+    file_bytes = await file.read()
+    if len(file_bytes) > MAX_SCAN_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Dosya boyutu 5MB'ı geçemez."
+        )
+
+    result = scan_medications_from_file(file_bytes, file.content_type)
+    result["source_filename"] = file.filename
+    return result

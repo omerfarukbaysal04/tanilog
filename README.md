@@ -133,11 +133,14 @@ tanilog/
 - [ ] Free paket: günlük 1 AI analiz sınırı kontrolü (test için kapalı)
 - [x] Kritik değer tespiti ve acil uyarı sistemi
 
-### Faz 6 — İlaç Hatırlatma & Etkileşim
-- [ ] İlaç hatırlatma bildirimleri
-- [ ] Free paket: 3 ilaç sınırı kontrolü
-- [ ] İlaç etkileşim kontrolü (Premium)
-- [ ] Reçete çapraz kontrol sistemi
+### Faz 6 — İlaç Hatırlatma & Etkileşim ✅
+- [x] İlaç hatırlatma bildirimleri
+- [x] Bildirim izni ve test bildirimi paneli
+- [x] Free paket: 3 ilaç sınırı kontrolü
+- [x] İlaç etkileşim kontrolü (Premium)
+- [x] Reçete çapraz kontrol sistemi
+- [x] Reçete / ilaç kutusu görselinden AI ile ilaç adayı çıkarma
+- [x] AI tarama sonucunu kullanıcı onayıyla manuel ilaç formuna aktarma
 
 ### Faz 7 — Sesli Asistan
 - [ ] Sesli giriş (speech-to-text) entegrasyonu
