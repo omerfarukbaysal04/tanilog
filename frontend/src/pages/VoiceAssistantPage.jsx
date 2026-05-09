@@ -30,6 +30,14 @@ export function UsageCard({ usage }) {
           <p className="text-sm text-navy-400 mt-1">
             {isUnlimited ? 'Premium sesli asistan aktif' : `${used}/3 sesli giriş kullanıldı`}
           </p>
+          {!isUnlimited && (
+            <button
+              type="button"
+              className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal-500/25 bg-teal-500/10 px-3 py-1.5 text-xs font-semibold text-teal-200 hover:bg-teal-500/20 transition-colors"
+            >
+              Daha fazlası için Premium al
+            </button>
+          )}
         </div>
         <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-300">
           <FiMic size={22} />
