@@ -1,4 +1,3 @@
-import json
 import re
 from datetime import date, datetime
 from typing import Any, Dict
@@ -46,10 +45,80 @@ def _extract_severity(text: str) -> int:
     return 5
 
 
+def _extract_hours(text: str) -> float:
+    lowered = text.lower().replace(",", ".")
+    match = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:saat|hour)\b", lowered)
+    if match:
+        return max(0, min(24, float(match.group(1))))
+    number_match = re.search(r"\b(\d+(?:\.\d+)?)\b", lowered)
+    if number_match:
+        return max(0, min(24, float(number_match.group(1))))
+    return 7.0
+
+
+def _extract_sleep_quality(text: str) -> str:
+    lowered = text.lower()
+    if any(word in lowered for word in ["mukemmel", "mükemmel", "harika", "excellent", "cok iyi", "çok iyi"]):
+        return "excellent"
+    if any(word in lowered for word in ["kotu", "kötü", "berbat", "bad"]):
+        return "bad"
+    if any(word in lowered for word in ["orta", "fena degil", "fena değil", "fair"]):
+        return "fair"
+    return "good"
+
+
+def _extract_meal_type(text: str) -> str:
+    lowered = text.lower()
+    if any(word in lowered for word in ["kahvalti", "kahvaltı", "sabah"]):
+        return "breakfast"
+    if any(word in lowered for word in ["ogle", "öğle", "oglen", "öğlen"]):
+        return "lunch"
+    if any(word in lowered for word in ["aksam", "akşam"]):
+        return "dinner"
+    return "snack"
+
+
+def _extract_water_ml(text: str) -> int:
+    lowered = text.lower()
+    match = re.search(r"\b(\d+)\s*(?:ml|mililitre)\b", lowered)
+    if match:
+        return max(0, int(match.group(1)))
+
+    liter_match = re.search(r"\b(\d+(?:[,.]\d+)?)\s*(?:litre|lt|l)\b", lowered)
+    if liter_match:
+        return max(0, int(float(liter_match.group(1).replace(",", ".")) * 1000))
+
+    if "su" in lowered:
+        glass_match = re.search(r"\b(\d+)\s*(?:bardak|sise|şişe)\b", lowered)
+        if glass_match:
+            return int(glass_match.group(1)) * 250
+    return 0
+
+
 def _fallback_parse(transcript: str, target_date: date) -> Dict[str, Any]:
     lowered = transcript.lower()
     medication_keywords = ["ilaç", "ilac", "tablet", "kapsül", "kapsul", "mg", "aldım", "aldim", "içtim", "ictim"]
+    medication_strong_keywords = ["ilaç", "ilac", "tablet", "kapsül", "kapsul", "mg", "mcg", "parol", "arveles"]
     symptom_keywords = ["ağrı", "agri", "baş", "bas", "mide", "bulantı", "bulanti", "ateş", "ates", "öksürük", "oksuruk", "halsiz"]
+    sleep_keywords = ["uyku", "uyudum", "uyandim", "uyandım", "saat uyudum", "uykusuz"]
+    nutrition_keywords = ["kahvalti", "kahvaltı", "ogle", "öğle", "oglen", "öğlen", "aksam", "akşam", "yemek", "yedim", "içtim", "ictim", "su", "beslenme"]
+
+    has_nutrition_signal = any(keyword in lowered for keyword in nutrition_keywords)
+    has_strong_medication_signal = any(keyword in lowered for keyword in medication_strong_keywords)
+
+    if has_nutrition_signal and not has_strong_medication_signal:
+        return {
+            "intent": "nutrition",
+            "confidence": 0.55,
+            "extracted_data": {
+                "date": target_date.isoformat(),
+                "meal_type": _extract_meal_type(transcript),
+                "water_ml": _extract_water_ml(transcript),
+                "notes": transcript,
+            },
+            "suggested_action": "nutrition_create",
+            "warnings": ["AI ayrıştırma kullanılamadı; metinden güvenli bir taslak çıkarıldı."],
+        }
 
     if any(keyword in lowered for keyword in medication_keywords):
         cleaned = re.sub(r"\b(ilaç|ilac|aldım|aldim|içtim|ictim|kullandım|kullandim|saat|hatırlat|hatirlat)\b", " ", lowered)
@@ -69,6 +138,34 @@ def _fallback_parse(transcript: str, target_date: date) -> Dict[str, Any]:
                 "notes": transcript,
             },
             "suggested_action": "medication_create",
+            "warnings": ["AI ayrıştırma kullanılamadı; metinden güvenli bir taslak çıkarıldı."],
+        }
+
+    if any(keyword in lowered for keyword in sleep_keywords):
+        return {
+            "intent": "sleep",
+            "confidence": 0.58,
+            "extracted_data": {
+                "date": target_date.isoformat(),
+                "hours_slept": _extract_hours(transcript),
+                "quality": _extract_sleep_quality(transcript),
+                "notes": transcript,
+            },
+            "suggested_action": "sleep_create",
+            "warnings": ["AI ayrıştırma kullanılamadı; metinden güvenli bir taslak çıkarıldı."],
+        }
+
+    if has_nutrition_signal:
+        return {
+            "intent": "nutrition",
+            "confidence": 0.55,
+            "extracted_data": {
+                "date": target_date.isoformat(),
+                "meal_type": _extract_meal_type(transcript),
+                "water_ml": _extract_water_ml(transcript),
+                "notes": transcript,
+            },
+            "suggested_action": "nutrition_create",
             "warnings": ["AI ayrıştırma kullanılamadı; metinden güvenli bir taslak çıkarıldı."],
         }
 
@@ -105,7 +202,7 @@ def _fallback_parse(transcript: str, target_date: date) -> Dict[str, Any]:
         "confidence": 0.25,
         "extracted_data": {"date": target_date.isoformat(), "notes": transcript},
         "suggested_action": "review",
-        "warnings": ["Bu ses kaydının semptom mu ilaç mı olduğu net anlaşılamadı."],
+        "warnings": ["Bu ses kaydının türü net anlaşılamadı."],
     }
 
 
@@ -113,7 +210,7 @@ def parse_voice_transcript(transcript: str, target_date: date) -> Dict[str, Any]
     fallback = _fallback_parse(transcript, target_date)
     prompt = f"""
     Sen TanıLog içindeki Türkçe sesli sağlık asistanısın.
-    Kullanıcının konuşmadan metne çevrilmiş ifadesini semptom veya ilaç kaydı taslağına dönüştür.
+    Kullanıcının konuşmadan metne çevrilmiş ifadesini semptom, ilaç, uyku veya beslenme kaydı taslağına dönüştür.
     Teşhis koyma, tedavi önerme, doz tavsiye etme. Sadece kullanıcının söylediği bilgileri yapılandır.
 
     Hedef tarih: {target_date.isoformat()}
@@ -121,7 +218,7 @@ def parse_voice_transcript(transcript: str, target_date: date) -> Dict[str, Any]
 
     Sadece şu JSON formatında cevap ver:
     {{
-      "intent": "symptom, medication veya unknown",
+      "intent": "symptom, medication, sleep, nutrition veya unknown",
       "confidence": 0.0 ile 1.0 arasında sayı,
       "extracted_data": {{
         "date": "{target_date.isoformat()}",
@@ -132,9 +229,13 @@ def parse_voice_transcript(transcript: str, target_date: date) -> Dict[str, Any]
         "time_taken": "intent medication ise HH:MM veya null",
         "reminder_enabled": "ilaç için kullanıcı hatırlatma istediyse true",
         "reminder_time": "HH:MM veya null",
+        "hours_slept": "intent sleep ise 0-24 arası saat sayısı",
+        "quality": "intent sleep ise bad, fair, good veya excellent",
+        "meal_type": "intent nutrition ise breakfast, lunch, dinner veya snack",
+        "water_ml": "intent nutrition ise su miktarı ml cinsinden sayı",
         "notes": "orijinal metinden kısa not"
       }},
-      "suggested_action": "symptom_create, medication_create veya review",
+      "suggested_action": "symptom_create, medication_create, sleep_create, nutrition_create veya review",
       "warnings": ["Belirsiz veya kullanıcı onayı gerektiren noktalar"]
     }}
     """
@@ -144,7 +245,7 @@ def parse_voice_transcript(transcript: str, target_date: date) -> Dict[str, Any]
     parsed.setdefault("extracted_data", {})
 
     intent = parsed.get("intent", "unknown")
-    if intent not in {"symptom", "medication", "unknown"}:
+    if intent not in {"symptom", "medication", "sleep", "nutrition", "unknown"}:
         intent = "unknown"
         parsed["intent"] = intent
 
@@ -168,6 +269,26 @@ def parse_voice_transcript(transcript: str, target_date: date) -> Dict[str, Any]
         data["reminder_time"] = data.get("reminder_time") if data["reminder_enabled"] else None
         data["notes"] = data.get("notes") or transcript
         parsed["suggested_action"] = "medication_create"
+
+    if intent == "sleep":
+        try:
+            data["hours_slept"] = max(0, min(24, float(data.get("hours_slept") or _extract_hours(transcript))))
+        except (TypeError, ValueError):
+            data["hours_slept"] = _extract_hours(transcript)
+        if data.get("quality") not in {"bad", "fair", "good", "excellent"}:
+            data["quality"] = _extract_sleep_quality(transcript)
+        data["notes"] = data.get("notes") or transcript
+        parsed["suggested_action"] = "sleep_create"
+
+    if intent == "nutrition":
+        if data.get("meal_type") not in {"breakfast", "lunch", "dinner", "snack"}:
+            data["meal_type"] = _extract_meal_type(transcript)
+        try:
+            data["water_ml"] = max(0, int(data.get("water_ml") or _extract_water_ml(transcript)))
+        except (TypeError, ValueError):
+            data["water_ml"] = _extract_water_ml(transcript)
+        data["notes"] = data.get("notes") or ("Sadece su" if data["water_ml"] else transcript)
+        parsed["suggested_action"] = "nutrition_create"
 
     parsed["confidence"] = max(0, min(1, float(parsed.get("confidence") or 0)))
     return parsed

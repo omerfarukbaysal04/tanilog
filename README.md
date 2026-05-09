@@ -145,6 +145,8 @@ tanilog/
 ### Faz 7 — Sesli Asistan
 - [x] Sesli giriş (speech-to-text) entegrasyonu
 - [x] Türkçe sesli kayıt ile semptom/ilaç girişi
+- [x] Sesli kayıt ile uyku ve beslenme girişi
+- [x] Sağlık Takibi sekmelerinden hızlı sesli kayıt modalı
 - [x] Free paket: günlük 3 sesli giriş sınırı
 - [x] Sınırsız sesli asistan (Premium)
 - [x] `/voice` sayfası, AI ayrıştırma ve kullanıcı onaylı kayıt akışı

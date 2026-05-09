@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
-import { FiActivity, FiPlus, FiHeart, FiCoffee, FiTrash2, FiClock, FiBell, FiCheckCircle, FiShield, FiAlertCircle, FiEdit3, FiSave, FiImage } from 'react-icons/fi';
+import { FiActivity, FiPlus, FiHeart, FiCoffee, FiTrash2, FiClock, FiBell, FiCheckCircle, FiShield, FiAlertCircle, FiEdit3, FiSave, FiImage, FiMic, FiMicOff, FiRefreshCw } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
 import Calendar from '../components/health/Calendar';
 import useHealthStore from '../stores/healthStore';
 import { ModalContainer, SymptomModal, MedicationModal, SleepModal, NutritionModal } from '../components/health/LogModals';
+import { ResultEditor, UsageCard, fieldClass, useVoiceRecorder } from './VoiceAssistantPage';
 
 const tabs = [
   { id: 'symptoms', label: 'Semptomlar', icon: <FiActivity /> },
@@ -32,6 +33,11 @@ function HealthTrackingPage() {
   const [interactionLoading, setInteractionLoading] = useState(false);
   const [interactionError, setInteractionError] = useState(null);
   const [selectedMedication, setSelectedMedication] = useState(null);
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
+  const voice = useVoiceRecorder({
+    selectedDate,
+    onSaved: () => setVoiceModalOpen(false),
+  });
   
   // Modal States
   const [modals, setModals] = useState({
@@ -43,6 +49,10 @@ function HealthTrackingPage() {
 
   const openModal = (type) => setModals(prev => ({ ...prev, [type]: true }));
   const closeModal = (type) => setModals(prev => ({ ...prev, [type]: false }));
+  const closeVoiceModal = () => {
+    setVoiceModalOpen(false);
+    voice.reset();
+  };
 
   useEffect(() => {
     // Component yüklendiğinde bugünün verilerini çek
@@ -213,13 +223,22 @@ function HealthTrackingPage() {
                       <h2 className="text-white font-semibold text-lg flex items-center gap-2">
                         {tabs.find(t => t.id === activeTab)?.label}
                       </h2>
-                      <button
-                        onClick={() => openModal(activeTab)}
-                        className="bg-teal-500 hover:bg-teal-600 text-white p-2 rounded-xl transition-colors shadow-lg shadow-teal-500/20"
-                        title="Yeni Ekle"
-                      >
-                        <FiPlus size={20} />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setVoiceModalOpen(true)}
+                          className="bg-blue-500/15 hover:bg-blue-500/25 text-blue-200 p-2 rounded-xl transition-colors border border-blue-500/20"
+                          title="Sesli Ekle"
+                        >
+                          <FiMic size={20} />
+                        </button>
+                        <button
+                          onClick={() => openModal(activeTab)}
+                          className="bg-teal-500 hover:bg-teal-600 text-white p-2 rounded-xl transition-colors shadow-lg shadow-teal-500/20"
+                          title="Yeni Ekle"
+                        >
+                          <FiPlus size={20} />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Semptom Listesi */}
@@ -366,6 +385,70 @@ function HealthTrackingPage() {
       />
       <SleepModal isOpen={modals.sleep} onClose={() => closeModal('sleep')} onSave={addSleep} selectedDate={formattedDate} />
       <NutritionModal isOpen={modals.nutrition} onClose={() => closeModal('nutrition')} onSave={addNutrition} selectedDate={formattedDate} />
+      <ModalContainer isOpen={voiceModalOpen} onClose={closeVoiceModal} title="Sesli Kayıt" maxWidth="max-w-5xl">
+        <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-5">
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-navy-700/50 bg-navy-900/40 p-4">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <p className="text-navy-400 text-xs">Aktif tarih: {formattedDate}</p>
+                  <h3 className="text-white font-semibold">Konuşarak kayıt ekle</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={voice.isListening ? voice.stopListening : voice.startListening}
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center text-white transition-colors ${
+                    voice.isListening ? 'bg-red-500' : 'bg-teal-500 hover:bg-teal-600'
+                  }`}
+                >
+                  {voice.isListening ? <FiMicOff size={22} /> : <FiMic size={22} />}
+                </button>
+              </div>
+
+              {!voice.support.supported && (
+                <div className="mb-4 rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100">
+                  Bu tarayıcıda mikrofonla metne çevirme yok. Metni yazıp aynı AI akışını kullanabilirsiniz.
+                </div>
+              )}
+
+              <textarea
+                className={`${fieldClass} min-h-[12rem] resize-none`}
+                value={voice.transcript}
+                onChange={(event) => voice.setTranscript(event.target.value)}
+                placeholder="Örn: 7 saat uyudum, kalitesi iyiydi. / Öğlen tavuk salata yedim, 500 ml su içtim."
+              />
+
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={voice.handleParse}
+                  disabled={voice.isLoading}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-teal-500 hover:bg-teal-600 disabled:opacity-60 text-white font-semibold transition-colors"
+                >
+                  {voice.isLoading ? <FiRefreshCw className="animate-spin" /> : <FiCheckCircle />}
+                  Analiz Et
+                </button>
+                <button
+                  type="button"
+                  onClick={voice.reset}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-navy-800 hover:bg-navy-700 text-navy-200 font-semibold transition-colors"
+                >
+                  Temizle
+                </button>
+              </div>
+            </div>
+            <UsageCard usage={voice.usage} />
+          </div>
+
+          <ResultEditor
+            result={voice.parseResult}
+            draft={voice.draft}
+            setDraft={voice.setDraft}
+            onConfirm={voice.handleConfirm}
+            isSaving={voice.isSaving}
+          />
+        </div>
+      </ModalContainer>
 
     </DashboardLayout>
   );

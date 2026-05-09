@@ -14,9 +14,9 @@ import DashboardLayout from '../components/DashboardLayout';
 import useHealthStore from '../stores/healthStore';
 import useVoiceStore from '../stores/voiceStore';
 
-const fieldClass = "w-full bg-navy-900/50 border border-navy-700 rounded-xl px-4 py-3 text-white placeholder-navy-500 focus:outline-none focus:border-teal-500 transition-colors";
+export const fieldClass = "w-full bg-navy-900/50 border border-navy-700 rounded-xl px-4 py-3 text-white placeholder-navy-500 focus:outline-none focus:border-teal-500 transition-colors";
 
-function UsageCard({ usage }) {
+export function UsageCard({ usage }) {
   const isUnlimited = usage?.limit === -1;
   const used = usage?.used_today ?? 0;
   const remaining = usage?.remaining ?? 0;
@@ -39,7 +39,7 @@ function UsageCard({ usage }) {
   );
 }
 
-function ResultEditor({ result, draft, setDraft, onConfirm, isSaving }) {
+export function ResultEditor({ result, draft, setDraft, onConfirm, isSaving }) {
   if (!result) {
     return (
       <div className="glass rounded-2xl border border-dashed border-navy-700/70 min-h-[22rem] flex flex-col items-center justify-center text-center px-6">
@@ -48,23 +48,26 @@ function ResultEditor({ result, draft, setDraft, onConfirm, isSaving }) {
         </div>
         <p className="text-white font-semibold">Henüz analiz yok</p>
         <p className="text-sm text-navy-400 mt-2 max-w-md">
-          Ses kaydı metne çevrildikten sonra TanıLog bunu semptom veya ilaç kaydı taslağına dönüştürür.
+          Ses kaydı metne çevrildikten sonra TanıLog bunu semptom, ilaç, uyku veya beslenme kaydı taslağına dönüştürür.
         </p>
       </div>
     );
   }
 
-  const isSymptom = result.intent === 'symptom';
-  const isMedication = result.intent === 'medication';
+  const labels = {
+    symptom: 'Semptom kaydı',
+    medication: 'İlaç kaydı',
+    sleep: 'Uyku kaydı',
+    nutrition: 'Beslenme kaydı',
+    unknown: 'Gözden geçir',
+  };
 
   return (
     <div className="glass rounded-2xl border border-navy-700/50 p-5 lg:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <p className="text-sm text-navy-400">AI taslağı</p>
-          <h2 className="text-xl font-bold text-white">
-            {isSymptom ? 'Semptom kaydı' : isMedication ? 'İlaç kaydı' : 'Gözden geçir'}
-          </h2>
+          <h2 className="text-xl font-bold text-white">{labels[result.intent] || 'Gözden geçir'}</h2>
         </div>
         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/20">
           Güven: %{Math.round((result.confidence || 0) * 100)}
@@ -80,16 +83,9 @@ function ResultEditor({ result, draft, setDraft, onConfirm, isSaving }) {
         </div>
       )}
 
-      {isSymptom && (
+      {result.intent === 'symptom' && (
         <div className="space-y-4">
-          <label className="block">
-            <span className="text-sm text-navy-300">Semptom</span>
-            <input
-              className={`${fieldClass} mt-2`}
-              value={draft.symptom_name || ''}
-              onChange={(event) => setDraft({ ...draft, symptom_name: event.target.value })}
-            />
-          </label>
+          <Field label="Semptom" value={draft.symptom_name || ''} onChange={(value) => setDraft({ ...draft, symptom_name: value })} />
           <label className="block">
             <span className="text-sm text-navy-300">Şiddet: {draft.severity || 5}/10</span>
             <input
@@ -101,44 +97,17 @@ function ResultEditor({ result, draft, setDraft, onConfirm, isSaving }) {
               onChange={(event) => setDraft({ ...draft, severity: Number(event.target.value) })}
             />
           </label>
-          <label className="block">
-            <span className="text-sm text-navy-300">Not</span>
-            <textarea
-              className={`${fieldClass} mt-2 min-h-[8rem] resize-none`}
-              value={draft.notes || ''}
-              onChange={(event) => setDraft({ ...draft, notes: event.target.value })}
-            />
-          </label>
+          <TextArea label="Not" value={draft.notes || ''} onChange={(value) => setDraft({ ...draft, notes: value })} />
         </div>
       )}
 
-      {isMedication && (
+      {result.intent === 'medication' && (
         <div className="grid md:grid-cols-2 gap-4">
-          <label className="block md:col-span-2">
-            <span className="text-sm text-navy-300">İlaç adı</span>
-            <input
-              className={`${fieldClass} mt-2`}
-              value={draft.name || ''}
-              onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm text-navy-300">Doz</span>
-            <input
-              className={`${fieldClass} mt-2`}
-              value={draft.dosage || ''}
-              onChange={(event) => setDraft({ ...draft, dosage: event.target.value })}
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm text-navy-300">Alınma saati</span>
-            <input
-              type="time"
-              className={`${fieldClass} mt-2`}
-              value={draft.time_taken || ''}
-              onChange={(event) => setDraft({ ...draft, time_taken: event.target.value })}
-            />
-          </label>
+          <div className="md:col-span-2">
+            <Field label="İlaç adı" value={draft.name || ''} onChange={(value) => setDraft({ ...draft, name: value })} />
+          </div>
+          <Field label="Doz" value={draft.dosage || ''} onChange={(value) => setDraft({ ...draft, dosage: value })} />
+          <Field label="Alınma saati" type="time" value={draft.time_taken || ''} onChange={(value) => setDraft({ ...draft, time_taken: value })} />
           <label className="md:col-span-2 flex items-center gap-3 rounded-xl border border-navy-700 bg-navy-900/40 px-4 py-3">
             <input
               type="checkbox"
@@ -149,24 +118,45 @@ function ResultEditor({ result, draft, setDraft, onConfirm, isSaving }) {
             <span className="text-sm text-navy-200">Bu ilaç için hatırlatma kur</span>
           </label>
           {draft.reminder_enabled && (
-            <label className="block md:col-span-2">
-              <span className="text-sm text-navy-300">Hatırlatma saati</span>
-              <input
-                type="time"
-                className={`${fieldClass} mt-2`}
-                value={draft.reminder_time || ''}
-                onChange={(event) => setDraft({ ...draft, reminder_time: event.target.value })}
-              />
-            </label>
+            <div className="md:col-span-2">
+              <Field label="Hatırlatma saati" type="time" value={draft.reminder_time || ''} onChange={(value) => setDraft({ ...draft, reminder_time: value })} />
+            </div>
           )}
-          <label className="block md:col-span-2">
-            <span className="text-sm text-navy-300">Not</span>
-            <textarea
-              className={`${fieldClass} mt-2 min-h-[7rem] resize-none`}
-              value={draft.notes || ''}
-              onChange={(event) => setDraft({ ...draft, notes: event.target.value })}
-            />
+          <div className="md:col-span-2">
+            <TextArea label="Not" value={draft.notes || ''} onChange={(value) => setDraft({ ...draft, notes: value })} />
+          </div>
+        </div>
+      )}
+
+      {result.intent === 'sleep' && (
+        <div className="space-y-4">
+          <Field label="Uyku süresi (saat)" type="number" value={draft.hours_slept || ''} onChange={(value) => setDraft({ ...draft, hours_slept: value })} />
+          <label className="block">
+            <span className="text-sm text-navy-300">Uyku kalitesi</span>
+            <select className={`${fieldClass} mt-2`} value={draft.quality || 'good'} onChange={(event) => setDraft({ ...draft, quality: event.target.value })}>
+              <option value="bad">Kötü</option>
+              <option value="fair">Orta</option>
+              <option value="good">İyi</option>
+              <option value="excellent">Mükemmel</option>
+            </select>
           </label>
+          <TextArea label="Not" value={draft.notes || ''} onChange={(value) => setDraft({ ...draft, notes: value })} />
+        </div>
+      )}
+
+      {result.intent === 'nutrition' && (
+        <div className="space-y-4">
+          <label className="block">
+            <span className="text-sm text-navy-300">Öğün</span>
+            <select className={`${fieldClass} mt-2`} value={draft.meal_type || 'snack'} onChange={(event) => setDraft({ ...draft, meal_type: event.target.value })}>
+              <option value="breakfast">Kahvaltı</option>
+              <option value="lunch">Öğle Yemeği</option>
+              <option value="dinner">Akşam Yemeği</option>
+              <option value="snack">Atıştırmalık</option>
+            </select>
+          </label>
+          <Field label="Su (ml)" type="number" value={draft.water_ml ?? ''} onChange={(value) => setDraft({ ...draft, water_ml: value })} />
+          <TextArea label="Yedikleriniz / not" value={draft.notes || ''} onChange={(value) => setDraft({ ...draft, notes: value })} />
         </div>
       )}
 
@@ -189,14 +179,32 @@ function ResultEditor({ result, draft, setDraft, onConfirm, isSaving }) {
   );
 }
 
-function VoiceAssistantPage() {
+function Field({ label, value, onChange, type = 'text' }) {
+  return (
+    <label className="block">
+      <span className="text-sm text-navy-300">{label}</span>
+      <input className={`${fieldClass} mt-2`} type={type} value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
+function TextArea({ label, value, onChange }) {
+  return (
+    <label className="block">
+      <span className="text-sm text-navy-300">{label}</span>
+      <textarea className={`${fieldClass} mt-2 min-h-[7rem] resize-none`} value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
+export function useVoiceRecorder({ selectedDate, onSaved }) {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [draft, setDraft] = useState({});
   const recognitionRef = useRef(null);
 
-  const { selectedDate, addSymptom, addMedication } = useHealthStore();
+  const { addSymptom, addMedication, addSleep, addNutrition } = useHealthStore();
   const { usage, parseResult, isLoading, fetchUsage, parseTranscript, clearResult } = useVoiceStore();
 
   const support = useMemo(() => {
@@ -210,9 +218,7 @@ function VoiceAssistantPage() {
   }, [fetchUsage]);
 
   useEffect(() => {
-    if (parseResult?.extracted_data) {
-      setDraft(parseResult.extracted_data);
-    }
+    if (parseResult?.extracted_data) setDraft(parseResult.extracted_data);
   }, [parseResult]);
 
   const startListening = () => {
@@ -225,20 +231,14 @@ function VoiceAssistantPage() {
     recognition.lang = 'tr-TR';
     recognition.interimResults = true;
     recognition.continuous = false;
-
     recognition.onresult = (event) => {
-      const text = Array.from(event.results)
-        .map((result) => result[0]?.transcript || '')
-        .join(' ')
-        .trim();
+      const text = Array.from(event.results).map((result) => result[0]?.transcript || '').join(' ').trim();
       setTranscript(text);
     };
-
     recognition.onerror = () => {
       setIsListening(false);
       toast.error('Ses alınamadı. Tarayıcı izinlerini kontrol edin.');
     };
-
     recognition.onend = () => setIsListening(false);
     recognitionRef.current = recognition;
     recognition.start();
@@ -250,6 +250,12 @@ function VoiceAssistantPage() {
     setIsListening(false);
   };
 
+  const reset = () => {
+    setTranscript('');
+    setDraft({});
+    clearResult();
+  };
+
   const handleParse = async () => {
     if (!transcript.trim()) {
       toast.error('Önce bir ses kaydı veya metin girin.');
@@ -257,10 +263,7 @@ function VoiceAssistantPage() {
     }
 
     try {
-      await parseTranscript({
-        transcript: transcript.trim(),
-        targetDate: format(selectedDate, 'yyyy-MM-dd'),
-      });
+      await parseTranscript({ transcript: transcript.trim(), targetDate: format(selectedDate, 'yyyy-MM-dd') });
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Sesli giriş analiz edilemedi.');
     }
@@ -271,15 +274,9 @@ function VoiceAssistantPage() {
     setIsSaving(true);
     try {
       if (parseResult.intent === 'symptom') {
-        await addSymptom({
-          date: draft.date,
-          symptom_name: draft.symptom_name,
-          severity: Number(draft.severity || 5),
-          notes: draft.notes || transcript,
-        });
+        await addSymptom({ date: draft.date, symptom_name: draft.symptom_name, severity: Number(draft.severity || 5), notes: draft.notes || transcript });
         toast.success('Semptom kaydı eklendi.');
       }
-
       if (parseResult.intent === 'medication') {
         await addMedication({
           date: draft.date,
@@ -292,16 +289,45 @@ function VoiceAssistantPage() {
         });
         toast.success('İlaç kaydı eklendi.');
       }
-
-      setTranscript('');
-      setDraft({});
-      clearResult();
+      if (parseResult.intent === 'sleep') {
+        await addSleep({ date: draft.date, hours_slept: Number(draft.hours_slept || 0), quality: draft.quality || 'good', notes: draft.notes || transcript });
+        toast.success('Uyku kaydı eklendi.');
+      }
+      if (parseResult.intent === 'nutrition') {
+        await addNutrition({ date: draft.date, meal_type: draft.meal_type || 'snack', water_ml: Number(draft.water_ml || 0), notes: draft.notes || (Number(draft.water_ml || 0) ? 'Sadece su' : transcript) });
+        toast.success('Beslenme kaydı eklendi.');
+      }
+      reset();
+      onSaved?.();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Kayıt eklenemedi.');
     } finally {
       setIsSaving(false);
     }
   };
+
+  return {
+    transcript,
+    setTranscript,
+    isListening,
+    isSaving,
+    draft,
+    setDraft,
+    usage,
+    parseResult,
+    isLoading,
+    support,
+    startListening,
+    stopListening,
+    handleParse,
+    handleConfirm,
+    reset,
+  };
+}
+
+function VoiceAssistantPage() {
+  const { selectedDate } = useHealthStore();
+  const voice = useVoiceRecorder({ selectedDate });
 
   return (
     <DashboardLayout>
@@ -316,16 +342,16 @@ function VoiceAssistantPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={isListening ? stopListening : startListening}
+                  onClick={voice.isListening ? voice.stopListening : voice.startListening}
                   className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg transition-all ${
-                    isListening ? 'bg-red-500 shadow-red-500/20' : 'bg-teal-500 hover:bg-teal-400 shadow-teal-500/20'
+                    voice.isListening ? 'bg-red-500 shadow-red-500/20' : 'bg-teal-500 hover:bg-teal-400 shadow-teal-500/20'
                   }`}
                 >
-                  {isListening ? <FiMicOff size={28} /> : <FiMic size={28} />}
+                  {voice.isListening ? <FiMicOff size={28} /> : <FiMic size={28} />}
                 </button>
               </div>
 
-              {!support.supported && (
+              {!voice.support.supported && (
                 <div className="mb-5 rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100">
                   Bu tarayıcıda Web Speech API yok. Metni manuel yazarak aynı AI akışını kullanabilirsiniz.
                 </div>
@@ -333,28 +359,24 @@ function VoiceAssistantPage() {
 
               <textarea
                 className={`${fieldClass} min-h-[15rem] resize-none`}
-                value={transcript}
-                onChange={(event) => setTranscript(event.target.value)}
-                placeholder="Örn: Başım çok ağrıyor, şiddeti 7. / Parol 500 mg aldım, saat 11:30."
+                value={voice.transcript}
+                onChange={(event) => voice.setTranscript(event.target.value)}
+                placeholder="Örn: Başım çok ağrıyor, şiddeti 7. / Parol 500 mg aldım, saat 11:30. / 7 saat uyudum. / Kahvaltıda yulaf yedim, 500 ml su içtim."
               />
 
               <div className="flex flex-col sm:flex-row gap-3 mt-5">
                 <button
                   type="button"
-                  onClick={handleParse}
-                  disabled={isLoading}
+                  onClick={voice.handleParse}
+                  disabled={voice.isLoading}
                   className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-semibold transition-colors"
                 >
-                  {isLoading ? <FiRefreshCw className="animate-spin" /> : <FiCheck />}
+                  {voice.isLoading ? <FiRefreshCw className="animate-spin" /> : <FiCheck />}
                   Analiz Et
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setTranscript('');
-                    setDraft({});
-                    clearResult();
-                  }}
+                  onClick={voice.reset}
                   className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-navy-800 hover:bg-navy-700 text-navy-200 font-semibold transition-colors"
                 >
                   Temizle
@@ -362,15 +384,15 @@ function VoiceAssistantPage() {
               </div>
             </div>
 
-            <UsageCard usage={usage} />
+            <UsageCard usage={voice.usage} />
           </div>
 
           <ResultEditor
-            result={parseResult}
-            draft={draft}
-            setDraft={setDraft}
-            onConfirm={handleConfirm}
-            isSaving={isSaving}
+            result={voice.parseResult}
+            draft={voice.draft}
+            setDraft={voice.setDraft}
+            onConfirm={voice.handleConfirm}
+            isSaving={voice.isSaving}
           />
         </div>
       </div>
