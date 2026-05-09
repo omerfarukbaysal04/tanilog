@@ -13,7 +13,8 @@ import {
   FiHeart,
   FiCpu,
   FiStar,
-  FiMic
+  FiMic,
+  FiClipboard
 } from 'react-icons/fi';
 import useAuthStore from '../stores/authStore';
 
@@ -23,6 +24,7 @@ const navItems = [
   { icon: <FiFileText size={20} />, label: 'Belgelerim', path: '/documents' },
   { icon: <FiCpu size={20} />, label: 'AI Analiz', path: '/ai' },
   { icon: <FiMic size={20} />, label: 'Sesli Asistan', path: '/voice' },
+  { icon: <FiClipboard size={20} />, label: 'Doktora Hazırlan', path: '/doctor-prep' },
   { icon: <FiUser size={20} />, label: 'Profil', path: '/profile' },
   { icon: <FiSettings size={20} />, label: 'Ayarlar', path: '/settings', badge: 'Yakında' },
 ];
@@ -33,6 +35,7 @@ const pageTitles = {
   '/documents': 'Belgelerim',
   '/ai': 'AI Analiz',
   '/voice': 'Sesli Asistan',
+  '/doctor-prep': 'Doktora Hazırlan',
   '/profile': 'Profil',
   '/settings': 'Ayarlar',
 };

@@ -167,6 +167,60 @@ def generate_health_report(health_context: dict, period: str, start_date: str, e
     return _json_from_gemini(prompt, fallback, temperature=0.25)
 
 
+def generate_doctor_prep_report(context: dict, start_date: str, end_date: str) -> dict:
+    """Create a 30-day doctor visit preparation report."""
+    fallback = {
+        "date_range": {"start": start_date, "end": end_date},
+        "summary": "Son 30 günlük doktor hazırlık raporu şu anda AI ile tamamlanamadı.",
+        "key_findings": [
+            "Kayıtlarınızı tarih sırasına göre doktorunuzla paylaşın.",
+            "Tekrarlayan semptomları, kullanılan ilaçları ve analizli belgeleri özellikle belirtin."
+        ],
+        "medication_summary": "İlaç kayıtlarınızı ve doz bilgilerinizi randevu öncesi kontrol edin.",
+        "document_summary": "Analizli belgeleriniz varsa randevuda yanınızda bulundurun.",
+        "risk_flags": [],
+        "doctor_questions": [
+            "Son 30 gündeki semptomlarım mevcut tedavimle ilişkili olabilir mi?",
+            "Kullandığım ilaçlar arasında dikkat etmem gereken bir etkileşim var mı?",
+            "Hangi tahlilleri veya kontrolleri tekrar etmem gerekir?"
+        ],
+        "preparation_checklist": [
+            "Tüm ilaç ve doz listesini hazırlayın.",
+            "Son tahlil ve reçete belgelerini yanınıza alın.",
+            "En sık tekrar eden semptomları tarihleriyle not edin."
+        ],
+        "full_report": "## Doktora Hazırlık\n\nAI raporu üretilemedi. Yine de son 30 günlük kayıtlarınızı, ilaçlarınızı ve belgelerinizi doktorunuzla paylaşmanız önerilir.",
+        "share_text": "Son 30 günlük sağlık kayıtlarımı ve analizli belgelerimi doktor randevumda değerlendirmek istiyorum."
+    }
+
+    prompt = f"""
+    Sen TanıLog içindeki Türkçe doktor randevusu hazırlık asistanısın.
+    Teşhis koyma, tedavi planı yazma, ilaç başlatma/bıraktırma veya kesin tıbbi hüküm verme.
+    Kullanıcının son 30 günlük sağlık kayıtlarını ve analizli belgelerini doktor görüşmesine hazırlanacak şekilde özetle.
+    Doktorun hızlı tarayabileceği, profesyonel ama sade bir Türkçe kullan.
+
+    Dönem: {start_date} - {end_date}
+    Bağlam:
+    {json.dumps(context, ensure_ascii=False, default=str)}
+
+    Sadece şu JSON formatında cevap ver:
+    {{
+      "date_range": {{"start": "{start_date}", "end": "{end_date}"}},
+      "summary": "Randevu öncesi 3-4 cümlelik genel özet.",
+      "key_findings": ["Doktor için en önemli bulgu veya örüntüler."],
+      "medication_summary": "İlaç kullanımı ve takip durumu özeti.",
+      "document_summary": "Analizli belge/tahlil/reçete özeti.",
+      "risk_flags": ["Acil olmayan ama randevuda özellikle konuşulması gereken uyarılar."],
+      "doctor_questions": ["Doktora sorulacak net ve kısa sorular."],
+      "preparation_checklist": ["Randevu öncesi hazırlanacak pratik maddeler."],
+      "full_report": "Markdown formatında profesyonel Türkçe rapor. Başlıklar: Hasta Özeti, Son 30 Günün Bulguları, İlaçlar, Belgeler ve Tahliller, Doktora Sorulacaklar, Hazırlık Listesi.",
+      "share_text": "Doktora veya yakına gönderilebilecek kısa paylaşım metni."
+    }}
+    """
+
+    return _json_from_gemini(prompt, fallback, temperature=0.2)
+
+
 def analyze_medication_interactions(medication_context: dict) -> dict:
     """Review active medications and prescription analyses for possible interaction warnings."""
     fallback = {

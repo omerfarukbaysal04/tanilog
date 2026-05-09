@@ -22,12 +22,12 @@ docker-compose up --build
 
 Uygulama çalıştıktan sonra:
 
-| Servis             | URL                          |
-| ------------------ | ---------------------------- |
-| **Frontend (Web)** | http://localhost:3000         |
-| **Backend API**    | http://localhost:8000         |
-| **API Docs**       | http://localhost:8000/docs    |
-| **ReDoc**          | http://localhost:8000/redoc   |
+| Servis             | URL                         |
+| ------------------ | --------------------------- |
+| **Frontend (Web)** | http://localhost:3000       |
+| **Backend API**    | http://localhost:8000       |
+| **API Docs**       | http://localhost:8000/docs  |
+| **ReDoc**          | http://localhost:8000/redoc |
 
 ## 🏗️ Proje Yapısı
 
@@ -64,25 +64,25 @@ tanilog/
 
 ## 🛠️ Teknoloji Yığını
 
-| Katman       | Teknoloji                     |
-| ------------ | ----------------------------- |
-| **Backend**  | Python, FastAPI, SQLAlchemy   |
-| **Frontend** | React, Tailwind CSS, Zustand  |
-| **Veritabanı** | PostgreSQL                 |
-| **Auth**     | JWT (python-jose + passlib)   |
-| **DevOps**   | Docker, Docker Compose, Git   |
+| Katman         | Teknoloji                    |
+| -------------- | ---------------------------- |
+| **Backend**    | Python, FastAPI, SQLAlchemy  |
+| **Frontend**   | React, Tailwind CSS, Zustand |
+| **Veritabanı** | PostgreSQL                   |
+| **Auth**       | JWT (python-jose + passlib)  |
+| **DevOps**     | Docker, Docker Compose, Git  |
 
 ## 📦 API Endpoint'leri
 
-| Metot  | Endpoint                   | Açıklama                  |
-| ------ | -------------------------- | ------------------------- |
-| GET    | `/`                        | API bilgisi               |
-| GET    | `/health`                  | Sistem sağlık kontrolü    |
-| POST   | `/api/v1/auth/register`    | Yeni kullanıcı kaydı      |
-| POST   | `/api/v1/auth/login`       | Kullanıcı girişi (JWT)    |
-| GET    | `/api/v1/auth/me`          | Mevcut kullanıcı bilgisi  |
-| PUT    | `/api/v1/auth/me`          | Profil güncelleme         |
-| PUT    | `/api/v1/auth/me/password` | Şifre değiştirme          |
+| Metot | Endpoint                   | Açıklama                 |
+| ----- | -------------------------- | ------------------------ |
+| GET   | `/`                        | API bilgisi              |
+| GET   | `/health`                  | Sistem sağlık kontrolü   |
+| POST  | `/api/v1/auth/register`    | Yeni kullanıcı kaydı     |
+| POST  | `/api/v1/auth/login`       | Kullanıcı girişi (JWT)   |
+| GET   | `/api/v1/auth/me`          | Mevcut kullanıcı bilgisi |
+| PUT   | `/api/v1/auth/me`          | Profil güncelleme        |
+| PUT   | `/api/v1/auth/me/password` | Şifre değiştirme         |
 
 ## 🎨 Marka
 
@@ -93,6 +93,7 @@ tanilog/
 ## 📋 Yapılacaklar (Roadmap)
 
 ### Faz 1 — Temel Altyapı ✅
+
 - [x] Proje iskelet yapısının oluşturulması
 - [x] Docker + Docker Compose kurulumu
 - [x] FastAPI backend temel yapısı
@@ -104,6 +105,7 @@ tanilog/
 - [x] API proxy ve CORS yapılandırması
 
 ### Faz 2 — Kullanıcı Yönetimi & Dashboard ✅
+
 - [x] Kayıt ve giriş sayfaları (frontend)
 - [x] Kullanıcı profil sayfası ve düzenleme
 - [x] Dashboard ana ekran tasarımı
@@ -112,6 +114,7 @@ tanilog/
 - [x] Alembic veritabanı migration yapısı
 
 ### Faz 3 — Günlük Sağlık Takibi ✅
+
 - [x] Semptom kayıt modülü (CRUD)
 - [x] İlaç kayıt ve takip modülü
 - [x] Uyku düzeni kaydı
@@ -120,6 +123,7 @@ tanilog/
 - [x] Takvim bazlı geçmiş görüntüleme
 
 ### Faz 4 — Tıbbi Belge Yönetimi ✅
+
 - [x] PDF / fotoğraf yükleme altyapısı
 - [x] Belge arşivleme ve listeleme
 - [x] Belge kategorilendirme (tahlil, MR, reçete, epikriz vb.)
@@ -127,6 +131,7 @@ tanilog/
 - [x] Free paket: aylık 3 belge sınırı kontrolü
 
 ### Faz 5 — Yapay Zeka Entegrasyonu ✅
+
 - [x] AI belge analizi (tahlil sonuçlarını Türkçe açıklama)
 - [x] Semptom-tahlil çapraz analiz
 - [x] Haftalık / aylık sağlık raporu oluşturma
@@ -134,6 +139,7 @@ tanilog/
 - [x] Kritik değer tespiti ve acil uyarı sistemi
 
 ### Faz 6 — İlaç Hatırlatma & Etkileşim ✅
+
 - [x] İlaç hatırlatma bildirimleri
 - [x] Bildirim izni ve test bildirimi paneli
 - [x] Free paket: 3 ilaç sınırı kontrolü
@@ -142,7 +148,8 @@ tanilog/
 - [x] Reçete / ilaç kutusu görselinden AI ile ilaç adayı çıkarma
 - [x] AI tarama sonucunu kullanıcı onayıyla manuel ilaç formuna aktarma
 
-### Faz 7 — Sesli Asistan
+### Faz 7 — Sesli Asistan ✅
+
 - [x] Sesli giriş (speech-to-text) entegrasyonu
 - [x] Türkçe sesli kayıt ile semptom/ilaç girişi
 - [x] Sesli kayıt ile uyku ve beslenme girişi
@@ -152,17 +159,22 @@ tanilog/
 - [x] `/voice` sayfası, AI ayrıştırma ve kullanıcı onaylı kayıt akışı
 
 ### Faz 8 — Doktora Hazırlan Modu (Premium)
-- [ ] Son 30 günlük veri özeti oluşturma
-- [ ] Türkçe PDF raporu otomatik üretimi
-- [ ] "Doktoruna şunları sor" listesi hazırlama
-- [ ] PDF indirme ve paylaşma
+
+- [x] Son 30 günlük veri özeti oluşturma
+- [x] Türkçe PDF raporu otomatik üretimi
+- [x] "Doktoruna şunları sor" listesi hazırlama
+- [x] PDF indirme ve paylaşma
+- [x] Premium erişim kontrolü ve `/doctor-prep` ekranı
+- [x] Doktor raporlarını kaydetme, listeleme ve yeniden açma
 
 ### Faz 9 — Aile & Sosyal Özellikler (Premium)
+
 - [ ] Aile üyesi ekleme ve yönetimi
 - [ ] Yaşlı yakını sağlık takibi (uzaktan erişim)
 - [ ] Aile üyesi belge ve kayıt görüntüleme
 
 ### Faz 10 — Ödeme & Premium Sistem
+
 - [ ] Premium abonelik sayfası
 - [ ] Ödeme sistemi entegrasyonu
 - [ ] Aylık (₺119) ve yıllık (₺1.100) plan yönetimi
@@ -170,12 +182,14 @@ tanilog/
 - [ ] Reklamsız deneyim (Premium)
 
 ### Faz 11 — Mobil Uygulama
+
 - [ ] React Native proje kurulumu
 - [ ] Kamera ile belge fotoğraflama
 - [ ] Push notification (ilaç hatırlatma)
 - [ ] Google Play Store yayını (Android)
 
 ### Faz 12 — Test & Yayın
+
 - [ ] Backend unit testleri
 - [ ] Frontend component testleri
 - [ ] E2E (uçtan uca) testler

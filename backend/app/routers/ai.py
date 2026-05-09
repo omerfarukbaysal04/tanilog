@@ -1,3 +1,4 @@
+import json
 from datetime import date, datetime, timedelta
 from typing import Literal
 
@@ -6,14 +7,16 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.ai_analysis import AIAnalysis
+from app.models.ai_analysis import AIAnalysis, DoctorPrepReport
 from app.models.document import Document
 from app.models.health import MedicationLog, NutritionLog, SleepLog, SymptomLog
 from app.models.user import User
 from app.routers.auth import get_current_user
+from app.routers.users import is_premium_active
 from app.services.ai_service import (
     analyze_medication_interactions,
     analyze_symptoms_with_document,
+    generate_doctor_prep_report,
     generate_health_report,
     scan_medications_from_file,
 )
@@ -35,6 +38,15 @@ class HealthReportRequest(BaseModel):
 
 class MedicationInteractionRequest(BaseModel):
     days: int = Field(30, ge=1, le=90)
+
+
+class DoctorPrepRequest(BaseModel):
+    days: int = Field(30, ge=30, le=30)
+
+
+class SaveDoctorPrepReportRequest(BaseModel):
+    title: str | None = Field(None, max_length=255)
+    report: dict
 
 
 def _date_or_datetime(value):
@@ -118,6 +130,31 @@ def _medication_context(db: Session, user_id: int, start_date: date, end_date: d
             for document, analysis in prescription_rows
         ],
     }
+
+
+def _document_analysis_context(db: Session, user_id: int, limit: int = 10) -> list[dict]:
+    rows = db.query(Document, AIAnalysis).join(
+        AIAnalysis,
+        AIAnalysis.document_id == Document.id
+    ).filter(
+        Document.user_id == user_id,
+        Document.is_deleted == False
+    ).order_by(AIAnalysis.created_at.desc()).limit(limit).all()
+
+    return [
+        {
+            "document_id": document.id,
+            "filename": document.original_filename,
+            "category": document.category,
+            "document_created_at": document.created_at,
+            "analysis_created_at": analysis.created_at,
+            "summary": analysis.summary,
+            "critical_findings": analysis.critical_findings,
+            "has_critical_alert": analysis.has_critical_alert,
+            "full_analysis": analysis.full_analysis,
+        }
+        for document, analysis in rows
+    ]
 
 
 @router.get("/analyzed-documents")
@@ -211,6 +248,174 @@ async def create_health_report(
         start_date.isoformat(),
         end_date.isoformat()
     )
+
+
+@router.post("/doctor-prep")
+async def create_doctor_prep_report(
+    payload: DoctorPrepRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not is_premium_active(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Doktora Hazırlan modu Premium kullanıcılar için kullanılabilir."
+        )
+
+    end_date = datetime.utcnow().date()
+    start_date = end_date - timedelta(days=payload.days - 1)
+    health_context = _health_context(db, current_user.id, start_date, end_date)
+    medication_context = _medication_context(db, current_user.id, start_date, end_date)
+    document_context = _document_analysis_context(db, current_user.id)
+
+    context = {
+        "user": {
+            "full_name": current_user.full_name,
+            "email": current_user.email,
+        },
+        "health": health_context,
+        "medication_review": medication_context,
+        "document_analyses": document_context,
+    }
+
+    result = generate_doctor_prep_report(
+        context,
+        start_date.isoformat(),
+        end_date.isoformat()
+    )
+    result["patient"] = {
+        "full_name": current_user.full_name,
+        "email": current_user.email,
+    }
+    result["generated_at"] = datetime.utcnow().isoformat()
+    result["source_counts"] = {
+        "symptoms": len(health_context["symptoms"]),
+        "medications": len(health_context["medications"]),
+        "sleep": len(health_context["sleep"]),
+        "nutrition": len(health_context["nutrition"]),
+        "documents": len(document_context),
+    }
+    return result
+
+
+@router.get("/doctor-prep/saved")
+async def list_saved_doctor_prep_reports(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not is_premium_active(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Kayıtlı doktor raporları Premium kullanıcılar için kullanılabilir."
+        )
+
+    reports = db.query(DoctorPrepReport).filter(
+        DoctorPrepReport.user_id == current_user.id
+    ).order_by(DoctorPrepReport.created_at.desc()).all()
+
+    return [
+        {
+            "id": item.id,
+            "title": item.title,
+            "period_start": item.period_start,
+            "period_end": item.period_end,
+            "summary": item.summary,
+            "created_at": item.created_at,
+        }
+        for item in reports
+    ]
+
+
+@router.get("/doctor-prep/saved/{report_id}")
+async def get_saved_doctor_prep_report(
+    report_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not is_premium_active(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Kayıtlı doktor raporları Premium kullanıcılar için kullanılabilir."
+        )
+
+    report = db.query(DoctorPrepReport).filter(
+        DoctorPrepReport.id == report_id,
+        DoctorPrepReport.user_id == current_user.id
+    ).first()
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rapor bulunamadı.")
+
+    payload = json.loads(report.report_json)
+    payload["saved_report_id"] = report.id
+    payload["saved_title"] = report.title
+    payload["saved_at"] = report.created_at.isoformat() if report.created_at else None
+    return payload
+
+
+@router.post("/doctor-prep/save", status_code=status.HTTP_201_CREATED)
+async def save_doctor_prep_report(
+    payload: SaveDoctorPrepReportRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not is_premium_active(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Doktor raporu kaydetme Premium kullanıcılar için kullanılabilir."
+        )
+
+    report = payload.report
+    date_range = report.get("date_range") or {}
+    try:
+        period_start = date.fromisoformat(date_range.get("start"))
+        period_end = date.fromisoformat(date_range.get("end"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Rapor dönem bilgisi eksik veya hatalı.")
+
+    title = payload.title or f"Doktor Raporu {period_end.isoformat()}"
+    saved = DoctorPrepReport(
+        user_id=current_user.id,
+        title=title[:255],
+        period_start=period_start,
+        period_end=period_end,
+        summary=str(report.get("summary") or "Doktor hazırlık raporu"),
+        report_json=json.dumps(report, ensure_ascii=False, default=str),
+    )
+    db.add(saved)
+    db.commit()
+    db.refresh(saved)
+
+    return {
+        "id": saved.id,
+        "title": saved.title,
+        "period_start": saved.period_start,
+        "period_end": saved.period_end,
+        "summary": saved.summary,
+        "created_at": saved.created_at,
+    }
+
+
+@router.delete("/doctor-prep/saved/{report_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_saved_doctor_prep_report(
+    report_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not is_premium_active(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Kayıtlı doktor raporları Premium kullanıcılar için kullanılabilir."
+        )
+
+    report = db.query(DoctorPrepReport).filter(
+        DoctorPrepReport.id == report_id,
+        DoctorPrepReport.user_id == current_user.id
+    ).first()
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rapor bulunamadı.")
+
+    db.delete(report)
+    db.commit()
 
 
 @router.post("/medication-interactions")
