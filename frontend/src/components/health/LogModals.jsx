@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 export function ModalContainer({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' }) {
-  return (
+  const modal = (
     <AnimatePresence>
       {isOpen && (
         <>
@@ -35,6 +36,9 @@ export function ModalContainer({ isOpen, onClose, title, children, maxWidth = 'm
       )}
     </AnimatePresence>
   );
+
+  if (typeof document === 'undefined') return modal;
+  return createPortal(modal, document.body);
 }
 
 export function SymptomModal({ isOpen, onClose, onSave, selectedDate }) {
