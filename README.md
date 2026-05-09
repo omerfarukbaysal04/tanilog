@@ -143,10 +143,11 @@ tanilog/
 - [x] AI tarama sonucunu kullanıcı onayıyla manuel ilaç formuna aktarma
 
 ### Faz 7 — Sesli Asistan
-- [ ] Sesli giriş (speech-to-text) entegrasyonu
-- [ ] Türkçe sesli kayıt ile semptom/ilaç girişi
-- [ ] Free paket: günlük 3 sesli giriş sınırı
-- [ ] Sınırsız sesli asistan (Premium)
+- [x] Sesli giriş (speech-to-text) entegrasyonu
+- [x] Türkçe sesli kayıt ile semptom/ilaç girişi
+- [x] Free paket: günlük 3 sesli giriş sınırı
+- [x] Sınırsız sesli asistan (Premium)
+- [x] `/voice` sayfası, AI ayrıştırma ve kullanıcı onaylı kayıt akışı
 
 ### Faz 8 — Doktora Hazırlan Modu (Premium)
 - [ ] Son 30 günlük veri özeti oluşturma

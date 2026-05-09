@@ -11,6 +11,7 @@ import ProfilePage from './pages/ProfilePage';
 import HealthTrackingPage from './pages/HealthTrackingPage';
 import DocumentsPage from './pages/DocumentsPage';
 import AIPage from './pages/AIPage';
+import VoiceAssistantPage from './pages/VoiceAssistantPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -82,6 +83,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AIPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/voice"
+          element={
+            <ProtectedRoute>
+              <VoiceAssistantPage />
             </ProtectedRoute>
           }
         />

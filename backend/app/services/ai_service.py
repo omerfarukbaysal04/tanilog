@@ -12,9 +12,8 @@ def get_genai_client():
     return genai.Client(api_key=settings.GEMINI_API_KEY)
 
 def _json_from_gemini(prompt: str, fallback: dict, temperature: float = 0.25) -> dict:
-    client = get_genai_client()
-
     try:
+        client = get_genai_client()
         response = client.models.generate_content(
             model=MODEL_NAME,
             contents=[prompt],

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, Integer, String, Text, Date, Time, Float, ForeignKey, DateTime
+from sqlalchemy import Boolean, Column, Integer, String, Text, Date, Time, Float, ForeignKey, DateTime, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -66,3 +66,18 @@ class NutritionLog(Base):
     notes = Column(Text, nullable=False)
     water_ml = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class VoiceUsageLog(Base):
+    """Daily voice assistant usage counter."""
+    __tablename__ = "voice_usage_logs"
+    __table_args__ = (
+        UniqueConstraint("user_id", "date", name="uq_voice_usage_user_date"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    date = Column(Date, nullable=False, index=True)
+    count = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
