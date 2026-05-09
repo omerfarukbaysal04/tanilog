@@ -39,6 +39,44 @@ export function UsageCard({ usage }) {
   );
 }
 
+export function VoiceMicButton({ isListening, onClick, size = 'lg' }) {
+  const dimensions = size === 'sm' ? 'w-12 h-12' : 'w-16 h-16';
+  const iconSize = size === 'sm' ? 22 : 28;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative ${dimensions} rounded-2xl flex items-center justify-center text-white shadow-lg transition-all overflow-visible ${
+        isListening ? 'bg-red-500 shadow-red-500/20' : 'bg-teal-500 hover:bg-teal-400 shadow-teal-500/20'
+      }`}
+      title={isListening ? 'Kaydı durdur' : 'Sesli kayıt başlat'}
+    >
+      {isListening && (
+        <>
+          <span className="absolute inset-0 rounded-2xl bg-red-400/30 animate-ping" />
+          <span className="absolute -inset-2 rounded-[1.35rem] border border-red-300/40 animate-pulse" />
+          <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex items-end gap-0.5 h-5">
+            {[0, 1, 2, 3].map((bar) => (
+              <span
+                key={bar}
+                className="w-1 rounded-full bg-red-200/90 animate-pulse"
+                style={{
+                  height: `${8 + bar * 3}px`,
+                  animationDelay: `${bar * 120}ms`,
+                }}
+              />
+            ))}
+          </span>
+        </>
+      )}
+      <span className="relative z-10">
+        {isListening ? <FiMicOff size={iconSize} /> : <FiMic size={iconSize} />}
+      </span>
+    </button>
+  );
+}
+
 export function ResultEditor({ result, draft, setDraft, onConfirm, isSaving }) {
   if (!result) {
     return (
@@ -340,15 +378,10 @@ function VoiceAssistantPage() {
                   <p className="text-sm text-navy-400">Türkçe sesli giriş</p>
                   <h1 className="text-2xl font-bold text-white">Sesli Asistan</h1>
                 </div>
-                <button
-                  type="button"
+                <VoiceMicButton
+                  isListening={voice.isListening}
                   onClick={voice.isListening ? voice.stopListening : voice.startListening}
-                  className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg transition-all ${
-                    voice.isListening ? 'bg-red-500 shadow-red-500/20' : 'bg-teal-500 hover:bg-teal-400 shadow-teal-500/20'
-                  }`}
-                >
-                  {voice.isListening ? <FiMicOff size={28} /> : <FiMic size={28} />}
-                </button>
+                />
               </div>
 
               {!voice.support.supported && (

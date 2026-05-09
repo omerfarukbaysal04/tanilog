@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
-import { FiActivity, FiPlus, FiHeart, FiCoffee, FiTrash2, FiClock, FiBell, FiCheckCircle, FiShield, FiAlertCircle, FiEdit3, FiSave, FiImage, FiMic, FiMicOff, FiRefreshCw } from 'react-icons/fi';
+import { FiActivity, FiPlus, FiHeart, FiCoffee, FiTrash2, FiClock, FiBell, FiCheckCircle, FiShield, FiAlertCircle, FiEdit3, FiSave, FiImage, FiMic, FiRefreshCw } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
 import Calendar from '../components/health/Calendar';
 import useHealthStore from '../stores/healthStore';
 import { ModalContainer, SymptomModal, MedicationModal, SleepModal, NutritionModal } from '../components/health/LogModals';
-import { ResultEditor, UsageCard, fieldClass, useVoiceRecorder } from './VoiceAssistantPage';
+import { ResultEditor, UsageCard, VoiceMicButton, fieldClass, useVoiceRecorder } from './VoiceAssistantPage';
 
 const tabs = [
   { id: 'symptoms', label: 'Semptomlar', icon: <FiActivity /> },
@@ -394,15 +394,11 @@ function HealthTrackingPage() {
                   <p className="text-navy-400 text-xs">Aktif tarih: {formattedDate}</p>
                   <h3 className="text-white font-semibold">Konuşarak kayıt ekle</h3>
                 </div>
-                <button
-                  type="button"
+                <VoiceMicButton
+                  size="sm"
+                  isListening={voice.isListening}
                   onClick={voice.isListening ? voice.stopListening : voice.startListening}
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center text-white transition-colors ${
-                    voice.isListening ? 'bg-red-500' : 'bg-teal-500 hover:bg-teal-600'
-                  }`}
-                >
-                  {voice.isListening ? <FiMicOff size={22} /> : <FiMic size={22} />}
-                </button>
+                />
               </div>
 
               {!voice.support.supported && (
