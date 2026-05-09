@@ -40,29 +40,30 @@ export function UsageCard({ usage }) {
 }
 
 export function VoiceMicButton({ isListening, onClick, size = 'lg' }) {
-  const dimensions = size === 'sm' ? 'w-12 h-12' : 'w-16 h-16';
-  const iconSize = size === 'sm' ? 22 : 28;
+  const dimensions = size === 'sm' ? 'w-12 h-12' : 'w-20 h-20';
+  const iconSize = size === 'sm' ? 20 : 28;
+  const radius = size === 'sm' ? 'rounded-xl' : 'rounded-2xl';
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative ${dimensions} rounded-2xl flex items-center justify-center text-white shadow-lg transition-all overflow-visible ${
+      className={`relative ${dimensions} ${radius} flex items-center justify-center text-white shadow-lg transition-all overflow-visible ${
         isListening ? 'bg-red-500 shadow-red-500/20' : 'bg-teal-500 hover:bg-teal-400 shadow-teal-500/20'
       }`}
       title={isListening ? 'Kaydı durdur' : 'Sesli kayıt başlat'}
     >
       {isListening && (
         <>
-          <span className="absolute inset-0 rounded-2xl bg-red-400/30 animate-ping" />
-          <span className="absolute -inset-2 rounded-[1.35rem] border border-red-300/40 animate-pulse" />
-          <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex items-end gap-0.5 h-5">
+          <span className={`absolute inset-0 ${radius} bg-red-400/30 animate-ping`} />
+          <span className={`absolute -inset-2 ${radius} border border-red-300/40 animate-pulse`} />
+          <span className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-end justify-center gap-0.5 h-3 w-8">
             {[0, 1, 2, 3].map((bar) => (
               <span
                 key={bar}
-                className="w-1 rounded-full bg-red-200/90 animate-pulse"
+                className="w-1 rounded-full bg-white/80 animate-pulse"
                 style={{
-                  height: `${8 + bar * 3}px`,
+                  height: `${5 + ((bar + 1) % 3) * 3}px`,
                   animationDelay: `${bar * 120}ms`,
                 }}
               />
@@ -70,7 +71,7 @@ export function VoiceMicButton({ isListening, onClick, size = 'lg' }) {
           </span>
         </>
       )}
-      <span className="relative z-10">
+      <span className={`relative z-10 transition-transform ${isListening ? '-translate-y-1' : ''}`}>
         {isListening ? <FiMicOff size={iconSize} /> : <FiMic size={iconSize} />}
       </span>
     </button>
