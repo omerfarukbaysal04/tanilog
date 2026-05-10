@@ -169,9 +169,14 @@ tanilog/
 
 ### Faz 9 — Aile & Sosyal Özellikler (Premium)
 
-- [ ] Aile üyesi ekleme ve yönetimi
-- [ ] Yaşlı yakını sağlık takibi (uzaktan erişim)
-- [ ] Aile üyesi belge ve kayıt görüntüleme
+- [x] Aile üyesi ekleme ve yönetimi
+- [x] Yaşlı yakını sağlık takibi (uzaktan erişim)
+- [x] Aile üyesi belge ve kayıt görüntüleme
+- [x] Premium erişim kontrolü ve `/family` ekranı
+- [x] E-posta ile aile daveti oluşturma ve kabul etme
+- [x] Gerçek TanıLog kullanıcısının kayıtlarını izinli takip etme
+- [x] Belge görüntüleme, kayıt ekleme ve düzenleme izin seviyeleri
+- [x] Davet edilen manuel aile profilini gerçek kullanıcı hesabına bağlama
 
 ### Faz 10 — Premium AI Chatbot & Sağlık Asistanı
 

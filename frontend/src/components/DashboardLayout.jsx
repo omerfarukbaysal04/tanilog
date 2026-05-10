@@ -15,9 +15,11 @@ import {
   FiStar,
   FiMic,
   FiClipboard,
-  FiMessageCircle
+  FiMessageCircle,
+  FiUsers
 } from 'react-icons/fi';
 import ChatAssistantWidget from './ChatAssistantWidget';
+import NotificationCenter from './NotificationCenter';
 import useAuthStore from '../stores/authStore';
 
 const navItems = [
@@ -28,6 +30,7 @@ const navItems = [
   { icon: <FiMessageCircle size={20} />, label: 'AI Asistan', path: '/chat' },
   { icon: <FiMic size={20} />, label: 'Sesli Asistan', path: '/voice' },
   { icon: <FiClipboard size={20} />, label: 'Doktora Hazırlan', path: '/doctor-prep' },
+  { icon: <FiUsers size={20} />, label: 'Aile Takibi', path: '/family' },
   { icon: <FiUser size={20} />, label: 'Profil', path: '/profile' },
   { icon: <FiSettings size={20} />, label: 'Ayarlar', path: '/settings', badge: 'Yakında' },
 ];
@@ -40,6 +43,7 @@ const pageTitles = {
   '/chat': 'AI Asistan',
   '/voice': 'Sesli Asistan',
   '/doctor-prep': 'Doktora Hazırlan',
+  '/family': 'Aile Takibi',
   '/profile': 'Profil',
   '/settings': 'Ayarlar',
 };
@@ -202,7 +206,9 @@ function DashboardLayout({ children }) {
             <div className="text-center">
               <h1 className="text-lg md:text-xl font-bold text-white">{pageTitle}</h1>
             </div>
-            <div className="hidden lg:block" />
+            <div className="flex justify-end">
+              <NotificationCenter />
+            </div>
           </div>
         </header>
 

@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import ai, auth, chat, health, health_tracking, documents, voice
+from app.routers import ai, auth, chat, family, health, health_tracking, documents, voice
 
 # FastAPI uygulaması
 app = FastAPI(
@@ -35,6 +35,7 @@ app.include_router(documents.router, prefix="/api/v1/documents", tags=["Belgeler
 app.include_router(ai.router, prefix="/api/v1/ai", tags=["Yapay Zeka"])
 app.include_router(voice.router, prefix="/api/v1/voice", tags=["Sesli Asistan"])
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["Premium AI Chatbot"])
+app.include_router(family.router, prefix="/api/v1/family", tags=["Aile Takibi"])
 
 
 @app.get("/", tags=["Kök"])
