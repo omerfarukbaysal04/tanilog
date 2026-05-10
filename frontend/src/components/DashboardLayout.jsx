@@ -14,8 +14,10 @@ import {
   FiCpu,
   FiStar,
   FiMic,
-  FiClipboard
+  FiClipboard,
+  FiMessageCircle
 } from 'react-icons/fi';
+import ChatAssistantWidget from './ChatAssistantWidget';
 import useAuthStore from '../stores/authStore';
 
 const navItems = [
@@ -23,6 +25,7 @@ const navItems = [
   { icon: <FiActivity size={20} />, label: 'Sağlık Takibi', path: '/health' },
   { icon: <FiFileText size={20} />, label: 'Belgelerim', path: '/documents' },
   { icon: <FiCpu size={20} />, label: 'AI Analiz', path: '/ai' },
+  { icon: <FiMessageCircle size={20} />, label: 'AI Asistan', path: '/chat' },
   { icon: <FiMic size={20} />, label: 'Sesli Asistan', path: '/voice' },
   { icon: <FiClipboard size={20} />, label: 'Doktora Hazırlan', path: '/doctor-prep' },
   { icon: <FiUser size={20} />, label: 'Profil', path: '/profile' },
@@ -34,6 +37,7 @@ const pageTitles = {
   '/health': 'Sağlık Takibi',
   '/documents': 'Belgelerim',
   '/ai': 'AI Analiz',
+  '/chat': 'AI Asistan',
   '/voice': 'Sesli Asistan',
   '/doctor-prep': 'Doktora Hazırlan',
   '/profile': 'Profil',
@@ -216,6 +220,7 @@ function DashboardLayout({ children }) {
           </motion.div>
         </main>
       </div>
+      <ChatAssistantWidget />
     </div>
   );
 }

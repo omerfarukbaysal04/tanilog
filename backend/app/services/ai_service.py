@@ -221,6 +221,158 @@ def generate_doctor_prep_report(context: dict, start_date: str, end_date: str) -
     return _json_from_gemini(prompt, fallback, temperature=0.2)
 
 
+def generate_chatbot_response(user_message: str, context: dict, history: list[dict]) -> dict:
+    """Generate a Premium AI assistant response grounded in Tanilog data."""
+    fallback = {
+        "answer": (
+            "Şu anda AI yanıtı üretilemedi. Yine de sağlık kayıtlarını düzenli tutmanı, "
+            "belge analizlerini doktorunla paylaşmanı ve acil belirtilerde sağlık kuruluşuna başvurmanı öneririm."
+        ),
+        "safety_level": "caution",
+        "suggested_actions": [],
+        "follow_up_questions": [
+            "Bu durumu ne zamandır yaşıyorsun?",
+            "Bu konuda doktoruna sormak istediğin özel bir nokta var mı?"
+        ],
+    }
+
+    prompt = f"""
+    Sen TanıLog Premium içindeki Türkçe sağlık asistanı chatbotusun.
+    Kullanıcının TanıLog kayıtlarını bağlam olarak kullanarak dikkatli, kısa ve pratik cevap ver.
+    Teşhis koyma, ilaç başlatma/bıraktırma, doz değiştirme veya kesin tıbbi hüküm verme.
+    Acil olabilecek belirtilerde net şekilde acil yardım/112/sağlık kuruluşu yönlendirmesi yap.
+    Yanıtlarında kullanıcıya doktor görüşmesini destekleyen sorular, takip önerileri ve güvenli kayıt önerileri sun.
+
+    Eğer kullanıcı yeni bir sağlık kaydı oluşturmak istiyorsa, suggested_actions içine kullanıcı onayıyla kaydedilebilecek bir aksiyon koy.
+    Aksiyon tipleri yalnızca şunlar olabilir:
+    - symptom: payload = date, symptom_name, severity, notes
+    - medication: payload = date, name, dosage, time_taken, reminder_enabled, reminder_time, notes
+    - sleep: payload = date, hours_slept, quality, notes
+    - nutrition: payload = date, meal_type, water_ml, notes
+
+    Kullanıcı mesajı:
+    {user_message}
+
+    Son konuşma geçmişi:
+    {json.dumps(history[-10:], ensure_ascii=False, default=str)}
+
+    TanıLog bağlamı:
+    {json.dumps(context, ensure_ascii=False, default=str)}
+
+    Sadece şu JSON formatında cevap ver:
+    {{
+      "answer": "Kullanıcıya Türkçe, güvenli, anlaşılır chatbot yanıtı.",
+      "safety_level": "normal, caution veya urgent",
+      "suggested_actions": [
+        {{
+          "type": "symptom|medication|sleep|nutrition",
+          "label": "Kullanıcıya gösterilecek kısa aksiyon adı",
+          "payload": {{"date": "YYYY-MM-DD"}}
+        }}
+      ],
+      "follow_up_questions": ["Kullanıcıya sorulabilecek 1-3 takip sorusu."]
+    }}
+    """
+
+    result = _json_from_gemini(prompt, fallback, temperature=0.25)
+    result.setdefault("answer", fallback["answer"])
+    result.setdefault("safety_level", "caution")
+    result.setdefault("suggested_actions", [])
+    result.setdefault("follow_up_questions", [])
+
+    if result["safety_level"] not in {"normal", "caution", "urgent"}:
+        result["safety_level"] = "caution"
+
+    allowed = {"symptom", "medication", "sleep", "nutrition"}
+    clean_actions = []
+    for action in result.get("suggested_actions", []):
+        if not isinstance(action, dict) or action.get("type") not in allowed:
+            continue
+        clean_actions.append({
+            "type": action.get("type"),
+            "label": action.get("label") or "Kaydı ekle",
+            "payload": action.get("payload") or {},
+        })
+    result["suggested_actions"] = clean_actions[:3]
+    return result
+
+
+def generate_chatbot_attachment_response(
+    user_message: str,
+    file_bytes: bytes,
+    mime_type: str,
+    filename: str,
+    context: dict,
+    history: list[dict],
+) -> dict:
+    """Generate a Premium AI assistant response for an uploaded chat file/image."""
+    fallback = {
+        "answer": (
+            f"{filename} dosyası şu anda AI ile incelenemedi. Dosya tıbbi belge veya görselse, "
+            "okunabilir olduğundan emin olup Belgelerim alanına da yükleyebilirsin."
+        ),
+        "safety_level": "caution",
+        "suggested_actions": [],
+        "follow_up_questions": [
+            "Bu dosyada özellikle hangi kısmı anlamak istiyorsun?",
+            "Bunu doktor raporuna eklemek ister misin?"
+        ],
+    }
+
+    prompt = f"""
+    Sen TanıLog Premium içindeki Türkçe sağlık asistanı chatbotusun.
+    Kullanıcı sohbet içinde bir dosya veya görsel yükledi.
+    Dosyayı/görseli incele, ancak teşhis koyma, tedavi veya ilaç değişikliği önerme.
+    Tıbbi belgeyse sade Türkçe özetle; ilaç kutusu/reçeteyse görünen bilgileri yapılandır; görsel net değilse bunu söyle.
+    Acil risk sezersen sağlık kuruluşuna yönlendir.
+
+    Kullanıcı mesajı: {user_message}
+    Dosya adı: {filename}
+    MIME türü: {mime_type}
+
+    Son konuşma geçmişi:
+    {json.dumps(history[-10:], ensure_ascii=False, default=str)}
+
+    TanıLog bağlamı:
+    {json.dumps(context, ensure_ascii=False, default=str)}
+
+    Sadece şu JSON formatında cevap ver:
+    {{
+      "answer": "Dosya/görsel hakkında Türkçe, güvenli, anlaşılır chatbot yanıtı.",
+      "safety_level": "normal, caution veya urgent",
+      "suggested_actions": [],
+      "follow_up_questions": ["Kullanıcıya sorulabilecek 1-3 takip sorusu."]
+    }}
+    """
+
+    try:
+        client = get_genai_client()
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=[
+                types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
+                prompt,
+            ],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.2,
+            ),
+        )
+        result = json.loads(response.text)
+    except Exception as e:
+        print(f"Chat Attachment Error: {str(e)}")
+        result = fallback.copy()
+        result["error"] = str(e)
+
+    result.setdefault("answer", fallback["answer"])
+    result.setdefault("safety_level", "caution")
+    result.setdefault("suggested_actions", [])
+    result.setdefault("follow_up_questions", [])
+    if result["safety_level"] not in {"normal", "caution", "urgent"}:
+        result["safety_level"] = "caution"
+    return result
+
+
 def analyze_medication_interactions(medication_context: dict) -> dict:
     """Review active medications and prescription analyses for possible interaction warnings."""
     fallback = {

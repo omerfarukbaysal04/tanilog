@@ -173,7 +173,20 @@ tanilog/
 - [ ] Yaşlı yakını sağlık takibi (uzaktan erişim)
 - [ ] Aile üyesi belge ve kayıt görüntüleme
 
-### Faz 10 — Ödeme & Premium Sistem
+### Faz 10 — Premium AI Chatbot & Sağlık Asistanı
+
+- [x] Kullanıcının sağlık kayıtlarını bağlam olarak okuyabilen AI sohbet ekranı
+- [x] Belge analizleri, doktor raporları ve günlük kayıtlar üzerinden soru-cevap
+- [x] Chat içinde semptom / ilaç / uyku / beslenme kaydı önerme ve kullanıcı onayıyla kaydetme
+- [x] Acil durum ve tıbbi sorumluluk güvenlik kuralları
+- [x] Premium kullanıcılar için sınırsız veya yüksek limitli asistan kullanımı
+- [x] Sesli asistan ile chatbot akışını birleştirme
+- [x] Sohbet geçmişi ve Premium erişim kontrolü
+- [x] Sohbet adını değiştirme ve sohbet silme
+- [x] Sağ alt hızlı AI asistan widget'ı
+- [x] Chat içinde PDF, metin ve görsel yükleyerek AI ile yorumlatma
+
+### Faz 11 — Ödeme & Premium Sistem
 
 - [ ] Premium abonelik sayfası
 - [ ] Ödeme sistemi entegrasyonu
@@ -181,14 +194,14 @@ tanilog/
 - [ ] Reklam gösterim altyapısı (Free kullanıcılar)
 - [ ] Reklamsız deneyim (Premium)
 
-### Faz 11 — Mobil Uygulama
+### Faz 12 — Mobil Uygulama
 
 - [ ] React Native proje kurulumu
 - [ ] Kamera ile belge fotoğraflama
 - [ ] Push notification (ilaç hatırlatma)
 - [ ] Google Play Store yayını (Android)
 
-### Faz 12 — Test & Yayın
+### Faz 13 — Test & Yayın
 
 - [ ] Backend unit testleri
 - [ ] Frontend component testleri

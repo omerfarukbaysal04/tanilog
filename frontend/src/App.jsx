@@ -13,6 +13,7 @@ import DocumentsPage from './pages/DocumentsPage';
 import AIPage from './pages/AIPage';
 import VoiceAssistantPage from './pages/VoiceAssistantPage';
 import DoctorPrepPage from './pages/DoctorPrepPage';
+import ChatAssistantPage from './pages/ChatAssistantPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -100,6 +101,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DoctorPrepPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <ChatAssistantPage />
             </ProtectedRoute>
           }
         />
