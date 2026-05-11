@@ -57,7 +57,7 @@ function NotificationCenter() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-12 w-[min(92vw,390px)] rounded-2xl border border-navy-700 shadow-2xl overflow-hidden z-[120] bg-navy-900/98 backdrop-blur-2xl">
+        <div className="absolute right-0 top-12 w-[min(92vw,390px)] rounded-2xl border border-navy-700 shadow-2xl overflow-hidden z-[140] bg-[#102334]">
           <header className="p-4 border-b border-navy-700/60 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-white font-semibold">Bildirimler</h2>
@@ -110,7 +110,7 @@ function NotificationCenter() {
             </button>
           </div>
 
-          <div className="max-h-[420px] min-h-[180px] overflow-y-auto p-3 space-y-2 bg-navy-900/95">
+          <div className="max-h-[420px] min-h-[180px] overflow-y-auto p-3 space-y-2 bg-[#102334]">
             {items.length === 0 ? (
               <div className="min-h-[128px] rounded-xl border border-dashed border-navy-700 bg-navy-950/30 p-6 text-center flex flex-col items-center justify-center">
                 <FiBell className="mx-auto text-navy-500 mb-2" size={24} />

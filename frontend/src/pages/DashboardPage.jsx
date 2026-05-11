@@ -201,7 +201,7 @@ function DashboardPage() {
           </div>
 
           {/* Premium upsell (Free kullanıcılar için) veya Widget alanı */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col">
             <h2 className="text-xl font-bold text-white mb-5">Öneriler</h2>
             {!user?.is_premium ? (
               <div className="animated-border rounded-2xl h-full p-[1px] bg-gradient-to-br from-teal-400/50 to-blue-500/50">
@@ -220,7 +220,7 @@ function DashboardPage() {
                   </p>
                   
                   <Link
-                    to="/#pricing"
+                    to="/billing"
                     className="w-full btn-shimmer bg-white text-navy-900 py-3 rounded-xl font-bold text-sm text-center transition-transform hover:scale-105 shadow-xl"
                   >
                     Planları Gör

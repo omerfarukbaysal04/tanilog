@@ -3,6 +3,7 @@ from app.models.family import FamilyAccess, FamilyHealthEntry, FamilyInvitation,
 from app.models.document import Document
 from app.models.health import SymptomLog, MedicationLog, SleepLog, NutritionLog
 from app.models.ai_analysis import AIAnalysis
+from app.models.subscription import SubscriptionEvent
 
 __all__ = [
     "User",
@@ -16,4 +17,5 @@ __all__ = [
     "SleepLog",
     "NutritionLog",
     "AIAnalysis",
+    "SubscriptionEvent",
 ]

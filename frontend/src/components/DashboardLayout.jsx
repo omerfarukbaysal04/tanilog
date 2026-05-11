@@ -16,10 +16,13 @@ import {
   FiMic,
   FiClipboard,
   FiMessageCircle,
-  FiUsers
+  FiUsers,
+  FiChevronDown,
+  FiCreditCard
 } from 'react-icons/fi';
 import ChatAssistantWidget from './ChatAssistantWidget';
 import NotificationCenter from './NotificationCenter';
+import AdBanner from './AdBanner';
 import useAuthStore from '../stores/authStore';
 
 const navItems = [
@@ -31,6 +34,7 @@ const navItems = [
   { icon: <FiMic size={20} />, label: 'Sesli Asistan', path: '/voice' },
   { icon: <FiClipboard size={20} />, label: 'Doktora Hazırlan', path: '/doctor-prep' },
   { icon: <FiUsers size={20} />, label: 'Aile Takibi', path: '/family' },
+  { icon: <FiCreditCard size={20} />, label: 'Premium', path: '/billing' },
   { icon: <FiUser size={20} />, label: 'Profil', path: '/profile' },
   { icon: <FiSettings size={20} />, label: 'Ayarlar', path: '/settings', badge: 'Yakında' },
 ];
@@ -44,6 +48,7 @@ const pageTitles = {
   '/voice': 'Sesli Asistan',
   '/doctor-prep': 'Doktora Hazırlan',
   '/family': 'Aile Takibi',
+  '/billing': 'Premium',
   '/profile': 'Profil',
   '/settings': 'Ayarlar',
 };
@@ -54,6 +59,7 @@ const pageTitles = {
  */
 function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
@@ -75,7 +81,7 @@ function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="min-h-screen bg-navy-900 flex font-poppins text-white selection:bg-teal-500 selection:text-white overflow-hidden relative">
+    <div className="h-screen bg-navy-900 flex font-poppins text-white selection:bg-teal-500 selection:text-white overflow-hidden relative">
       {/* Background blobs for dashboard */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] right-[-5%] w-[40vw] h-[40vw] bg-teal-500/5 rounded-full blur-[100px] animate-pulse-glow" />
@@ -159,7 +165,7 @@ function DashboardLayout({ children }) {
         </nav>
 
         {/* Kullanıcı bilgi & çıkış */}
-        <div className="border-t border-navy-700/50 p-5 bg-navy-900/30">
+        <div className="hidden border-t border-navy-700/50 p-5 bg-navy-900/30">
           <div className="flex items-center gap-3 mb-4 px-2">
             <div className="w-10 h-10 bg-gradient-to-br from-teal-500/20 to-blue-500/20 border border-teal-500/30 rounded-xl flex items-center justify-center text-teal-400 font-bold shadow-inner">
               {getInitials(user?.full_name)}
@@ -206,8 +212,78 @@ function DashboardLayout({ children }) {
             <div className="text-center">
               <h1 className="text-lg md:text-xl font-bold text-white">{pageTitle}</h1>
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end items-center gap-2">
               <NotificationCenter />
+              <Link
+                to="/profile"
+                className="hidden sm:flex w-10 h-10 rounded-xl bg-navy-800/70 hover:bg-navy-700 text-teal-300 border border-navy-700/70 items-center justify-center font-bold transition-colors"
+                title="Profil"
+              >
+                {getInitials(user?.full_name)}
+              </Link>
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen((value) => !value)}
+                  className="h-10 rounded-xl bg-navy-800/70 hover:bg-navy-700 border border-navy-700/70 px-3 flex items-center gap-2 transition-colors"
+                  title="Hesap"
+                >
+                  <span className="hidden xl:block text-left max-w-[150px]">
+                    <span className="block text-white text-xs font-semibold truncate">{user?.full_name || 'Kullanıcı'}</span>
+                    <span className="block text-navy-400 text-[11px] truncate">{user?.is_premium ? 'Premium Plan' : 'Ücretsiz Plan'}</span>
+                  </span>
+                  <FiChevronDown className="text-navy-300" />
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-12 w-72 rounded-2xl border border-navy-700 bg-[#102334] shadow-2xl z-[140] overflow-hidden">
+                    <div className="p-4 border-b border-navy-700/60">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 bg-gradient-to-br from-teal-500/20 to-blue-500/20 border border-teal-500/30 rounded-xl flex items-center justify-center text-teal-300 font-bold">
+                          {getInitials(user?.full_name)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-white text-sm font-semibold truncate">{user?.full_name || 'Kullanıcı'}</p>
+                          <p className="text-navy-400 text-xs truncate">{user?.email || ''}</p>
+                        </div>
+                      </div>
+                      <span
+                        className={`inline-flex items-center gap-1.5 mt-3 text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                          user?.is_premium
+                            ? 'bg-gradient-to-r from-teal-500/10 to-blue-500/10 text-teal-300 border border-teal-500/30'
+                            : 'bg-navy-800 text-navy-300 border border-navy-700'
+                        }`}
+                      >
+                        {user?.is_premium ? (
+                          <><FiStar className="fill-current text-yellow-400" size={11}/> Premium Plan</>
+                        ) : (
+                          'Ücretsiz Plan'
+                        )}
+                      </span>
+                    </div>
+                    <div className="p-2">
+                      <Link
+                        to="/billing"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-navy-200 hover:text-white hover:bg-navy-800 transition-colors"
+                      >
+                        <FiCreditCard /> Premium
+                      </Link>
+                      <Link
+                        to="/profile"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-navy-200 hover:text-white hover:bg-navy-800 transition-colors"
+                      >
+                        <FiUser /> Profil
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-colors"
+                      >
+                        <FiLogOut /> Güvenli Çıkış
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>
@@ -223,6 +299,11 @@ function DashboardLayout({ children }) {
             className="max-w-[92rem] mx-auto h-full"
           >
             {children}
+            {location.pathname !== '/billing' && (
+              <div className="mt-8">
+                <AdBanner compact />
+              </div>
+            )}
           </motion.div>
         </main>
       </div>

@@ -193,11 +193,13 @@ tanilog/
 
 ### Faz 11 — Ödeme & Premium Sistem
 
-- [ ] Premium abonelik sayfası
-- [ ] Ödeme sistemi entegrasyonu
-- [ ] Aylık (₺119) ve yıllık (₺1.100) plan yönetimi
-- [ ] Reklam gösterim altyapısı (Free kullanıcılar)
-- [ ] Reklamsız deneyim (Premium)
+- [x] Premium abonelik sayfası (`/billing`)
+- [x] Test edilebilir mock ödeme sistemi entegrasyonu
+- [x] Aylık (₺119) ve yıllık (₺1.100) plan yönetimi
+- [x] Abonelik işlem geçmişi ve iptal akışı
+- [x] Reklam gösterim altyapısı (Free kullanıcılar)
+- [x] Reklamsız deneyim (Premium)
+- [ ] Gerçek ödeme sağlayıcısı (Iyzico/Stripe vb.) canlı entegrasyonu
 
 ### Faz 12 — Mobil Uygulama
 

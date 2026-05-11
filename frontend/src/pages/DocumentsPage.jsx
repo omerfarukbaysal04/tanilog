@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import DashboardLayout from '../components/DashboardLayout';
 import UploadZone from '../components/documents/UploadZone';
@@ -49,9 +50,9 @@ function DocumentsPage() {
                 <span className="text-navy-400">Ücretsiz Plan:</span>{' '}
                 <span className="text-white font-medium">Aylık 3 belge</span>
               </div>
-              <a href="#" className="text-xs bg-teal-500 text-white px-2 py-1 rounded-md font-medium hover:bg-teal-600 transition-colors">
+              <Link to="/billing" className="text-xs bg-teal-500 text-white px-2 py-1 rounded-md font-medium hover:bg-teal-600 transition-colors">
                 Premium'a Geç
-              </a>
+              </Link>
             </div>
           )}
         </div>

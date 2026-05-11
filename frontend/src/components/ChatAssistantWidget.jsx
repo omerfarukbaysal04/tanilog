@@ -159,6 +159,12 @@ function ChatAssistantWidget() {
               <p className="text-navy-400 text-sm mt-2">
                 Sağlık kayıtlarınla bağlamlı sohbet, belge ve görsel analizi Premium planda açılır.
               </p>
+              <Link
+                to="/billing"
+                className="mt-5 inline-flex items-center justify-center rounded-xl bg-teal-500 hover:bg-teal-400 text-white px-4 py-2.5 text-sm font-bold transition-colors"
+              >
+                Premium'a Geç
+              </Link>
             </div>
           ) : (
             <>

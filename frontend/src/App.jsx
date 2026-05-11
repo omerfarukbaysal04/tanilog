@@ -15,6 +15,7 @@ import VoiceAssistantPage from './pages/VoiceAssistantPage';
 import DoctorPrepPage from './pages/DoctorPrepPage';
 import ChatAssistantPage from './pages/ChatAssistantPage';
 import FamilyPage from './pages/FamilyPage';
+import BillingPage from './pages/BillingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -118,6 +119,14 @@ function App() {
           element={
             <ProtectedRoute>
               <FamilyPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/billing"
+          element={
+            <ProtectedRoute>
+              <BillingPage />
             </ProtectedRoute>
           }
         />

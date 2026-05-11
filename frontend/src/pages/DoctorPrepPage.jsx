@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import toast from 'react-hot-toast';
 import {
@@ -199,8 +200,14 @@ function DoctorPrepPage() {
             <div>
               <h2 className="text-yellow-100 font-semibold">Premium özellik</h2>
               <p className="text-yellow-100/80 text-sm mt-1">
-                Doktora Hazırlan modu Premium kullanıcılar için açılır. Test etmek için kullanıcıyı premium yapman gerekiyor.
+                Doktora Hazırlan modu Premium kullanıcılar için açılır. Devam etmek için Premium plana geçebilirsin.
               </p>
+              <Link
+                to="/billing"
+                className="mt-4 inline-flex items-center justify-center rounded-xl bg-yellow-400 hover:bg-yellow-300 text-navy-900 px-4 py-2 text-sm font-bold transition-colors"
+              >
+                Premium'a Geç
+              </Link>
             </div>
           </div>
         )}

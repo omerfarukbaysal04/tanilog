@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   FiAlertTriangle,
@@ -571,6 +572,12 @@ function PremiumGate({ invitations = [], onAccept }) {
         <p className="text-navy-400 mt-3">
           Aile üyeleri için uzaktan sağlık takibi, belge bağlama ve düzenli kayıt görüntüleme Premium kullanıcılar için açılır.
         </p>
+        <Link
+          to="/billing"
+          className="mt-6 inline-flex items-center justify-center rounded-xl bg-teal-500 hover:bg-teal-400 text-white px-5 py-3 text-sm font-bold transition-colors"
+        >
+          Premium'a Geç
+        </Link>
         {invitations.length > 0 && (
           <div className="mt-6 text-left space-y-3">
             <h2 className="text-white font-semibold text-center">Sana gelen aile davetleri</h2>
