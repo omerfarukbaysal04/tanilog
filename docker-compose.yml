@@ -31,6 +31,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       SECRET_KEY: ${SECRET_KEY}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      DEBUG: ${TANILOG_DEBUG:-true}
+      ALLOWED_ORIGINS: '${ALLOWED_ORIGINS:-["http://localhost:3000","http://localhost:5173"]}'
+      UPLOAD_DIR: ${UPLOAD_DIR:-uploads}
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 60
     ports:
@@ -38,6 +41,8 @@ services:
     volumes:
       - ./backend/app:/app/app
       - ./backend/alembic:/app/alembic
+      - ./backend/tests:/app/tests
+      - ./scripts:/app/scripts
       - ./backend/uploads:/app/uploads
     depends_on:
       db:
@@ -55,6 +60,8 @@ services:
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
+      - ./frontend/scripts:/app/scripts
+      - ./frontend/package.json:/app/package.json
       - ./frontend/vite.config.js:/app/vite.config.js
     depends_on:
       - backend

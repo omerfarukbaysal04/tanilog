@@ -26,13 +26,14 @@ const useAuthStore = create((set, get) => ({
   },
 
   // Kullanıcı kaydı
-  register: async (email, password, fullName) => {
+  register: async (email, password, fullName, acceptedTerms = false) => {
     set({ isLoading: true });
     try {
       const { data } = await api.post('/auth/register', {
         email,
         password,
         full_name: fullName,
+        accepted_terms: acceptedTerms,
       });
       set({ isLoading: false });
       return data;

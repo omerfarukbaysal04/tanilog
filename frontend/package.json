@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node ./scripts/smoke-frontend.mjs"
   },
   "dependencies": {
     "axios": "^1.7.4",

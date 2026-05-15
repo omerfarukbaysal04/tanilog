@@ -6,7 +6,6 @@ import {
   FiRefreshCw,
   FiShield,
   FiStar,
-  FiTrendingUp,
   FiX,
   FiZap,
 } from 'react-icons/fi';
@@ -22,8 +21,9 @@ const planLabels = {
 };
 
 const eventLabels = {
-  checkout_created: 'Ödeme oturumu oluşturuldu',
+  checkout_created: 'Ödeme hazırlığı oluşturuldu',
   subscription_cancelled: 'Abonelik iptal edildi',
+  admin_plan_updated: 'Plan yönetici tarafından güncellendi',
 };
 
 const eventStatusLabels = {
@@ -34,6 +34,7 @@ const eventStatusLabels = {
 
 const providerLabels = {
   mock: 'Test ödeme',
+  admin: 'Yönetici işlemi',
 };
 
 function BillingPage() {
@@ -57,9 +58,9 @@ function BillingPage() {
   const handleCheckout = async (plan) => {
     try {
       await createCheckout(plan);
-      toast.success('Test odeme oturumu olusturuldu.');
+      toast.success('Premium geçişi hazırlandı.');
     } catch {
-      toast.error('Odeme oturumu olusturulamadi.');
+      toast.error('Premium geçişi başlatılamadı.');
     }
   };
 
@@ -68,9 +69,9 @@ function BillingPage() {
     try {
       await completeCheckout(checkout.session_id);
       await fetchUser();
-      toast.success('Premium abonelik aktiflestirildi.');
+      toast.success('Premium abonelik aktifleştirildi.');
     } catch {
-      toast.error('Odeme tamamlanamadi.');
+      toast.error('Ödeme tamamlanamadı.');
     }
   };
 
@@ -97,9 +98,9 @@ function BillingPage() {
               <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/25 bg-teal-500/10 text-teal-200 px-3 py-1 text-xs font-semibold mb-4">
                 <FiCreditCard /> Faz 11
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white">Odeme ve Premium</h1>
+              <h1 className="text-3xl md:text-4xl font-bold text-white">Ödeme ve Premium</h1>
               <p className="text-navy-300 mt-3 max-w-2xl">
-                Premium planini yonet, test odeme akisini calistir ve reklamsiz Tanilog deneyimini ac.
+                Premium planını yönet, test ödeme akışını çalıştır ve reklamsız TanıLog deneyimini aç.
               </p>
             </div>
             <div className="rounded-2xl border border-navy-700 bg-navy-900/60 p-5 min-w-[240px]">
@@ -110,7 +111,7 @@ function BillingPage() {
               </div>
               <p className="text-navy-400 text-sm mt-2">
                 {isPremium && subscription?.premium_until
-                  ? `${subscription.days_remaining} gun kaldi`
+                  ? `${subscription.days_remaining} gün kaldı`
                   : 'Reklamlı ücretsiz deneyim'}
               </p>
             </div>
@@ -136,7 +137,7 @@ function BillingPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-teal-300 text-xs font-semibold uppercase tracking-[0.16em]">
-                      {premiumPlan ? 'Premium' : 'Baslangic'}
+                      {premiumPlan ? 'Premium' : 'Başlangıç'}
                     </p>
                     <h2 className="text-white text-2xl font-bold mt-2">{planLabels[key] || plan.name}</h2>
                   </div>
@@ -150,7 +151,7 @@ function BillingPage() {
                 <div className="mt-6">
                   <span className="text-white text-4xl font-bold">₺{plan.price}</span>
                   <span className="text-navy-400 text-sm ml-2">
-                    {key === 'monthly' ? '/ ay' : key === 'yearly' ? '/ yil' : ''}
+                    {key === 'monthly' ? '/ ay' : key === 'yearly' ? '/ yıl' : ''}
                   </span>
                 </div>
 
@@ -169,7 +170,7 @@ function BillingPage() {
                     disabled={isLoading}
                     className="mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-teal-500 hover:bg-teal-400 disabled:opacity-60 text-white px-4 py-3 font-bold transition-colors"
                   >
-                    <FiCreditCard /> {isCurrent ? 'Plani Yenile' : 'Bu Plani Sec'}
+                    <FiCreditCard /> {isCurrent ? 'Planı Yenile' : 'Bu Planı Seç'}
                   </button>
                 ) : (
                   <div className="mt-7 rounded-xl border border-navy-700 bg-navy-900/50 px-4 py-3 text-navy-300 text-sm">
@@ -185,13 +186,13 @@ function BillingPage() {
           <section className="rounded-3xl border border-teal-500/30 bg-teal-500/10 p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
             <div>
               <div className="flex items-center gap-2 text-teal-200 font-semibold">
-                <FiZap /> Test odeme hazir
+                <FiZap /> Premium geçişi hazır
               </div>
               <p className="text-white font-bold text-xl mt-2">
-                {planLabels[checkout.plan]} icin ₺{checkout.amount} mock checkout
+                {planLabels[checkout.plan]} için ₺{checkout.amount} test ödeme
               </p>
               <p className="text-navy-300 text-sm mt-1">
-                Session: <span className="font-mono text-navy-200">{checkout.session_id}</span>
+                Bu demo akışında gerçek kart bilgisi alınmaz. Butona basınca premium hesabın aktifleşir.
               </p>
             </div>
             <button
@@ -199,7 +200,7 @@ function BillingPage() {
               disabled={isLoading}
               className="rounded-xl bg-white text-navy-900 hover:bg-navy-100 disabled:opacity-60 px-5 py-3 font-bold transition-colors"
             >
-              Test Odemeyi Tamamla
+              Test Ödemeyi Tamamla
             </button>
           </section>
         )}
@@ -209,7 +210,7 @@ function BillingPage() {
             <div className="flex items-center justify-between gap-3 mb-5">
               <div>
                 <h2 className="text-white text-xl font-bold">Abonelik durumu</h2>
-                <p className="text-navy-400 text-sm">Plan, reklam ve premium erisim ozeti.</p>
+                <p className="text-navy-400 text-sm">Plan, reklam ve premium erişim özeti.</p>
               </div>
               <button
                 onClick={() => fetchBilling()}
@@ -224,7 +225,7 @@ function BillingPage() {
               <StatusPill label="Reklam" value={isPremium ? 'Yok' : 'Gösterilir'} positive={isPremium} />
               <StatusPill label="Plan" value={planLabels[activePlan] || 'Ücretsiz'} positive={isPremium} />
               <StatusPill
-                label="Bitis"
+                label="Bitiş"
                 value={subscription?.premium_until ? new Date(subscription.premium_until).toLocaleDateString('tr-TR') : '-'}
                 positive={isPremium}
               />
@@ -235,18 +236,18 @@ function BillingPage() {
                 disabled={isLoading}
                 className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/25 bg-red-500/10 hover:bg-red-500/15 text-red-200 px-4 py-3 font-semibold transition-colors"
               >
-                <FiX /> Test Aboneligini Iptal Et
+                <FiX /> Test Aboneliğini İptal Et
               </button>
             )}
           </div>
 
           <div className="glass rounded-3xl border border-navy-700/50 p-6">
-            <h2 className="text-white text-xl font-bold mb-1">Islem gecmisi</h2>
-            <p className="text-navy-400 text-sm mb-5">Son test odeme ve abonelik hareketleri.</p>
+            <h2 className="text-white text-xl font-bold mb-1">İşlem geçmişi</h2>
+            <p className="text-navy-400 text-sm mb-5">Son test ödeme ve abonelik hareketleri.</p>
             <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
               {events.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-navy-700 text-navy-400 text-sm p-6 text-center">
-                  Henuz odeme hareketi yok.
+                  Henüz ödeme hareketi yok.
                 </div>
               ) : (
                 events.map((event) => (

@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # Yapay Zeka
     GEMINI_API_KEY: str | None = None
 
+    # Dosya depolama
+    UPLOAD_DIR: str = "uploads"
+
     class Config:
         env_file = ".env"
 

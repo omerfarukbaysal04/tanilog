@@ -25,6 +25,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, description="En az 8 karakter")
     full_name: str = Field(..., min_length=2, description="Ad Soyad")
+    accepted_terms: bool = False
 
 
 class UserResponse(BaseModel):
@@ -34,6 +35,7 @@ class UserResponse(BaseModel):
     full_name: str
     is_active: bool
     is_premium: bool
+    is_admin: bool
     subscription_plan: str
     avatar_url: str | None
     created_at: datetime
@@ -108,6 +110,11 @@ async def get_current_user(
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED,
              summary="Yeni kullanıcı kaydı")
 async def register(user_data: UserCreate, db: Session = Depends(get_db)):
+    if not user_data.accepted_terms:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Devam etmek için kullanım şartları ve KVKK metnini kabul etmelisiniz.",
+        )
     """Yeni bir kullanıcı hesabı oluşturur."""
     # E-posta kontrolü
     existing_user = db.query(User).filter(User.email == user_data.email).first()
@@ -122,6 +129,8 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
         email=user_data.email,
         hashed_password=get_password_hash(user_data.password),
         full_name=user_data.full_name,
+        terms_accepted_at=datetime.utcnow(),
+        privacy_accepted_at=datetime.utcnow(),
     )
     db.add(new_user)
     db.commit()

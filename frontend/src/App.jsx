@@ -16,7 +16,11 @@ import DoctorPrepPage from './pages/DoctorPrepPage';
 import ChatAssistantPage from './pages/ChatAssistantPage';
 import FamilyPage from './pages/FamilyPage';
 import BillingPage from './pages/BillingPage';
+import SettingsPage from './pages/SettingsPage';
+import AdminPage from './pages/AdminPage';
+import LegalPage from './pages/LegalPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   const { initAuth } = useAuthStore();
@@ -43,11 +47,15 @@ function App() {
           },
         }}
       />
+      <ErrorBoundary>
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/privacy" element={<LegalPage />} />
+        <Route path="/terms" element={<LegalPage />} />
+        <Route path="/kvkk" element={<LegalPage />} />
 
         {/* Protected routes */}
         <Route
@@ -130,7 +138,24 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
+      </ErrorBoundary>
     </>
   );
 }

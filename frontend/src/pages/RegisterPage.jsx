@@ -12,6 +12,7 @@ function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const { register, isLoading } = useAuthStore();
   const navigate = useNavigate();
 
@@ -38,8 +39,13 @@ function RegisterPage() {
       return;
     }
 
+    if (!acceptedTerms) {
+      toast.error('Devam etmek için kullanım şartları ve KVKK metnini kabul etmelisiniz.');
+      return;
+    }
+
     try {
-      await register(email, password, fullName);
+      await register(email, password, fullName, acceptedTerms);
       toast.success('Kayıt başarılı! Giriş yapabilirsiniz.');
       navigate('/login');
     } catch (error) {
@@ -166,6 +172,20 @@ function RegisterPage() {
             </div>
 
             {/* Kayıt butonu */}
+            <label className="flex items-start gap-3 rounded-xl border border-navy-700/60 bg-navy-900/35 p-3 text-xs text-navy-300">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(event) => setAcceptedTerms(event.target.checked)}
+                className="mt-0.5 accent-teal-500"
+              />
+              <span>
+                <Link to="/terms" className="text-teal-300 hover:text-teal-200">Kullanım Şartları</Link>,{' '}
+                <Link to="/privacy" className="text-teal-300 hover:text-teal-200">Gizlilik Politikası</Link> ve{' '}
+                <Link to="/kvkk" className="text-teal-300 hover:text-teal-200">KVKK Aydınlatma Metni</Link>'ni okudum, kabul ediyorum.
+              </span>
+            </label>
+
             <button
               type="submit"
               disabled={isLoading}

@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import extract
 
+from app.config import settings
 from app.database import get_db
 from app.models.user import User
 from app.models.document import Document
@@ -17,7 +18,7 @@ from app.routers.auth import get_current_user
 
 router = APIRouter()
 
-UPLOAD_DIR = "uploads"
+UPLOAD_DIR = settings.UPLOAD_DIR
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
@@ -221,4 +222,3 @@ async def get_document_analysis(
         raise HTTPException(status_code=404, detail="Bu belge için henüz yapay zeka analizi yapılmamış")
         
     return analysis
-

@@ -1,10 +1,10 @@
-# 🩺 TanıLog
+# TanıLog
 
 **Sağlığını anla, hayatını yönet.**
 
 TanıLog, kişisel sağlık günlüğü tutmayı tıbbi belge analiziyle birleştiren, yapay zeka destekli bir sağlık platformudur.
 
-## 🚀 Hızlı Başlangıç
+## Hızlı Başlangıç
 
 ### Gereksinimler
 
@@ -17,206 +17,287 @@ TanıLog, kişisel sağlık günlüğü tutmayı tıbbi belge analiziyle birleş
 git clone https://github.com/kullanici/tanilog.git
 cd tanilog
 cp .env.example .env
-docker-compose up --build
+docker compose up --build
 ```
 
 Uygulama çalıştıktan sonra:
 
-| Servis             | URL                         |
-| ------------------ | --------------------------- |
-| **Frontend (Web)** | http://localhost:3000       |
-| **Backend API**    | http://localhost:8000       |
-| **API Docs**       | http://localhost:8000/docs  |
-| **ReDoc**          | http://localhost:8000/redoc |
+| Servis | URL |
+| --- | --- |
+| Frontend Web | http://localhost:3000 |
+| Backend API | http://localhost:8000 |
+| API Docs | http://localhost:8000/docs |
+| ReDoc | http://localhost:8000/redoc |
 
-## 🏗️ Proje Yapısı
+### Test ve Doğrulama
 
+```bash
+docker compose exec backend python -m compileall app
+docker compose exec backend python tests/smoke_api.py
+docker compose exec frontend npm run build
+docker compose exec frontend npm run test
+docker compose exec -e TANILOG_API_URL=http://localhost:8000/api/v1 -e TANILOG_WEB_URL=http://frontend:3000 backend python scripts/e2e_smoke.py
 ```
+
+`scripts/e2e_smoke.py` komutu çalışan Docker servisleri üzerinden uçtan uca temel kayıt, giriş, ayarlar, dashboard ve yasal sayfa kontrollerini yapar.
+
+## Proje Yapısı
+
+```text
 tanilog/
-├── backend/                    # FastAPI Backend
+├── backend/                    # FastAPI backend
 │   ├── app/
 │   │   ├── models/             # SQLAlchemy modelleri
-│   │   ├── routers/            # API endpoint'leri
+│   │   ├── routers/            # API endpointleri
 │   │   ├── schemas/            # Pydantic şemaları
+│   │   ├── services/           # AI ve yardımcı servisler
 │   │   ├── config.py           # Yapılandırma ayarları
 │   │   ├── database.py         # Veritabanı bağlantısı
 │   │   └── main.py             # Uygulama giriş noktası
+│   ├── alembic/                # Veritabanı migration dosyaları
+│   ├── uploads/                # Yüklenen dosyalar
 │   ├── Dockerfile
 │   └── requirements.txt
-├── frontend/                   # React Frontend
+├── frontend/                   # React frontend
 │   ├── src/
+│   │   ├── components/         # Ortak bileşenler
 │   │   ├── pages/              # Sayfa bileşenleri
 │   │   ├── stores/             # Zustand state yönetimi
-│   │   ├── lib/                # Yardımcı modüller
-│   │   ├── App.jsx             # Ana uygulama bileşeni
-│   │   ├── main.jsx            # React giriş noktası
-│   │   └── index.css           # Global stiller
+│   │   ├── lib/                # API yardımcıları
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── index.css
 │   ├── Dockerfile
 │   ├── package.json
 │   ├── tailwind.config.js
 │   └── vite.config.js
-├── docker-compose.yml          # Docker Compose yapılandırması
-├── .env.example                # Ortam değişkenleri şablonu
-├── .gitignore
-├── proje.md                    # Ürün geliştirme dokümanı
+├── docker-compose.yml
+├── .env.example
+├── proje.md
+├── tanilog.html
 └── README.md
 ```
 
-## 🛠️ Teknoloji Yığını
+## Teknoloji Yığını
 
-| Katman         | Teknoloji                    |
-| -------------- | ---------------------------- |
-| **Backend**    | Python, FastAPI, SQLAlchemy  |
-| **Frontend**   | React, Tailwind CSS, Zustand |
-| **Veritabanı** | PostgreSQL                   |
-| **Auth**       | JWT (python-jose + passlib)  |
-| **DevOps**     | Docker, Docker Compose, Git  |
+| Katman | Teknoloji |
+| --- | --- |
+| Backend | Python, FastAPI, SQLAlchemy |
+| Frontend | React, Vite, Tailwind CSS, Zustand |
+| Veritabanı | PostgreSQL |
+| Auth | JWT, python-jose, passlib |
+| AI | Gemini entegrasyonu |
+| DevOps | Docker, Docker Compose, Alembic |
 
-## 📦 API Endpoint'leri
+## Önemli API Endpointleri
 
-| Metot | Endpoint                   | Açıklama                 |
-| ----- | -------------------------- | ------------------------ |
-| GET   | `/`                        | API bilgisi              |
-| GET   | `/health`                  | Sistem sağlık kontrolü   |
-| POST  | `/api/v1/auth/register`    | Yeni kullanıcı kaydı     |
-| POST  | `/api/v1/auth/login`       | Kullanıcı girişi (JWT)   |
-| GET   | `/api/v1/auth/me`          | Mevcut kullanıcı bilgisi |
-| PUT   | `/api/v1/auth/me`          | Profil güncelleme        |
-| PUT   | `/api/v1/auth/me/password` | Şifre değiştirme         |
+| Metot | Endpoint | Açıklama |
+| --- | --- | --- |
+| GET | `/` | API bilgisi |
+| GET | `/health` | Sistem sağlık kontrolü |
+| POST | `/api/v1/auth/register` | Yeni kullanıcı kaydı |
+| POST | `/api/v1/auth/login` | Kullanıcı girişi |
+| GET | `/api/v1/auth/me` | Mevcut kullanıcı bilgisi |
+| GET | `/api/v1/dashboard/summary` | Dashboard özeti |
+| GET / PUT | `/api/v1/settings` | Kullanıcı ayarları |
+| GET / POST | `/api/v1/health/*` | Sağlık takip kayıtları |
+| GET / POST | `/api/v1/documents/*` | Belge yönetimi |
+| POST | `/api/v1/ai/*` | AI analizleri |
+| GET / POST | `/api/v1/chat/*` | Premium AI asistan |
+| GET / POST | `/api/v1/family/*` | Aile takibi |
+| GET / POST | `/api/v1/billing/*` | Premium ve ödeme yönetimi |
 
-## 🎨 Marka
+## Marka
 
-- **Renk Paleti:** Teal (`#0fb8a5`), Navy (`#1d3b4f`), Açık Gri (`#F4F6F8`), Beyaz (`#FFFFFF`)
-- **Tipografi:** Poppins
-- **Marka:** BaysalCare
+- Renk paleti: Teal (`#0fb8a5`), Navy (`#1d3b4f`), açık gri (`#F4F6F8`), beyaz (`#FFFFFF`)
+- Tipografi: Poppins
+- Marka: BaysalCare
 
-## 📋 Yapılacaklar (Roadmap)
+## Roadmap
 
-### Faz 1 — Temel Altyapı ✅
+### Faz 1 - Temel Altyapı
 
 - [x] Proje iskelet yapısının oluşturulması
 - [x] Docker + Docker Compose kurulumu
 - [x] FastAPI backend temel yapısı
 - [x] PostgreSQL veritabanı entegrasyonu
-- [x] JWT kimlik doğrulama (kayıt / giriş / me)
+- [x] JWT kimlik doğrulama
 - [x] React + Vite + Tailwind CSS frontend kurulumu
 - [x] Zustand state yönetimi altyapısı
-- [x] Landing page (tanıtım sayfası)
+- [x] Landing page
 - [x] API proxy ve CORS yapılandırması
 
-### Faz 2 — Kullanıcı Yönetimi & Dashboard ✅
+### Faz 2 - Kullanıcı Yönetimi & Dashboard
 
-- [x] Kayıt ve giriş sayfaları (frontend)
+- [x] Kayıt ve giriş sayfaları
 - [x] Kullanıcı profil sayfası ve düzenleme
 - [x] Dashboard ana ekran tasarımı
-- [x] Şifre sıfırlama / değiştirme
-- [x] Premium / Free kullanıcı ayrımı (backend)
-- [x] Alembic veritabanı migration yapısı
+- [x] Dashboard gerçek veri özeti ve son aktiviteler
+- [x] Hızlı eylemler
+- [x] Şifre değiştirme
+- [x] Premium / Free kullanıcı ayrımı
+- [x] Alembic migration yapısı
 
-### Faz 3 — Günlük Sağlık Takibi ✅
+### Faz 3 - Günlük Sağlık Takibi
 
-- [x] Semptom kayıt modülü (CRUD)
+- [x] Semptom kayıt modülü
 - [x] İlaç kayıt ve takip modülü
 - [x] Uyku düzeni kaydı
 - [x] Beslenme notu kaydı
 - [x] Günlük sağlık özeti görünümü
 - [x] Takvim bazlı geçmiş görüntüleme
 
-### Faz 4 — Tıbbi Belge Yönetimi ✅
+### Faz 4 - Tıbbi Belge Yönetimi
 
 - [x] PDF / fotoğraf yükleme altyapısı
 - [x] Belge arşivleme ve listeleme
-- [x] Belge kategorilendirme (tahlil, MR, reçete, epikriz vb.)
+- [x] Belge kategorilendirme
 - [x] Belge önizleme ve detay görünümü
-- [x] Free paket: aylık 3 belge sınırı kontrolü
+- [x] Free paket için aylık belge limiti
 
-### Faz 5 — Yapay Zeka Entegrasyonu ✅
+### Faz 5 - Yapay Zeka Entegrasyonu
 
-- [x] AI belge analizi (tahlil sonuçlarını Türkçe açıklama)
+- [x] AI belge analizi
 - [x] Semptom-tahlil çapraz analiz
 - [x] Haftalık / aylık sağlık raporu oluşturma
-- [ ] Free paket: günlük 1 AI analiz sınırı kontrolü (test için kapalı)
 - [x] Kritik değer tespiti ve acil uyarı sistemi
+- [ ] Free paket için günlük AI analiz limiti aktif etme
 
-### Faz 6 — İlaç Hatırlatma & Etkileşim ✅
+### Faz 6 - İlaç Hatırlatma & Etkileşim
 
 - [x] İlaç hatırlatma bildirimleri
 - [x] Bildirim izni ve test bildirimi paneli
-- [x] Free paket: 3 ilaç sınırı kontrolü
-- [x] İlaç etkileşim kontrolü (Premium)
+- [x] Free paket için günlük ilaç kaydı limiti
+- [x] İlaç etkileşim kontrolü
 - [x] Reçete çapraz kontrol sistemi
 - [x] Reçete / ilaç kutusu görselinden AI ile ilaç adayı çıkarma
-- [x] AI tarama sonucunu kullanıcı onayıyla manuel ilaç formuna aktarma
+- [x] AI tarama sonucunu kullanıcı onayıyla ilaç formuna aktarma
 
-### Faz 7 — Sesli Asistan ✅
+### Faz 7 - Sesli Asistan
 
-- [x] Sesli giriş (speech-to-text) entegrasyonu
-- [x] Türkçe sesli kayıt ile semptom/ilaç girişi
-- [x] Sesli kayıt ile uyku ve beslenme girişi
+- [x] Speech-to-text entegrasyonu
+- [x] Türkçe sesli kayıt ile semptom ve ilaç girişi
+- [x] Türkçe sesli kayıt ile uyku ve beslenme girişi
 - [x] Sağlık Takibi sekmelerinden hızlı sesli kayıt modalı
-- [x] Free paket: günlük 3 sesli giriş sınırı
-- [x] Sınırsız sesli asistan (Premium)
-- [x] `/voice` sayfası, AI ayrıştırma ve kullanıcı onaylı kayıt akışı
+- [x] Free paket için günlük sesli giriş limiti
+- [x] Premium için sınırsız sesli asistan
+- [x] AI ayrıştırma ve kullanıcı onaylı kayıt akışı
 
-### Faz 8 — Doktora Hazırlan Modu (Premium)
+### Faz 8 - Doktora Hazırlan Modu
 
 - [x] Son 30 günlük veri özeti oluşturma
-- [x] Türkçe PDF raporu otomatik üretimi
+- [x] Türkçe doktor raporu üretimi
 - [x] "Doktoruna şunları sor" listesi hazırlama
-- [x] PDF indirme ve paylaşma
-- [x] Premium erişim kontrolü ve `/doctor-prep` ekranı
+- [x] PDF önizleme / yazdırma akışı
+- [x] Premium erişim kontrolü
 - [x] Doktor raporlarını kaydetme, listeleme ve yeniden açma
+- [x] Raporu sesli özetleme
 
-### Faz 9 — Aile & Sosyal Özellikler (Premium)
+### Faz 9 - Aile & Sosyal Özellikler
 
 - [x] Aile üyesi ekleme ve yönetimi
-- [x] Yaşlı yakını sağlık takibi (uzaktan erişim)
+- [x] Yaşlı yakını sağlık takibi
 - [x] Aile üyesi belge ve kayıt görüntüleme
-- [x] Premium erişim kontrolü ve `/family` ekranı
+- [x] Premium erişim kontrolü
 - [x] E-posta ile aile daveti oluşturma ve kabul etme
-- [x] Gerçek TanıLog kullanıcısının kayıtlarını izinli takip etme
+- [x] Gerçek TanıLog kullanıcısını izinli takip etme
 - [x] Belge görüntüleme, kayıt ekleme ve düzenleme izin seviyeleri
 - [x] Davet edilen manuel aile profilini gerçek kullanıcı hesabına bağlama
 
-### Faz 10 — Premium AI Chatbot & Sağlık Asistanı
+### Faz 10 - Premium AI Chatbot & Sağlık Asistanı
 
-- [x] Kullanıcının sağlık kayıtlarını bağlam olarak okuyabilen AI sohbet ekranı
+- [x] Sağlık kayıtlarını bağlam olarak okuyabilen AI sohbet ekranı
 - [x] Belge analizleri, doktor raporları ve günlük kayıtlar üzerinden soru-cevap
-- [x] Chat içinde semptom / ilaç / uyku / beslenme kaydı önerme ve kullanıcı onayıyla kaydetme
+- [x] Chat içinde kayıt önerme ve kullanıcı onayıyla kaydetme
 - [x] Acil durum ve tıbbi sorumluluk güvenlik kuralları
-- [x] Premium kullanıcılar için sınırsız veya yüksek limitli asistan kullanımı
+- [x] Premium erişim kontrolü
 - [x] Sesli asistan ile chatbot akışını birleştirme
-- [x] Sohbet geçmişi ve Premium erişim kontrolü
+- [x] Sohbet geçmişi
 - [x] Sohbet adını değiştirme ve sohbet silme
-- [x] Sağ alt hızlı AI asistan widget'ı
+- [x] Sağ alt hızlı AI asistan widgetı
 - [x] Chat içinde PDF, metin ve görsel yükleyerek AI ile yorumlatma
 
-### Faz 11 — Ödeme & Premium Sistem
+### Faz 11 - Ödeme & Premium Sistem
 
 - [x] Premium abonelik sayfası (`/billing`)
-- [x] Test edilebilir mock ödeme sistemi entegrasyonu
-- [x] Aylık (₺119) ve yıllık (₺1.100) plan yönetimi
+- [x] Test edilebilir mock ödeme sistemi
+- [x] Aylık ve yıllık plan yönetimi
 - [x] Abonelik işlem geçmişi ve iptal akışı
-- [x] Reklam gösterim altyapısı (Free kullanıcılar)
-- [x] Reklamsız deneyim (Premium)
-- [ ] Gerçek ödeme sağlayıcısı (Iyzico/Stripe vb.) canlı entegrasyonu
+- [x] Reklam gösterim altyapısı
+- [x] Reklamsız Premium deneyim
+- [ ] Gerçek ödeme sağlayıcısı entegrasyonu
 
-### Faz 12 — Mobil Uygulama
+### Ara Faz - Ayarlar & Sağlık Profili
+
+- [x] `/settings` sayfası ve sidebar erişimi
+- [x] Bildirim tercihleri ve sessiz saatler
+- [x] AI veri kullanım izinleri
+- [x] Sağlık profili
+- [x] Acil iletişim bilgileri
+- [x] Premium, güvenlik ve veri aksiyonu kısayolları
+- [x] AI bağlamını kullanıcı izinlerine göre filtreleme
+- [x] Verilerimi dışa aktar özelliği
+- [x] Şifre ve onay metniyle hesap silme akışı
+
+### Mobil Öncesi Web Sertleştirme
+
+- [x] Dashboard hızlı eylemler, son aktiviteler, günlük özet ve haftalık trend
+- [x] Hata yakalama ekranı ve backend request loglama
+- [x] Admin paneli: kullanıcı listesi, sistem özeti, premium/admin yönetimi
+- [x] KVKK / gizlilik / kullanım şartları sayfaları
+- [x] Kayıt ekranında yasal metin onayı
+- [x] Hesap silme ve veri dışa aktarma
+- [x] Dosya depolama dizinini `UPLOAD_DIR` ayarına bağlama
+- [x] Bildirim merkezini kullanıcı ayarları ve sessiz saatlerle bağlama
+- [ ] Gerçek e-posta gönderimi: şimdilik kapsam dışı bırakıldı
+- [x] Geniş test paketi: backend, frontend ve E2E smoke kontrolleri
+- [x] Production ortam değişkenleri ve güvenlik kontrolü
+- [x] Performans ve bundle optimizasyonu
+
+### Faz 12 - Mobil Uygulama
 
 - [ ] React Native proje kurulumu
 - [ ] Kamera ile belge fotoğraflama
-- [ ] Push notification (ilaç hatırlatma)
-- [ ] Google Play Store yayını (Android)
+- [ ] Push notification
+- [ ] Android yayın süreci
 
-### Faz 13 — Test & Yayın
+### Faz 13 - Test & Yayın
 
 - [ ] Backend unit testleri
 - [ ] Frontend component testleri
-- [ ] E2E (uçtan uca) testler
+- [ ] E2E testler
 - [ ] Performans optimizasyonu
 - [ ] Production Docker yapılandırması
 - [ ] CI/CD pipeline kurulumu
 
-## 📄 Lisans
+## Veritabanını Görüntüleme
+
+PostgreSQL Docker volume içinde tutulur. pgAdmin veya DBeaver ile şu bilgilerle bağlanabilirsin:
+
+```text
+Host: localhost
+Port: 5432
+Database: .env içindeki POSTGRES_DB
+Username: .env içindeki POSTGRES_USER
+Password: .env içindeki POSTGRES_PASSWORD
+```
+
+Örnek tablolar:
+
+- `users`
+- `symptom_logs`
+- `medication_logs`
+- `sleep_logs`
+- `nutrition_logs`
+- `documents`
+- `ai_analyses`
+- `doctor_prep_reports`
+- `chat_sessions`
+- `chat_messages`
+- `family_members`
+- `family_invitations`
+- `subscription_events`
+
+## Lisans
 
 Bu proje Ömer Faruk Baysal tarafından geliştirilmektedir.

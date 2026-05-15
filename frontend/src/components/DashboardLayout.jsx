@@ -18,7 +18,8 @@ import {
   FiMessageCircle,
   FiUsers,
   FiChevronDown,
-  FiCreditCard
+  FiCreditCard,
+  FiShield
 } from 'react-icons/fi';
 import ChatAssistantWidget from './ChatAssistantWidget';
 import NotificationCenter from './NotificationCenter';
@@ -36,8 +37,10 @@ const navItems = [
   { icon: <FiUsers size={20} />, label: 'Aile Takibi', path: '/family' },
   { icon: <FiCreditCard size={20} />, label: 'Premium', path: '/billing' },
   { icon: <FiUser size={20} />, label: 'Profil', path: '/profile' },
-  { icon: <FiSettings size={20} />, label: 'Ayarlar', path: '/settings', badge: 'Yakında' },
+  { icon: <FiSettings size={20} />, label: 'Ayarlar', path: '/settings' },
 ];
+
+const adminNavItem = { icon: <FiShield size={20} />, label: 'Admin', path: '/admin' };
 
 const pageTitles = {
   '/dashboard': 'Dashboard',
@@ -51,6 +54,7 @@ const pageTitles = {
   '/billing': 'Premium',
   '/profile': 'Profil',
   '/settings': 'Ayarlar',
+  '/admin': 'Admin',
 };
 
 /**
@@ -122,7 +126,7 @@ function DashboardLayout({ children }) {
 
         {/* Navigasyon */}
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto hide-scrollbar">
-          {navItems.map((item) => {
+          {[...navItems, ...(user?.is_admin ? [adminNavItem] : [])].map((item) => {
             const isActive = location.pathname === item.path;
             const isDisabled = !!item.badge;
 

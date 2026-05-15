@@ -46,7 +46,7 @@ const useAIStore = create((set) => ({
       set({ healthReport: data, isGeneratingReport: false });
       return data;
     } catch (error) {
-      const message = error.response?.data?.detail || 'Saglik raporu olusturulamadi.';
+      const message = error.response?.data?.detail || 'Sağlık raporu oluşturulamadı.';
       set({ error: message, isGeneratingReport: false });
       throw new Error(message);
     }

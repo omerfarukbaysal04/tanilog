@@ -16,41 +16,41 @@ router = APIRouter()
 
 PLAN_CATALOG = {
     "free": {
-        "name": "Ucretsiz",
+        "name": "Ücretsiz",
         "price": 0,
         "currency": "TRY",
         "interval": "forever",
         "features": [
-            "Ayda 3 belge yukleme",
-            "Gunluk temel saglik kaydi",
-            "Sinirli sesli giris",
-            "Reklamli deneyim",
+            "Ayda 3 belge yükleme",
+            "Günlük temel sağlık kaydı",
+            "Sınırlı sesli giriş",
+            "Reklamlı deneyim",
         ],
     },
     "monthly": {
-        "name": "Premium Aylik",
+        "name": "Premium Aylık",
         "price": 119,
         "currency": "TRY",
         "interval": "month",
         "days": 30,
         "features": [
-            "Sinirsiz AI belge ve saglik analizi",
-            "Doktora Hazirlan raporlari",
+            "Sınırsız AI belge ve sağlık analizi",
+            "Doktora Hazırlan raporları",
             "Aile takibi ve premium AI asistan",
-            "Reklamsiz deneyim",
+            "Reklamsız deneyim",
         ],
     },
     "yearly": {
-        "name": "Premium Yillik",
+        "name": "Premium Yıllık",
         "price": 1100,
         "currency": "TRY",
         "interval": "year",
         "days": 365,
         "features": [
-            "Aylik plana dahil tum ozellikler",
-            "Yillik odemede avantajli fiyat",
-            "Oncelikli yeni ozellik erisimi",
-            "Reklamsiz deneyim",
+            "Aylık plana dahil tüm özellikler",
+            "Yıllık ödemede avantajlı fiyat",
+            "Öncelikli yeni özellik erişimi",
+            "Reklamsız deneyim",
         ],
     },
 }
@@ -118,7 +118,7 @@ async def get_events(
     }
 
 
-@router.post("/checkout", status_code=status.HTTP_201_CREATED, summary="Mock odeme oturumu olustur")
+@router.post("/checkout", status_code=status.HTTP_201_CREATED, summary="Test ödeme oturumu oluştur")
 async def create_checkout(
     payload: CheckoutRequest,
     current_user: User = Depends(get_current_user),
@@ -147,7 +147,7 @@ async def create_checkout(
         "amount": plan["price"],
         "currency": plan["currency"],
         "checkout_url": f"/billing?checkout={session_id}",
-        "message": "Test odeme oturumu olusturuldu. Gercek saglayici entegrasyonunda bu URL odeme sayfasina yonlenir.",
+        "message": "Test ödeme akışı hazırlandı. Gerçek sağlayıcı entegrasyonunda bu URL ödeme sayfasına yönlenir.",
     }
 
 
@@ -166,7 +166,7 @@ async def complete_checkout(
         .first()
     )
     if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Odeme oturumu bulunamadi.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ödeme oturumu bulunamadı.")
     if event.status == "completed":
         return {"subscription": _subscription_payload(current_user), "event_id": event.id}
     if event.plan not in ("monthly", "yearly"):

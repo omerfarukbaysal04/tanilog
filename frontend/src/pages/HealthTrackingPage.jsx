@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { FiActivity, FiPlus, FiHeart, FiCoffee, FiTrash2, FiClock, FiBell, FiCheckCircle, FiShield, FiAlertCircle, FiEdit3, FiSave, FiImage, FiMic, FiRefreshCw } from 'react-icons/fi';
@@ -18,6 +19,7 @@ const tabs = [
 ];
 
 function HealthTrackingPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     selectedDate, setSelectedDate, dailyData, isLoading,
     addSymptom, deleteSymptom,
@@ -59,6 +61,18 @@ function HealthTrackingPage() {
     setSelectedDate(new Date());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    const shouldOpen = searchParams.get('new') === '1';
+    if (!tab || !tabs.some((item) => item.id === tab)) return;
+
+    setActiveTab(tab);
+    if (shouldOpen) {
+      setModals((prev) => ({ ...prev, [tab]: true }));
+      setSearchParams({ tab }, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const formattedDate = format(selectedDate, 'yyyy-MM-dd');
 

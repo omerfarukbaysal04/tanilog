@@ -15,14 +15,14 @@ import DashboardLayout from '../components/DashboardLayout';
 import useAIStore from '../stores/aiStore';
 
 const dayOptions = [
-  { value: 7, label: 'Son 7 gun' },
-  { value: 30, label: 'Son 30 gun' },
-  { value: 60, label: 'Son 60 gun' },
+  { value: 7, label: 'Son 7 gün' },
+  { value: 30, label: 'Son 30 gün' },
+  { value: 60, label: 'Son 60 gün' },
 ];
 
 const reportOptions = [
-  { value: 'weekly', label: 'Haftalik' },
-  { value: 'monthly', label: 'Aylik' },
+  { value: 'weekly', label: 'Haftalık' },
+  { value: 'monthly', label: 'Aylık' },
 ];
 
 function AIPage() {
@@ -92,7 +92,7 @@ function AIPage() {
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-white">AI Analiz</h1>
             <p className="text-navy-300 text-sm mt-2 max-w-2xl">
-              Tahlil analizlerini gunluk saglik kayitlarinla birlikte degerlendir ve haftalik ya da aylik saglik raporu olustur.
+              Tahlil analizlerini günlük sağlık kayıtlarınla birlikte değerlendir ve haftalık ya da aylık sağlık raporu oluştur.
             </p>
           </div>
 
@@ -120,15 +120,15 @@ function AIPage() {
                 <FiZap size={22} />
               </div>
               <div>
-                <h2 className="text-white font-semibold text-lg">Semptom-Tahlil Capraz Analizi</h2>
-                <p className="text-navy-400 text-sm mt-1">Analiz edilmis bir belgeyi son kayitlarinla birlikte yorumlat.</p>
+                <h2 className="text-white font-semibold text-lg">Semptom-Tahlil Çapraz Analizi</h2>
+                <p className="text-navy-400 text-sm mt-1">Analiz edilmiş bir belgeyi son kayıtlarınla birlikte yorumlat.</p>
               </div>
             </div>
 
             <div className="p-6 space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <label className="md:col-span-2">
-                  <span className="block text-sm text-navy-300 mb-2">Analiz edilmis belge</span>
+                  <span className="block text-sm text-navy-300 mb-2">Analiz edilmiş belge</span>
                   <select
                     value={selectedDocumentId}
                     onChange={(event) => setSelectedDocumentId(event.target.value)}
@@ -136,7 +136,7 @@ function AIPage() {
                     disabled={isLoadingDocuments || analyzedDocuments.length === 0}
                   >
                     {analyzedDocuments.length === 0 ? (
-                      <option value="">Analiz edilmis belge yok</option>
+                      <option value="">Analiz edilmiş belge yok</option>
                     ) : (
                       analyzedDocuments.map((doc) => (
                         <option key={doc.id} value={doc.id}>
@@ -148,7 +148,7 @@ function AIPage() {
                 </label>
 
                 <label>
-                  <span className="block text-sm text-navy-300 mb-2">Donem</span>
+                  <span className="block text-sm text-navy-300 mb-2">Dönem</span>
                   <select
                     value={selectedDays}
                     onChange={(event) => setSelectedDays(Number(event.target.value))}
@@ -179,15 +179,15 @@ function AIPage() {
                 className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-navy-700 disabled:text-navy-400 text-white rounded-xl py-3 font-semibold transition-colors flex items-center justify-center gap-2"
               >
                 {isAnalyzing ? <FiRefreshCw className="animate-spin" /> : <FiActivity />}
-                Capraz Analiz Olustur
+                Çapraz Analiz Oluştur
               </button>
 
               {analyzedDocuments.length === 0 && !isLoadingDocuments && (
-                <EmptyState text="Once Belgelerim sayfasinda bir belge yukleyip AI analizini baslatin." />
+                <EmptyState text="Önce Belgelerim sayfasında bir belge yükleyip AI analizini başlatın." />
               )}
 
               {crossAnalysis && (
-                <AnalysisResult data={crossAnalysis} markdownKey="full_analysis" title="Capraz Analiz Sonucu" />
+                <AnalysisResult data={crossAnalysis} markdownKey="full_analysis" title="Çapraz Analiz Sonucu" />
               )}
             </div>
           </section>
@@ -198,8 +198,8 @@ function AIPage() {
                 <FiCalendar size={22} />
               </div>
               <div>
-                <h2 className="text-white font-semibold text-lg">Saglik Raporu</h2>
-                <p className="text-navy-400 text-sm mt-1">Haftalik veya aylik kayitlarini anlik rapora donustur.</p>
+                <h2 className="text-white font-semibold text-lg">Sağlık Raporu</h2>
+                <p className="text-navy-400 text-sm mt-1">Haftalık veya aylık kayıtlarını anlık rapora dönüştür.</p>
               </div>
             </div>
 
@@ -226,11 +226,11 @@ function AIPage() {
                 className="w-full bg-white hover:bg-navy-100 disabled:bg-navy-700 disabled:text-navy-400 text-navy-900 rounded-xl py-3 font-semibold transition-colors flex items-center justify-center gap-2"
               >
                 {isGeneratingReport ? <FiRefreshCw className="animate-spin" /> : <FiCpu />}
-                Rapor Olustur
+                Rapor Oluştur
               </button>
 
               {!healthReport && !isGeneratingReport && (
-                <EmptyState text="Secili donem icin rapor olusturdugunda ozet, trendler ve doktor sorulari burada gorunur." />
+                <EmptyState text="Seçili dönem için rapor oluşturduğunda özet, trendler ve doktor soruları burada görünür." />
               )}
 
               {healthReport && (
@@ -348,7 +348,7 @@ function MarkdownPanel({ title, content }) {
 function Disclaimer() {
   return (
     <p className="text-center text-xs text-navy-500 italic">
-      Bu AI ciktisi bilgilendirme amaclidir; teshis veya tedavi yerine gecmez. Supheli durumlarda saglik profesyoneline danisin.
+      Bu AI çıktısı bilgilendirme amaçlıdır; teşhis veya tedavi yerine geçmez. Şüpheli durumlarda sağlık profesyoneline danışın.
     </p>
   );
 }

@@ -526,9 +526,9 @@ function LandingPage() {
           <div>
             <h4 className="text-white font-semibold mb-4">Yasal</h4>
             <ul className="space-y-3">
-              <li><a href="#" className="text-navy-400 hover:text-teal-400 text-sm transition-colors">Gizlilik Politikası</a></li>
-              <li><a href="#" className="text-navy-400 hover:text-teal-400 text-sm transition-colors">Kullanım Şartları</a></li>
-              <li><a href="#" className="text-navy-400 hover:text-teal-400 text-sm transition-colors">KVKK Aydınlatma Metni</a></li>
+              <li><Link to="/privacy" className="text-navy-400 hover:text-teal-400 text-sm transition-colors">Gizlilik Politikası</Link></li>
+              <li><Link to="/terms" className="text-navy-400 hover:text-teal-400 text-sm transition-colors">Kullanım Şartları</Link></li>
+              <li><Link to="/kvkk" className="text-navy-400 hover:text-teal-400 text-sm transition-colors">KVKK Aydınlatma Metni</Link></li>
             </ul>
           </div>
         </div>

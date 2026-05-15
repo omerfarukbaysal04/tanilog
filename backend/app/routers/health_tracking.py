@@ -124,7 +124,7 @@ async def update_medication(
         MedicationLog.user_id == current_user.id
     ).first()
     if not db_item:
-        raise HTTPException(status_code=404, detail="KayÄ±t bulunamadÄ±")
+        raise HTTPException(status_code=404, detail="Kayıt bulunamadı")
 
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(db_item, field, value)

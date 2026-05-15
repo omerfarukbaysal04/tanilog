@@ -264,15 +264,32 @@ async def create_doctor_prep_report(
 
     end_date = datetime.utcnow().date()
     start_date = end_date - timedelta(days=payload.days - 1)
-    health_context = _health_context(db, current_user.id, start_date, end_date)
-    medication_context = _medication_context(db, current_user.id, start_date, end_date)
-    document_context = _document_analysis_context(db, current_user.id)
+    health_context = _health_context(db, current_user.id, start_date, end_date) if current_user.ai_use_health_records else {
+        "symptoms": [],
+        "medications": [],
+        "sleep": [],
+        "nutrition": [],
+    }
+    medication_context = _medication_context(db, current_user.id, start_date, end_date) if current_user.ai_use_health_records else {
+        "medications": [],
+        "prescriptions": [],
+    }
+    document_context = _document_analysis_context(db, current_user.id) if current_user.ai_use_documents else []
 
     context = {
         "user": {
             "full_name": current_user.full_name,
             "email": current_user.email,
         },
+        "health_profile": {
+            "birth_year": current_user.birth_year,
+            "biological_sex": current_user.biological_sex,
+            "height_cm": current_user.height_cm,
+            "weight_kg": current_user.weight_kg,
+            "blood_type": current_user.blood_type,
+            "chronic_conditions": current_user.chronic_conditions,
+            "allergies": current_user.allergies,
+        } if current_user.ai_use_profile else {},
         "health": health_context,
         "medication_review": medication_context,
         "document_analyses": document_context,

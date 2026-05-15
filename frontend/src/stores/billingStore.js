@@ -40,7 +40,7 @@ const useBillingStore = create((set, get) => ({
       return data;
     } catch (error) {
       set({
-        error: error.response?.data?.detail || 'Odeme oturumu olusturulamadi.',
+        error: error.response?.data?.detail || 'Ödeme oturumu oluşturulamadı.',
         isLoading: false,
       });
       throw error;
@@ -56,7 +56,7 @@ const useBillingStore = create((set, get) => ({
       return data;
     } catch (error) {
       set({
-        error: error.response?.data?.detail || 'Odeme tamamlanamadi.',
+        error: error.response?.data?.detail || 'Ödeme tamamlanamadı.',
         isLoading: false,
       });
       throw error;

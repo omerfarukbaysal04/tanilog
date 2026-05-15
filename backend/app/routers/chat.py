@@ -94,6 +94,15 @@ def _chat_context(db: Session, user: User) -> dict:
     return {
         "today": date.today().isoformat(),
         "user": {"full_name": user.full_name, "email": user.email},
+        "health_profile": {
+            "birth_year": user.birth_year,
+            "biological_sex": user.biological_sex,
+            "height_cm": user.height_cm,
+            "weight_kg": user.weight_kg,
+            "blood_type": user.blood_type,
+            "chronic_conditions": user.chronic_conditions,
+            "allergies": user.allergies,
+        } if user.ai_use_profile else {},
         "date_range": {"start": start_date.isoformat(), "end": end_date.isoformat()},
         "health": {
             "symptoms": _serialize_items(symptoms, ["date", "symptom_name", "severity", "notes"]),
@@ -103,7 +112,7 @@ def _chat_context(db: Session, user: User) -> dict:
             ),
             "sleep": _serialize_items(sleep, ["date", "hours_slept", "quality", "notes"]),
             "nutrition": _serialize_items(nutrition, ["date", "meal_type", "water_ml", "notes"]),
-        },
+        } if user.ai_use_health_records else {},
         "document_analyses": [
             {
                 "filename": document.original_filename,
@@ -113,7 +122,7 @@ def _chat_context(db: Session, user: User) -> dict:
                 "has_critical_alert": analysis.has_critical_alert,
             }
             for document, analysis in document_rows
-        ],
+        ] if user.ai_use_documents else [],
         "doctor_reports": [
             {
                 "title": report.title,
@@ -123,7 +132,7 @@ def _chat_context(db: Session, user: User) -> dict:
                 "created_at": report.created_at,
             }
             for report in doctor_reports
-        ],
+        ] if user.ai_use_doctor_reports else [],
     }
 
 
