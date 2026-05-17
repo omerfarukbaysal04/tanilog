@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import useAuthStore from './stores/authStore';
 
@@ -7,6 +7,8 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import SearchPage from './pages/SearchPage';
+import TimelinePage from './pages/TimelinePage';
 import ProfilePage from './pages/ProfilePage';
 import HealthTrackingPage from './pages/HealthTrackingPage';
 import DocumentsPage from './pages/DocumentsPage';
@@ -19,6 +21,7 @@ import BillingPage from './pages/BillingPage';
 import SettingsPage from './pages/SettingsPage';
 import AdminPage from './pages/AdminPage';
 import LegalPage from './pages/LegalPage';
+import SharedDoctorReportPage from './pages/SharedDoctorReportPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -47,7 +50,7 @@ function App() {
           },
         }}
       />
-      <ErrorBoundary>
+      <RouteBoundary>
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
@@ -56,6 +59,7 @@ function App() {
         <Route path="/privacy" element={<LegalPage />} />
         <Route path="/terms" element={<LegalPage />} />
         <Route path="/kvkk" element={<LegalPage />} />
+        <Route path="/shared/doctor-report/:token" element={<SharedDoctorReportPage />} />
 
         {/* Protected routes */}
         <Route
@@ -63,6 +67,22 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <ProtectedRoute>
+              <SearchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/timeline"
+          element={
+            <ProtectedRoute>
+              <TimelinePage />
             </ProtectedRoute>
           }
         />
@@ -155,9 +175,14 @@ function App() {
           }
         />
       </Routes>
-      </ErrorBoundary>
+      </RouteBoundary>
     </>
   );
+}
+
+function RouteBoundary({ children }) {
+  const location = useLocation();
+  return <ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary>;
 }
 
 export default App;

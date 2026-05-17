@@ -43,6 +43,7 @@ const emptyInvitationForm = {
   can_view_documents: true,
   can_add_records: false,
   can_edit_records: false,
+  can_generate_reports: false,
   message: '',
 };
 
@@ -346,18 +347,19 @@ function FamilyPage() {
                   <option value="">Manuel profile bağlama</option>
                   {members.map((member) => <option key={member.id} value={member.id}>{member.full_name}</option>)}
                 </select>
-                <label className="flex items-center gap-2 text-sm text-navy-200">
-                  <input type="checkbox" checked={invitationForm.can_view_documents} onChange={(e) => setInvitationForm({ ...invitationForm, can_view_documents: e.target.checked })} />
-                  Belgeleri görebilsin
-                </label>
-                <label className="flex items-center gap-2 text-sm text-navy-200">
-                  <input type="checkbox" checked={invitationForm.can_add_records} onChange={(e) => setInvitationForm({ ...invitationForm, can_add_records: e.target.checked })} />
-                  Kayıt ekleyebileyim
-                </label>
-                <label className="flex items-center gap-2 text-sm text-navy-200">
-                  <input type="checkbox" checked={invitationForm.can_edit_records} onChange={(e) => setInvitationForm({ ...invitationForm, can_edit_records: e.target.checked })} />
-                  Düzenleme izni
-                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    ['can_view_documents', 'Belge görebilir'],
+                    ['can_add_records', 'Kayıt ekleyebilir'],
+                    ['can_edit_records', 'Kayıt düzenleyebilir'],
+                    ['can_generate_reports', 'Rapor oluşturabilir'],
+                  ].map(([field, label]) => (
+                    <label key={field} className="flex items-center justify-between gap-2 rounded-xl border border-navy-700 bg-navy-900/35 px-3 py-2 text-sm text-navy-200">
+                      <span>{label}</span>
+                      <input type="checkbox" checked={invitationForm[field]} onChange={(e) => setInvitationForm({ ...invitationForm, [field]: e.target.checked })} />
+                    </label>
+                  ))}
+                </div>
                 <textarea className={`${inputClass} min-h-[76px]`} placeholder="Davet notu" value={invitationForm.message} onChange={(e) => setInvitationForm({ ...invitationForm, message: e.target.value })} />
                 <button className="w-full rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 flex items-center justify-center gap-2 transition-colors">
                   <FiMail /> Davet Oluştur
@@ -454,7 +456,7 @@ function FamilyPage() {
                             <p className="text-white text-sm font-semibold truncate">{access.owner_name || access.owner_email}</p>
                             <p className="text-navy-400 text-xs mt-1">{access.relation}</p>
                             <p className="text-navy-500 text-xs mt-1">
-                              {access.can_add_records ? 'Kayıt ekleme açık' : 'Sadece görüntüleme'}
+                              {access.can_generate_reports ? 'Rapor izni açık' : access.can_add_records ? 'Kayıt ekleme açık' : 'Sadece görüntüleme'}
                             </p>
                           </button>
                         ))}
@@ -600,7 +602,7 @@ function InvitationCard({ invitation, onAccept }) {
           <p className="text-navy-300 text-xs mt-1">{invitation.relation} olarak takip daveti gönderdi.</p>
           {invitation.message && <p className="text-navy-300 text-xs mt-2">{invitation.message}</p>}
           <p className="text-navy-500 text-xs mt-2">
-            {invitation.can_view_documents ? 'Belge erişimi açık' : 'Belge erişimi kapalı'} · {invitation.can_add_records ? 'Kayıt ekleyebilir' : 'Kayıt ekleyemez'}
+            {invitation.can_view_documents ? 'Belge erişimi açık' : 'Belge erişimi kapalı'} · {invitation.can_add_records ? 'Kayıt ekleyebilir' : 'Kayıt ekleyemez'} · {invitation.can_generate_reports ? 'Rapor oluşturabilir' : 'Rapor oluşturamaz'}
           </p>
         </div>
         <button onClick={onAccept} className="rounded-xl bg-teal-500 hover:bg-teal-600 text-white px-3 py-2 text-sm font-semibold transition-colors">
@@ -711,6 +713,7 @@ function SharedSummaryPanel({ summary, form, setForm, onSubmit, onUpdateRecord }
             <span className="rounded-full bg-navy-800 text-navy-200 px-3 py-1 text-xs inline-flex items-center gap-1"><FiEye /> Görüntüleme</span>
             {access.can_add_records && <span className="rounded-full bg-teal-500/10 text-teal-200 border border-teal-500/20 px-3 py-1 text-xs inline-flex items-center gap-1"><FiPlus /> Kayıt ekleme</span>}
             {access.can_edit_records && <span className="rounded-full bg-blue-500/10 text-blue-200 border border-blue-500/20 px-3 py-1 text-xs inline-flex items-center gap-1"><FiCheckCircle /> Düzenleme</span>}
+            {access.can_generate_reports && <span className="rounded-full bg-purple-500/10 text-purple-200 border border-purple-500/20 px-3 py-1 text-xs inline-flex items-center gap-1"><FiFileText /> Rapor</span>}
           </div>
         </div>
       </div>

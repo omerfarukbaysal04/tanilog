@@ -55,6 +55,7 @@ class FamilyInvitationCreate(BaseModel):
     can_view_documents: bool = True
     can_add_records: bool = False
     can_edit_records: bool = False
+    can_generate_reports: bool = False
     message: str | None = Field(None, max_length=1000)
 
 
@@ -261,6 +262,7 @@ def _invitation_to_dict(invitation: FamilyInvitation, inviter: User | None = Non
         "can_view_documents": invitation.can_view_documents,
         "can_add_records": invitation.can_add_records,
         "can_edit_records": invitation.can_edit_records,
+        "can_generate_reports": invitation.can_generate_reports,
         "message": invitation.message,
         "expires_at": invitation.expires_at,
         "accepted_at": invitation.accepted_at,
@@ -293,6 +295,7 @@ def _access_to_dict(access: FamilyAccess, owner: User | None = None, member: Fam
         "can_view_documents": access.can_view_documents,
         "can_add_records": access.can_add_records,
         "can_edit_records": access.can_edit_records,
+        "can_generate_reports": access.can_generate_reports,
         "is_active": access.is_active,
         "created_at": access.created_at,
         "updated_at": access.updated_at,
@@ -670,6 +673,7 @@ async def create_family_invitation(
         can_view_documents=payload.can_view_documents,
         can_add_records=payload.can_add_records,
         can_edit_records=payload.can_edit_records,
+        can_generate_reports=payload.can_generate_reports,
         message=payload.message,
         expires_at=datetime.utcnow() + timedelta(days=14),
     )
@@ -739,6 +743,7 @@ async def accept_family_invitation(
             can_view_documents=invitation.can_view_documents,
             can_add_records=invitation.can_add_records,
             can_edit_records=invitation.can_edit_records,
+            can_generate_reports=invitation.can_generate_reports,
         )
         db.add(access)
     else:
@@ -748,6 +753,7 @@ async def accept_family_invitation(
         access.can_view_documents = invitation.can_view_documents
         access.can_add_records = invitation.can_add_records
         access.can_edit_records = invitation.can_edit_records
+        access.can_generate_reports = invitation.can_generate_reports
         access.updated_at = datetime.utcnow()
 
     if invitation.family_member_id:

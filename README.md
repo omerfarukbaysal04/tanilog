@@ -99,6 +99,13 @@ tanilog/
 | POST | `/api/v1/auth/login` | Kullanıcı girişi |
 | GET | `/api/v1/auth/me` | Mevcut kullanıcı bilgisi |
 | GET | `/api/v1/dashboard/summary` | Dashboard özeti |
+| GET | `/api/v1/dashboard/search` | Sağlık verilerinde global arama |
+| GET | `/api/v1/search` | Gelişmiş arama ve filtreleme |
+| GET | `/api/v1/timeline` | Sağlık zaman çizelgesi |
+| GET / POST | `/api/v1/risk-alerts/*` | Açıklanabilir risk uyarıları |
+| GET / POST | `/api/v1/onboarding/*` | İlk kurulum adımları |
+| GET / POST | `/api/v1/push/*` | Opsiyonel Web Push altyapısı |
+| GET / POST | `/api/v1/notifications/*` | Bildirim merkezi olayları |
 | GET / PUT | `/api/v1/settings` | Kullanıcı ayarları |
 | GET / POST | `/api/v1/health/*` | Sağlık takip kayıtları |
 | GET / POST | `/api/v1/documents/*` | Belge yönetimi |
@@ -242,6 +249,18 @@ tanilog/
 ### Mobil Öncesi Web Sertleştirme
 
 - [x] Dashboard hızlı eylemler, son aktiviteler, günlük özet ve haftalık trend
+- [x] Header içinde global sağlık verisi araması
+- [x] Dashboard veri kalitesi uyarıları ve eksik kayıt yönlendirmeleri
+- [x] Bildirim merkezi ve tarayıcı içi bildirim deneyimi
+- [x] Şifreli, 24 saat geçerli doktor raporu paylaşım linki
+- [x] Header aramasıyla birleşik gelişmiş arama ve filtreler
+- [x] Sağlık zaman çizelgesi
+- [x] Açıklanabilir riskli örüntü uyarıları
+- [x] İlk giriş onboarding akışı
+- [x] İlaç veri kalitesi uyarıları
+- [x] Branşa göre doktor raporu şablonu seçimi
+- [x] Aile takip izin matrisi ve rapor oluşturma izni
+- [x] Admin audit log
 - [x] Hata yakalama ekranı ve backend request loglama
 - [x] Admin paneli: kullanıcı listesi, sistem özeti, premium/admin yönetimi
 - [x] KVKK / gizlilik / kullanım şartları sayfaları
@@ -297,6 +316,12 @@ Password: .env içindeki POSTGRES_PASSWORD
 - `family_members`
 - `family_invitations`
 - `subscription_events`
+- `push_subscriptions`
+- `notification_events`
+- `doctor_share_links`
+- `risk_alerts`
+- `onboarding_states`
+- `admin_audit_logs`
 
 ## Lisans
 

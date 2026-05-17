@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
@@ -9,7 +9,6 @@ import {
   FiLock,
   FiRefreshCw,
   FiSave,
-  FiSettings,
   FiShield,
   FiStar,
   FiTrash2,
@@ -89,12 +88,12 @@ function SettingsPage() {
 
   const requestNotificationPermission = async () => {
     if (typeof Notification === 'undefined') {
-      toast.error('Bu tarayıcı bildirim desteklemiyor.');
+      toast.error('Bu tarayÄ±cÄ± bildirim desteklemiyor.');
       return;
     }
     const permission = await Notification.requestPermission();
     if (permission === 'granted') toast.success('Bildirim izni verildi.');
-    else toast.error('Bildirim izni kapalı.');
+    else toast.error('Bildirim izni kapalÄ±.');
   };
 
   const handleExport = async () => {
@@ -109,9 +108,9 @@ function SettingsPage() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      toast.success('Veri dosyası hazırlandı.');
+      toast.success('Veri dosyasÄ± hazÄ±rlandÄ±.');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Veriler dışa aktarılamadı.');
+      toast.error(error.response?.data?.detail || 'Veriler dÄ±ÅŸa aktarÄ±lamadÄ±.');
     }
   };
 
@@ -132,12 +131,9 @@ function SettingsPage() {
         <section className="glass rounded-3xl border border-navy-700/50 p-7 md:p-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/25 bg-teal-500/10 text-teal-200 px-3 py-1 text-xs font-semibold mb-4">
-                <FiSettings /> Ara Faz
-              </div>
               <h1 className="text-white text-3xl font-bold">Ayarlar</h1>
               <p className="text-navy-300 mt-2 max-w-2xl">
-                Bildirimleri, AI veri izinlerini ve sağlık profilini tek yerden yönet.
+                Bildirimleri, AI veri izinlerini ve saÄŸlÄ±k profilini tek yerden yÃ¶net.
               </p>
             </div>
             <button
@@ -153,16 +149,16 @@ function SettingsPage() {
 
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_0.9fr] gap-6">
           <div className="space-y-6">
-            <SettingsSection icon={<FiBell />} title="Bildirim Ayarları" description="İlaç, davet ve sesli hatırlatma tercihleri.">
-              <Toggle label="Tarayıcı bildirimleri" checked={form.notifications_enabled} onChange={(value) => setValue('notifications_enabled', value)} />
+            <SettingsSection icon={<FiBell />} title="Bildirim AyarlarÄ±" description="Ä°laÃ§, davet ve sesli hatÄ±rlatma tercihleri.">
+              <Toggle label="TarayÄ±cÄ± bildirimleri" checked={form.notifications_enabled} onChange={(value) => setValue('notifications_enabled', value)} />
               <Toggle label="Sesli bildirimler" checked={form.voice_notifications_enabled} onChange={(value) => setValue('voice_notifications_enabled', value)} />
-              <Toggle label="İlaç hatırlatmaları" checked={form.medication_reminders_enabled} onChange={(value) => setValue('medication_reminders_enabled', value)} />
+              <Toggle label="Ä°laÃ§ hatÄ±rlatmalarÄ±" checked={form.medication_reminders_enabled} onChange={(value) => setValue('medication_reminders_enabled', value)} />
               <Toggle label="Aile daveti bildirimleri" checked={form.family_invite_notifications_enabled} onChange={(value) => setValue('family_invite_notifications_enabled', value)} />
               <Toggle label="Sessiz saatler" checked={form.quiet_hours_enabled} onChange={(value) => setValue('quiet_hours_enabled', value)} />
               {form.quiet_hours_enabled && (
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <Field label="Başlangıç" type="time" value={form.quiet_hours_start} onChange={(value) => setValue('quiet_hours_start', value)} />
-                  <Field label="Bitiş" type="time" value={form.quiet_hours_end} onChange={(value) => setValue('quiet_hours_end', value)} />
+                  <Field label="BaÅŸlangÄ±Ã§" type="time" value={form.quiet_hours_start} onChange={(value) => setValue('quiet_hours_start', value)} />
+                  <Field label="BitiÅŸ" type="time" value={form.quiet_hours_end} onChange={(value) => setValue('quiet_hours_end', value)} />
                 </div>
               )}
               <button
@@ -174,21 +170,21 @@ function SettingsPage() {
               </button>
             </SettingsSection>
 
-            <SettingsSection icon={<FiCpu />} title="AI ve Veri Kullanımı" description="Asistan ve raporlar hangi verileri bağlam olarak kullanabilir?">
-              <Toggle label="Sağlık kayıtlarım AI bağlamına dahil olsun" checked={form.ai_use_health_records} onChange={(value) => setValue('ai_use_health_records', value)} />
-              <Toggle label="Belgelerim ve analizlerim kullanılsın" checked={form.ai_use_documents} onChange={(value) => setValue('ai_use_documents', value)} />
-              <Toggle label="Kayıtlı doktor raporları kullanılsın" checked={form.ai_use_doctor_reports} onChange={(value) => setValue('ai_use_doctor_reports', value)} />
-              <Toggle label="Sağlık profilim AI bağlamına dahil olsun" checked={form.ai_use_profile} onChange={(value) => setValue('ai_use_profile', value)} />
+            <SettingsSection icon={<FiCpu />} title="AI ve Veri KullanÄ±mÄ±" description="Asistan ve raporlar hangi verileri baÄŸlam olarak kullanabilir?">
+              <Toggle label="SaÄŸlÄ±k kayÄ±tlarÄ±m AI baÄŸlamÄ±na dahil olsun" checked={form.ai_use_health_records} onChange={(value) => setValue('ai_use_health_records', value)} />
+              <Toggle label="Belgelerim ve analizlerim kullanÄ±lsÄ±n" checked={form.ai_use_documents} onChange={(value) => setValue('ai_use_documents', value)} />
+              <Toggle label="KayÄ±tlÄ± doktor raporlarÄ± kullanÄ±lsÄ±n" checked={form.ai_use_doctor_reports} onChange={(value) => setValue('ai_use_doctor_reports', value)} />
+              <Toggle label="SaÄŸlÄ±k profilim AI baÄŸlamÄ±na dahil olsun" checked={form.ai_use_profile} onChange={(value) => setValue('ai_use_profile', value)} />
             </SettingsSection>
 
-            <SettingsSection icon={<FiUser />} title="Sağlık Profili" description="AI yorumlarının daha anlamlı olması için temel sağlık bilgileri.">
+            <SettingsSection icon={<FiUser />} title="SaÄŸlÄ±k Profili" description="AI yorumlarÄ±nÄ±n daha anlamlÄ± olmasÄ± iÃ§in temel saÄŸlÄ±k bilgileri.">
               <div className="grid sm:grid-cols-2 gap-3">
-                <Field label="Doğum yılı" type="number" value={form.birth_year} onChange={(value) => setValue('birth_year', value)} />
+                <Field label="DoÄŸum yÄ±lÄ±" type="number" value={form.birth_year} onChange={(value) => setValue('birth_year', value)} />
                 <Select label="Biyolojik cinsiyet" value={form.biological_sex || ''} onChange={(value) => setValue('biological_sex', value)}>
                   <option value="">Belirtmek istemiyorum</option>
-                  <option value="female">Kadın</option>
+                  <option value="female">KadÄ±n</option>
                   <option value="male">Erkek</option>
-                  <option value="other">Diğer</option>
+                  <option value="other">DiÄŸer</option>
                 </Select>
                 <Field label="Boy (cm)" type="number" value={form.height_cm} onChange={(value) => setValue('height_cm', value)} />
                 <Field label="Kilo (kg)" type="number" value={form.weight_kg} onChange={(value) => setValue('weight_kg', value)} />
@@ -199,29 +195,29 @@ function SettingsPage() {
                   ))}
                 </Select>
               </div>
-              <TextArea label="Kronik hastalıklar" value={form.chronic_conditions || ''} onChange={(value) => setValue('chronic_conditions', value)} />
+              <TextArea label="Kronik hastalÄ±klar" value={form.chronic_conditions || ''} onChange={(value) => setValue('chronic_conditions', value)} />
               <TextArea label="Alerjiler" value={form.allergies || ''} onChange={(value) => setValue('allergies', value)} />
               <div className="grid sm:grid-cols-2 gap-3">
-                <Field label="Acil kişi" value={form.emergency_contact_name || ''} onChange={(value) => setValue('emergency_contact_name', value)} />
+                <Field label="Acil kiÅŸi" value={form.emergency_contact_name || ''} onChange={(value) => setValue('emergency_contact_name', value)} />
                 <Field label="Acil telefon" value={form.emergency_contact_phone || ''} onChange={(value) => setValue('emergency_contact_phone', value)} />
               </div>
             </SettingsSection>
           </div>
 
           <aside className="space-y-6">
-            <SettingsSection icon={<FiShield />} title="Gizlilik ve Güvenlik" description="Hesap güvenliği ve veri aksiyonları.">
+            <SettingsSection icon={<FiShield />} title="Gizlilik ve GÃ¼venlik" description="Hesap gÃ¼venliÄŸi ve veri aksiyonlarÄ±.">
               <Link to="/profile" className="flex items-center gap-2 rounded-xl border border-navy-700 bg-navy-900/45 px-4 py-3 text-sm font-semibold text-navy-100 hover:bg-navy-800 transition-colors">
-                <FiLock /> Şifre değiştir
+                <FiLock /> Åifre deÄŸiÅŸtir
               </Link>
               <button type="button" onClick={handleExport} className="flex w-full items-center gap-2 rounded-xl border border-navy-700 bg-navy-900/45 px-4 py-3 text-sm font-semibold text-navy-100 hover:bg-navy-800 transition-colors">
-                <FiDownload /> Verilerimi dışa aktar
+                <FiDownload /> Verilerimi dÄ±ÅŸa aktar
               </button>
               <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 space-y-3">
                 <div className="flex items-center gap-2 text-red-200 font-semibold text-sm">
-                  <FiTrash2 /> Hesabımı sil
+                  <FiTrash2 /> HesabÄ±mÄ± sil
                 </div>
-                <p className="text-red-100/80 text-xs">Kalıcı silme için şifreni ve HESABIMI SIL onay metnini gir.</p>
-                <Field label="Şifre" type="password" value={deletePassword} onChange={setDeletePassword} />
+                <p className="text-red-100/80 text-xs">KalÄ±cÄ± silme iÃ§in ÅŸifreni ve HESABIMI SIL onay metnini gir.</p>
+                <Field label="Åifre" type="password" value={deletePassword} onChange={setDeletePassword} />
                 <Field label="Onay metni" value={deleteConfirmation} onChange={setDeleteConfirmation} />
                 <button
                   type="button"
@@ -229,18 +225,18 @@ function SettingsPage() {
                   disabled={!deletePassword || deleteConfirmation.trim().toUpperCase() !== 'HESABIMI SIL'}
                   className="w-full rounded-xl bg-red-500/20 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-red-100 px-4 py-3 text-sm font-bold transition-colors"
                 >
-                  Hesabımı kalıcı sil
+                  HesabÄ±mÄ± kalÄ±cÄ± sil
                 </button>
               </div>
             </SettingsSection>
 
-            <SettingsSection icon={<FiStar />} title="Premium ve Abonelik" description="Plan bilgisi ve ödeme sayfası.">
+            <SettingsSection icon={<FiStar />} title="Premium ve Abonelik" description="Plan bilgisi ve Ã¶deme sayfasÄ±.">
               <div className="rounded-2xl border border-navy-700 bg-navy-900/45 p-4">
                 <p className="text-navy-400 text-sm">Mevcut plan</p>
-                <p className="text-white font-bold text-xl mt-1">{user?.is_premium ? 'Premium' : 'Ücretsiz'}</p>
+                <p className="text-white font-bold text-xl mt-1">{user?.is_premium ? 'Premium' : 'Ãœcretsiz'}</p>
               </div>
               <Link to="/billing" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-white px-4 py-3 font-bold transition-colors">
-                <FiStar /> Premium sayfasına git
+                <FiStar /> Premium sayfasÄ±na git
               </Link>
             </SettingsSection>
 
@@ -248,7 +244,7 @@ function SettingsPage() {
               <div className="flex items-start gap-3">
                 <FiClock className="mt-0.5 shrink-0" />
                 <p>
-                  Sessiz saatler ve AI veri izinleri kaydedilir. AI servisleri yalnızca izin verdiğin veri bağlamını kullanır.
+                  Sessiz saatler ve AI veri izinleri kaydedilir. AI servisleri yalnÄ±zca izin verdiÄŸin veri baÄŸlamÄ±nÄ± kullanÄ±r.
                 </p>
               </div>
             </div>

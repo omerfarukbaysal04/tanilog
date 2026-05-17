@@ -1,5 +1,7 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import api from '../lib/api';
+
+let activeGeneration = null;
 
 const useDoctorPrepStore = create((set) => ({
   report: null,
@@ -8,17 +10,22 @@ const useDoctorPrepStore = create((set) => ({
   isLoadingSaved: false,
   isSaving: false,
   error: null,
-
-  createDoctorPrepReport: async () => {
+  createDoctorPrepReport: async (specialty = 'family') => {
+    if (activeGeneration) return activeGeneration;
     set({ isGenerating: true, error: null });
-    try {
-      const { data } = await api.post('/ai/doctor-prep', { days: 30 });
+    activeGeneration = (async () => {
+      const { data } = await api.post('/ai/doctor-prep', { days: 30, specialty });
       set({ report: data, isGenerating: false });
       return data;
+    })();
+    try {
+      return await activeGeneration;
     } catch (error) {
       const message = error.response?.data?.detail || 'Doktora hazırlık raporu oluşturulamadı.';
       set({ error: message, isGenerating: false });
       throw new Error(message);
+    } finally {
+      activeGeneration = null;
     }
   },
 
@@ -29,7 +36,7 @@ const useDoctorPrepStore = create((set) => ({
       set({ savedReports: data, isLoadingSaved: false });
       return data;
     } catch (error) {
-      const message = error.response?.data?.detail || 'Kayıtlı raporlar yüklenemedi.';
+      const message = error.response?.data?.detail || 'KayÄ±tlÄ± raporlar yÃ¼klenemedi.';
       set({ error: message, isLoadingSaved: false });
       throw new Error(message);
     }
@@ -42,7 +49,7 @@ const useDoctorPrepStore = create((set) => ({
       set({ report: data, isGenerating: false });
       return data;
     } catch (error) {
-      const message = error.response?.data?.detail || 'Kayıtlı rapor açılamadı.';
+      const message = error.response?.data?.detail || 'KayÄ±tlÄ± rapor aÃ§Ä±lamadÄ±.';
       set({ error: message, isGenerating: false });
       throw new Error(message);
     }
@@ -78,6 +85,11 @@ const useDoctorPrepStore = create((set) => ({
       set({ error: message });
       throw new Error(message);
     }
+  },
+
+  createShareLink: async ({ reportId, password, hours = 24 }) => {
+    const { data } = await api.post(`/ai/doctor-prep/saved/${reportId}/share`, { password, hours });
+    return data;
   },
 
   clearError: () => set({ error: null }),

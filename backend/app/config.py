@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     # Dosya depolama
     UPLOAD_DIR: str = "uploads"
 
+    # Web Push / paylaşım linkleri
+    PUBLIC_WEB_URL: str = "http://localhost:3000"
+    VAPID_PUBLIC_KEY: str | None = None
+    VAPID_PRIVATE_KEY: str | None = None
+    VAPID_SUBJECT: str = "mailto:admin@tanilog.local"
+
     class Config:
         env_file = ".env"
 

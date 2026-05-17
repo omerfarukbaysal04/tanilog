@@ -22,3 +22,6 @@ starlette==0.38.6
 
 # Yapay Zeka
 google-genai==0.2.0
+
+# Web Push
+pywebpush==2.0.3

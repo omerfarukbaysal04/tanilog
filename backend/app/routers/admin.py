@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -13,6 +14,7 @@ from app.models.family import FamilyInvitation
 from app.models.health import MedicationLog, NutritionLog, SleepLog, SymptomLog
 from app.models.subscription import SubscriptionEvent
 from app.models.user import User
+from app.models.web_completion import AdminAuditLog
 from app.routers.auth import get_current_user
 
 router = APIRouter()
@@ -25,6 +27,16 @@ class PremiumUpdate(BaseModel):
 
 class AdminUpdate(BaseModel):
     is_admin: bool
+
+
+def _audit(db: Session, admin_user: User, target_user: User, action: str, before: dict, after: dict) -> None:
+    db.add(AdminAuditLog(
+        admin_user_id=admin_user.id,
+        target_user_id=target_user.id,
+        action=action,
+        before=json.dumps(before, ensure_ascii=False, default=str),
+        after=json.dumps(after, ensure_ascii=False, default=str),
+    ))
 
 
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
@@ -100,6 +112,8 @@ async def update_user_premium(
     if not user:
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı.")
 
+    before = {"is_premium": user.is_premium, "subscription_plan": user.subscription_plan, "premium_until": user.premium_until}
+
     if payload.plan == "free":
         user.is_premium = False
         user.subscription_plan = "free"
@@ -108,6 +122,14 @@ async def update_user_premium(
         user.is_premium = True
         user.subscription_plan = payload.plan
         user.premium_until = datetime.utcnow() + timedelta(days=payload.days)
+    _audit(
+        db,
+        admin_user,
+        user,
+        "premium_updated",
+        before=before,
+        after={"is_premium": user.is_premium, "subscription_plan": user.subscription_plan, "premium_until": user.premium_until},
+    )
 
     event = SubscriptionEvent(
         user_id=user.id,
@@ -138,7 +160,40 @@ async def update_user_admin(
     if not user:
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı.")
 
+    before = {"is_admin": user.is_admin}
     user.is_admin = payload.is_admin
+    _audit(
+        db,
+        current_user,
+        user,
+        "admin_updated",
+        before=before,
+        after={"is_admin": user.is_admin},
+    )
     db.commit()
     db.refresh(user)
     return _user_payload(user)
+
+
+@router.get("/audit-logs", summary="Admin audit log")
+async def list_admin_audit_logs(
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    rows = db.query(AdminAuditLog).order_by(AdminAuditLog.created_at.desc()).limit(100).all()
+    user_ids = {row.admin_user_id for row in rows if row.admin_user_id} | {row.target_user_id for row in rows if row.target_user_id}
+    users = {user.id: user for user in db.query(User).filter(User.id.in_(user_ids)).all()} if user_ids else {}
+    return [
+        {
+            "id": row.id,
+            "action": row.action,
+            "admin_user_id": row.admin_user_id,
+            "admin_name": users.get(row.admin_user_id).full_name if users.get(row.admin_user_id) else None,
+            "target_user_id": row.target_user_id,
+            "target_name": users.get(row.target_user_id).full_name if users.get(row.target_user_id) else None,
+            "before": json.loads(row.before) if row.before else None,
+            "after": json.loads(row.after) if row.after else None,
+            "created_at": row.created_at,
+        }
+        for row in rows
+    ]

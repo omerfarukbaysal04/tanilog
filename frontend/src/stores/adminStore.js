@@ -4,18 +4,20 @@ import api from '../lib/api';
 const useAdminStore = create((set) => ({
   overview: null,
   users: [],
+  auditLogs: [],
   isLoading: false,
   error: null,
 
   fetchAdminData: async () => {
     set({ isLoading: true, error: null });
     try {
-      const [overview, users] = await Promise.all([
+      const [overview, users, auditLogs] = await Promise.all([
         api.get('/admin/overview'),
         api.get('/admin/users'),
+        api.get('/admin/audit-logs'),
       ]);
-      set({ overview: overview.data, users: users.data, isLoading: false });
-      return { overview: overview.data, users: users.data };
+      set({ overview: overview.data, users: users.data, auditLogs: auditLogs.data, isLoading: false });
+      return { overview: overview.data, users: users.data, auditLogs: auditLogs.data };
     } catch (error) {
       const message = error.response?.data?.detail || 'Admin verileri yuklenemedi.';
       set({ error: message, isLoading: false });

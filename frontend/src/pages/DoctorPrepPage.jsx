@@ -36,11 +36,16 @@ function DoctorPrepPage() {
     loadSavedReport,
     saveCurrentReport,
     deleteSavedReport,
+    createShareLink,
     clearError,
   } = useDoctorPrepStore();
   const isPremium = !!user?.is_premium;
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [specialty, setSpecialty] = useState('family');
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [sharePassword, setSharePassword] = useState('');
+  const [shareUrl, setShareUrl] = useState('');
   const printableHtml = useMemo(() => (report ? buildPrintableReport(report) : ''), [report]);
 
   useEffect(() => () => {
@@ -53,8 +58,10 @@ function DoctorPrepPage() {
 
   const handleGenerate = async () => {
     clearError();
+    toast('Rapor arka planda hazırlanıyor. Bu sırada sitede gezinmeye devam edebilirsin.');
     try {
-      await createDoctorPrepReport();
+      await createDoctorPrepReport(specialty);
+      toast.success('Doktor raporu hazır.');
     } catch {
       // Store handles visible error state.
     }
@@ -102,6 +109,34 @@ function DoctorPrepPage() {
       toast.success('Rapor kaydedildi.');
     } catch (error) {
       toast.error(error.message || 'Rapor kaydedilemedi.');
+    }
+  };
+
+  const handleCreateSecureShare = async () => {
+    if (!report) {
+      toast.error('Önce rapor oluşturmalısın.');
+      return;
+    }
+    if (sharePassword.length < 4) {
+      toast.error('Paylaşım şifresi en az 4 karakter olmalı.');
+      return;
+    }
+    try {
+      let reportId = report.saved_report_id;
+      if (!reportId) {
+        const saved = await saveCurrentReport({
+          title: report.saved_title || `Doktor Raporu ${report.date_range?.end || new Date().toISOString().slice(0, 10)}`,
+          report,
+        });
+        reportId = saved.id;
+        toast.success('Rapor kaydedildi.');
+      }
+      const data = await createShareLink({ reportId, password: sharePassword, hours: 24 });
+      setShareUrl(data.share_url);
+      await navigator.clipboard.writeText(data.share_url);
+      toast.success('24 saat geçerli paylaşım linki kopyalandı.');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || error.message || 'Paylaşım linki oluşturulamadı.');
     }
   };
 
@@ -159,10 +194,6 @@ function DoctorPrepPage() {
         <div className="glass-card rounded-2xl border border-navy-700/50 p-6 lg:p-7">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-semibold mb-4">
-                <FiClipboard size={14} />
-                Faz 8 Premium
-              </div>
               <h1 className="text-2xl md:text-3xl font-bold text-white">Doktora Hazırlan</h1>
               <p className="text-navy-300 text-sm mt-2 max-w-2xl">
                 Son 30 günlük sağlık kayıtlarını, ilaçlarını ve analizli belgelerini doktor görüşmesi için profesyonel bir rapora dönüştür.
@@ -170,6 +201,16 @@ function DoctorPrepPage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
+              <select
+                value={specialty}
+                onChange={(event) => setSpecialty(event.target.value)}
+                className="rounded-xl border border-navy-700 bg-navy-900/60 text-white px-4 py-3 text-sm font-semibold outline-none"
+              >
+                <option value="family">Aile Hekimi</option>
+                <option value="internal">Dahiliye</option>
+                <option value="neurology">Nöroloji</option>
+                <option value="cardiology">Kardiyoloji</option>
+              </select>
               <ActionButton onClick={handleGenerate} disabled={isGenerating} tone="primary">
                 {isGenerating ? <FiRefreshCw className="animate-spin" /> : <FiFileText />}
                 Rapor Oluştur
@@ -189,6 +230,10 @@ function DoctorPrepPage() {
               <ActionButton onClick={handleShare} disabled={!report} tone="dark">
                 <FiShare2 />
                 Paylaş
+              </ActionButton>
+              <ActionButton onClick={() => setShareModalOpen(true)} disabled={!report || isSaving} tone="dark">
+                <FiLock />
+                Link Oluştur
               </ActionButton>
             </div>
           </div>
@@ -264,6 +309,32 @@ function DoctorPrepPage() {
               onClose={() => setPdfPreviewOpen(false)}
             />
           )}
+        </ModalContainer>
+
+        <ModalContainer
+          isOpen={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          title="Şifreli Paylaşım Linki"
+          maxWidth="max-w-lg"
+        >
+          <div className="space-y-4">
+            <p className="text-navy-300 text-sm">
+              Bu link 24 saat geçerli olur. Şifreyi doktorunla ayrı bir kanaldan paylaşman daha güvenlidir.
+            </p>
+            <input
+              className="w-full rounded-xl border border-navy-700 bg-navy-900/45 text-white px-4 py-3 outline-none focus:border-teal-500"
+              type="password"
+              placeholder="Paylaşım şifresi"
+              value={sharePassword}
+              onChange={(event) => setSharePassword(event.target.value)}
+            />
+            {shareUrl && (
+              <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-3 text-teal-100 text-sm break-all">{shareUrl}</div>
+            )}
+            <button onClick={handleCreateSecureShare} className="w-full rounded-xl bg-teal-500 hover:bg-teal-400 text-white px-4 py-3 font-bold">
+              Linki Oluştur ve Kopyala
+            </button>
+          </div>
         </ModalContainer>
       </div>
     </DashboardLayout>

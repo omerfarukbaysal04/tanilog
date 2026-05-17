@@ -1,4 +1,6 @@
+import hashlib
 import json
+import secrets
 from datetime import date, datetime, timedelta
 from typing import Literal
 
@@ -7,6 +9,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.config import settings
 from app.models.ai_analysis import AIAnalysis, DoctorPrepReport
 from app.models.document import Document
 from app.models.health import MedicationLog, NutritionLog, SleepLog, SymptomLog
@@ -42,11 +45,25 @@ class MedicationInteractionRequest(BaseModel):
 
 class DoctorPrepRequest(BaseModel):
     days: int = Field(30, ge=30, le=30)
+    specialty: Literal["family", "internal", "neurology", "cardiology"] = "family"
 
 
 class SaveDoctorPrepReportRequest(BaseModel):
     title: str | None = Field(None, max_length=255)
     report: dict
+
+
+class CreateDoctorShareRequest(BaseModel):
+    password: str = Field(..., min_length=4, max_length=80)
+    hours: int = Field(24, ge=1, le=168)
+
+
+class OpenDoctorShareRequest(BaseModel):
+    password: str
+
+
+def _token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def _date_or_datetime(value):
@@ -293,6 +310,13 @@ async def create_doctor_prep_report(
         "health": health_context,
         "medication_review": medication_context,
         "document_analyses": document_context,
+        "specialty": payload.specialty,
+        "specialty_instruction": {
+            "family": "Aile hekimi için genel, anlaşılır ve önceliklendirilmiş bir özet hazırla.",
+            "internal": "Dahiliye odaklı; metabolik, ilaç, uyku ve beslenme ilişkilerini daha görünür yap.",
+            "neurology": "Nöroloji odaklı; baş ağrısı, uyku, nörolojik semptomlar ve tetikleyicileri öne çıkar.",
+            "cardiology": "Kardiyoloji odaklı; göğüs ağrısı, tansiyon ima eden kayıtlar, uyku ve ilaç uyumunu öne çıkar.",
+        }.get(payload.specialty),
     }
 
     result = generate_doctor_prep_report(
@@ -305,6 +329,7 @@ async def create_doctor_prep_report(
         "email": current_user.email,
     }
     result["generated_at"] = datetime.utcnow().isoformat()
+    result["specialty"] = payload.specialty
     result["source_counts"] = {
         "symptoms": len(health_context["symptoms"]),
         "medications": len(health_context["medications"]),
@@ -435,6 +460,70 @@ async def delete_saved_doctor_prep_report(
     db.commit()
 
 
+@router.post("/doctor-prep/saved/{report_id}/share", status_code=status.HTTP_201_CREATED)
+async def create_doctor_share_link(
+    report_id: int,
+    payload: CreateDoctorShareRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not is_premium_active(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Rapor paylaşımı Premium kullanıcılar için kullanılabilir.")
+
+    report = db.query(DoctorPrepReport).filter(
+        DoctorPrepReport.id == report_id,
+        DoctorPrepReport.user_id == current_user.id,
+    ).first()
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rapor bulunamadı.")
+
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.utcnow() + timedelta(hours=payload.hours)
+    link = DoctorShareLink(
+        report_id=report.id,
+        user_id=current_user.id,
+        token_hash=_token_hash(token),
+        password_hash=get_password_hash(payload.password),
+        expires_at=expires_at,
+    )
+    db.add(link)
+    db.commit()
+    db.refresh(link)
+    return {
+        "id": link.id,
+        "token": token,
+        "share_url": f"{settings.PUBLIC_WEB_URL.rstrip('/')}/shared/doctor-report/{token}",
+        "expires_at": expires_at,
+        "hours": payload.hours,
+    }
+
+
+@router.post("/doctor-prep/shared/{token}")
+async def open_shared_doctor_report(
+    token: str,
+    payload: OpenDoctorShareRequest,
+    db: Session = Depends(get_db),
+):
+    link = db.query(DoctorShareLink).filter(DoctorShareLink.token_hash == _token_hash(token)).first()
+    if not link or link.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paylaşım linki bulunamadı veya süresi doldu.")
+    if not verify_password(payload.password, link.password_hash):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Paylaşım şifresi hatalı.")
+
+    report = db.query(DoctorPrepReport).filter(DoctorPrepReport.id == link.report_id).first()
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rapor bulunamadı.")
+
+    link.view_count += 1
+    link.last_viewed_at = datetime.utcnow()
+    db.commit()
+
+    data = json.loads(report.report_json)
+    data["saved_title"] = report.title
+    data["shared_expires_at"] = link.expires_at
+    return data
+
+
 @router.post("/medication-interactions")
 async def check_medication_interactions(
     payload: MedicationInteractionRequest,
@@ -477,3 +566,5 @@ async def scan_medication_file(
     result = scan_medications_from_file(file_bytes, file.content_type)
     result["source_filename"] = file.filename
     return result
+from app.models.web_completion import DoctorShareLink
+from app.routers.auth import get_password_hash, verify_password

@@ -86,10 +86,6 @@ function AIPage() {
       <div className="max-w-6xl mx-auto space-y-8 pb-8">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-300 text-xs font-semibold mb-4">
-              <FiCpu size={14} />
-              Faz 5 AI Merkezi
-            </div>
             <h1 className="text-2xl md:text-3xl font-bold text-white">AI Analiz</h1>
             <p className="text-navy-300 text-sm mt-2 max-w-2xl">
               Tahlil analizlerini günlük sağlık kayıtlarınla birlikte değerlendir ve haftalık ya da aylık sağlık raporu oluştur.

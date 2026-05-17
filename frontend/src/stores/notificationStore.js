@@ -91,6 +91,7 @@ const useNotificationStore = create((set, get) => ({
         api.get(`/health/daily-summary?date=${date}`).catch(() => ({ data: { medications: [] } })),
         api.get('/family/invitations/received').catch(() => ({ data: [] })),
       ]);
+      const serverResponse = await api.get('/notifications').catch(() => ({ data: [] }));
 
       const medicationItems = (summaryResponse.data.medications || [])
         .filter(() => notificationSettings.notifications_enabled && notificationSettings.medication_reminders_enabled)
@@ -121,7 +122,12 @@ const useNotificationStore = create((set, get) => ({
       }));
 
       const manualItems = get().items.filter((item) => item.type === 'system_test');
-      const items = [...invitationItems, ...medicationItems, ...manualItems]
+      const serverItems = (serverResponse.data || []).map((item) => ({
+        ...item,
+        read: item.read || readIds.has(item.id),
+      }));
+
+      const items = [...serverItems, ...invitationItems, ...medicationItems, ...manualItems]
         .sort((a, b) => new Date(b.eventTime || 0) - new Date(a.eventTime || 0));
 
       localStorage.setItem(voiceKey, String(notificationSettings.voice_notifications_enabled));
@@ -224,6 +230,10 @@ const useNotificationStore = create((set, get) => ({
     set((state) => ({
       items: state.items.map((item) => item.id === id ? { ...item, read: true } : item),
     }));
+    if (String(id).startsWith('server-')) {
+      const numericId = String(id).replace('server-', '');
+      api.post(`/notifications/${numericId}/read`).catch(() => {});
+    }
   },
 
   markAllRead: () => {
@@ -231,6 +241,7 @@ const useNotificationStore = create((set, get) => ({
     get().items.forEach((item) => readIds.add(item.id));
     saveStoredSet(readKey, readIds);
     set((state) => ({ items: state.items.map((item) => ({ ...item, read: true })) }));
+    api.post('/notifications/read-all').catch(() => {});
   },
 }));
 

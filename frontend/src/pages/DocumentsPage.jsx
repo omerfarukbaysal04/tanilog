@@ -69,7 +69,7 @@ function DocumentsPage() {
                 <div className="relative z-10">
                   <h3 className="text-white font-semibold mb-2">Yapay Zeka Hazırlığı</h3>
                   <p className="text-navy-300 text-sm">
-                    Faz 5 ile birlikte yüklediğiniz karmaşık tahlil sonuçlarını yapay zekamız Türkçe ve anlaşılır bir dilde sizin için yorumlayacak.
+                    Yüklediğiniz karmaşık tahlil sonuçlarını yapay zekamız Türkçe ve anlaşılır bir dilde sizin için yorumlayacak.
                   </p>
                 </div>
               </div>

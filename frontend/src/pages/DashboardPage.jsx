@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FiActivity,
+  FiAlertCircle,
   FiCalendar,
   FiChevronRight,
   FiClock,
@@ -15,6 +16,8 @@ import {
 } from 'react-icons/fi';
 import useAuthStore from '../stores/authStore';
 import useDashboardStore from '../stores/dashboardStore';
+import useOnboardingStore from '../stores/onboardingStore';
+import useRiskAlertStore from '../stores/riskAlertStore';
 import DashboardLayout from '../components/DashboardLayout';
 
 const quickActions = [
@@ -80,16 +83,21 @@ const parseLocalDate = (dateStr) => {
 function DashboardPage() {
   const { user, fetchUser } = useAuthStore();
   const { summary, isLoading, fetchSummary } = useDashboardStore();
+  const { state: onboardingState, fetchOnboarding, completeStep, skip } = useOnboardingStore();
+  const { alerts, fetchAlerts, dismissAlert } = useRiskAlertStore();
 
   useEffect(() => {
     if (!user) fetchUser();
     fetchSummary().catch(() => {});
-  }, [user, fetchUser, fetchSummary]);
+    fetchOnboarding().catch(() => {});
+    fetchAlerts(true).catch(() => {});
+  }, [user, fetchUser, fetchSummary, fetchOnboarding, fetchAlerts]);
 
   const counts = summary?.counts || {};
   const today = summary?.today || {};
   const activities = summary?.activities || [];
   const trends = summary?.trends || [];
+  const dataQuality = summary?.data_quality || [];
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -191,6 +199,9 @@ function DashboardPage() {
         <div>
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-bold text-white">Hızlı Eylemler</h2>
+            <Link to="/timeline" className="inline-flex items-center gap-2 text-sm text-teal-300 hover:text-teal-200 font-semibold">
+              <FiClock size={15} /> Zaman çizelgesi
+            </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {quickActions.map((action) => {
@@ -215,11 +226,56 @@ function DashboardPage() {
           </div>
         </div>
 
+        {onboardingState && !onboardingState.is_complete && (
+          <section className="glass rounded-2xl border border-teal-500/20 bg-teal-500/5 p-5">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h2 className="text-white font-bold text-xl">Kurulumu Tamamla</h2>
+                <p className="text-navy-300 text-sm mt-1">{onboardingState.completed_count}/{onboardingState.total_count} adım tamamlandı.</p>
+              </div>
+              <button onClick={() => skip().catch(() => {})} className="rounded-xl border border-navy-700 bg-navy-800 text-navy-100 px-4 py-2.5 text-sm font-semibold">Şimdilik atla</button>
+            </div>
+            <div className="grid md:grid-cols-5 gap-2 mt-4">
+              {[
+                ['health_profile_done', 'Sağlık profili', '/settings'],
+                ['notifications_done', 'Bildirim izni', '/settings'],
+                ['first_record_done', 'İlk kayıt', '/health'],
+                ['first_document_done', 'Belge yükle', '/documents'],
+                ['ai_permissions_done', 'AI izinleri', '/settings'],
+              ].map(([step, label, route]) => (
+                <Link key={step} to={route} onClick={() => completeStep(step).catch(() => {})} className={`rounded-xl border p-3 text-sm font-semibold ${onboardingState.steps?.[step] ? 'border-teal-500/30 bg-teal-500/10 text-teal-200' : 'border-navy-700 bg-navy-900/35 text-navy-200'}`}>
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {alerts.length > 0 && (
+          <section className="glass rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-white font-bold text-xl">Riskli Örüntü Uyarıları</h2>
+              <Link to="/search?category=risk" className="text-sm text-yellow-200 hover:text-yellow-100 font-semibold">Uyarıları ara</Link>
+            </div>
+            <div className="grid md:grid-cols-2 gap-3">
+              {alerts.slice(0, 4).map((alert) => (
+                <div key={alert.id} className="rounded-xl border border-yellow-500/20 bg-navy-900/35 p-4">
+                  <p className="text-yellow-100 font-semibold">{alert.title}</p>
+                  <p className="text-navy-300 text-sm mt-1">{alert.message}</p>
+                  <button onClick={() => dismissAlert(alert.id).catch(() => {})} className="text-yellow-200 text-xs font-semibold mt-3">Gizle</button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           <div className="xl:col-span-2">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-xl font-bold text-white">Son Aktiviteler</h2>
-              <Link to="/health" className="text-sm text-teal-300 hover:text-teal-200 font-semibold">Sağlık takibine git</Link>
+              <Link to="/timeline" className="inline-flex items-center gap-2 text-sm text-teal-300 hover:text-teal-200 font-semibold">
+                <FiClock size={15} /> Tüm zaman çizelgesi
+              </Link>
             </div>
             <div className="glass rounded-2xl p-5 border border-navy-700/50 min-h-[300px] relative overflow-hidden">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-navy-800/50 rounded-full blur-3xl" />
@@ -243,7 +299,7 @@ function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-5">
             <h2 className="text-xl font-bold text-white mb-5">Bugünün Özeti</h2>
             <div className="glass rounded-2xl p-6 border border-navy-700/50 h-full">
               <div className="grid grid-cols-2 gap-3">
@@ -267,6 +323,26 @@ function DashboardPage() {
                 </div>
               )}
             </div>
+            {dataQuality.length > 0 && (
+              <div className="glass rounded-2xl p-5 border border-yellow-500/20 bg-yellow-500/5">
+                <div className="flex items-center gap-2 mb-3">
+                  <FiAlertCircle className="text-yellow-300" />
+                  <h3 className="text-white font-semibold">Veri Kalitesi</h3>
+                </div>
+                <div className="space-y-2">
+                  {dataQuality.map((item) => (
+                    <Link
+                      key={`${item.kind}-${item.title}`}
+                      to={item.route}
+                      className="block rounded-xl border border-navy-700/70 bg-navy-900/35 p-3 hover:bg-navy-800/70 transition-colors"
+                    >
+                      <p className="text-white text-sm font-semibold">{item.title}</p>
+                      <p className="text-navy-400 text-xs mt-1 leading-relaxed">{item.description}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

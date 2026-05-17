@@ -478,6 +478,7 @@ function MedicationPanel({
   onOpenDetails,
   renderEmptyState,
 }) {
+  const warnings = buildMedicationWarnings(medications);
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -535,6 +536,19 @@ function MedicationPanel({
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 flex items-start gap-3">
           <FiAlertCircle className="text-red-300 mt-0.5 flex-shrink-0" size={18} />
           <p className="text-red-200 text-sm">{interactionError}</p>
+        </div>
+      )}
+
+      {warnings.length > 0 && (
+        <div className="rounded-xl border border-yellow-500/25 bg-yellow-500/10 p-4">
+          <h3 className="text-yellow-100 font-semibold flex items-center gap-2">
+            <FiAlertCircle /> Veri Kalitesi Uyarıları
+          </h3>
+          <div className="mt-3 space-y-2">
+            {warnings.map((warning, index) => (
+              <p key={index} className="text-yellow-50/90 text-sm rounded-lg bg-navy-900/30 border border-yellow-500/10 p-3">{warning}</p>
+            ))}
+          </div>
         </div>
       )}
 
@@ -644,6 +658,28 @@ function MedicationPanel({
       )}
     </div>
   );
+}
+
+function buildMedicationWarnings(medications) {
+  const warnings = [];
+  const seen = new Map();
+  medications.forEach((item) => {
+    const key = `${item.name || ''}|${item.dosage || ''}`.toLowerCase().trim();
+    seen.set(key, (seen.get(key) || 0) + 1);
+    if (item.reminder_enabled && !item.reminder_time && !item.time_taken) {
+      warnings.push(`${item.name} için hatırlatma açık ama saat bilgisi eksik.`);
+    }
+    if (!/\d|tablet|kapsül|mg|ml|damla|ölçek|sprey/i.test(item.dosage || '')) {
+      warnings.push(`${item.name} doz bilgisi alışılmış formatta görünmüyor: ${item.dosage}`);
+    }
+  });
+  seen.forEach((count, key) => {
+    if (count > 1) {
+      const [name, dosage] = key.split('|');
+      warnings.push(`${name} ${dosage ? `(${dosage})` : ''} aynı gün birden fazla kayıtlı görünüyor.`);
+    }
+  });
+  return [...new Set(warnings)].slice(0, 4);
 }
 
 function MedicationDetailModal({ medication, onClose, onUpdate, onDelete, onMarkTaken }) {

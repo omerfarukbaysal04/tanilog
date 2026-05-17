@@ -67,6 +67,25 @@ def main():
 
     _, dashboard = request("/dashboard/summary", token=token)
     assert len(dashboard["trends"]) == 7
+    assert "data_quality" in dashboard
+
+    _, search = request("/search?q=smoke", token=token)
+    assert "results" in search
+
+    _, timeline = request("/timeline?days=7", token=token)
+    assert "items" in timeline
+
+    _, onboarding = request("/onboarding", token=token)
+    assert onboarding["total_count"] == 5
+
+    _, risks = request("/risk-alerts", token=token)
+    assert isinstance(risks, list)
+
+    _, push_config = request("/push/config", token=token)
+    assert push_config["provider"] == "web_push"
+
+    _, notifications = request("/notifications", token=token)
+    assert isinstance(notifications, list)
 
     _, export = request("/settings/export", token=token)
     assert export["user"]["email"] == email

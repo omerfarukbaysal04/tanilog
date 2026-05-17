@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -24,16 +24,17 @@ import {
 import ChatAssistantWidget from './ChatAssistantWidget';
 import NotificationCenter from './NotificationCenter';
 import AdBanner from './AdBanner';
+import GlobalSearch from './GlobalSearch';
 import useAuthStore from '../stores/authStore';
 
 const navItems = [
   { icon: <FiHome size={20} />, label: 'Dashboard', path: '/dashboard' },
-  { icon: <FiActivity size={20} />, label: 'Sağlık Takibi', path: '/health' },
+  { icon: <FiActivity size={20} />, label: 'SaÄŸlÄ±k Takibi', path: '/health' },
   { icon: <FiFileText size={20} />, label: 'Belgelerim', path: '/documents' },
   { icon: <FiCpu size={20} />, label: 'AI Analiz', path: '/ai' },
   { icon: <FiMessageCircle size={20} />, label: 'AI Asistan', path: '/chat' },
   { icon: <FiMic size={20} />, label: 'Sesli Asistan', path: '/voice' },
-  { icon: <FiClipboard size={20} />, label: 'Doktora Hazırlan', path: '/doctor-prep' },
+  { icon: <FiClipboard size={20} />, label: 'Doktora HazÄ±rlan', path: '/doctor-prep' },
   { icon: <FiUsers size={20} />, label: 'Aile Takibi', path: '/family' },
   { icon: <FiCreditCard size={20} />, label: 'Premium', path: '/billing' },
   { icon: <FiUser size={20} />, label: 'Profil', path: '/profile' },
@@ -44,12 +45,14 @@ const adminNavItem = { icon: <FiShield size={20} />, label: 'Admin', path: '/adm
 
 const pageTitles = {
   '/dashboard': 'Dashboard',
-  '/health': 'Sağlık Takibi',
+  '/search': 'Arama',
+  '/timeline': 'Zaman Ã‡izelgesi',
+  '/health': 'SaÄŸlÄ±k Takibi',
   '/documents': 'Belgelerim',
   '/ai': 'AI Analiz',
   '/chat': 'AI Asistan',
   '/voice': 'Sesli Asistan',
-  '/doctor-prep': 'Doktora Hazırlan',
+  '/doctor-prep': 'Doktora HazÄ±rlan',
   '/family': 'Aile Takibi',
   '/billing': 'Premium',
   '/profile': 'Profil',
@@ -58,8 +61,8 @@ const pageTitles = {
 };
 
 /**
- * Dashboard layout bileşeni.
- * Sol sidebar + üst header + ana içerik alanı.
+ * Dashboard layout bileÅŸeni.
+ * Sol sidebar + Ã¼st header + ana iÃ§erik alanÄ±.
  */
 function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -67,7 +70,7 @@ function DashboardLayout({ children }) {
   const { user, logout } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
-  const pageTitle = pageTitles[location.pathname] || 'TanıLog';
+  const pageTitle = pageTitles[location.pathname] || 'TanÄ±Log';
 
   const handleLogout = () => {
     logout();
@@ -114,7 +117,7 @@ function DashboardLayout({ children }) {
         {/* Logo */}
         <div className="flex items-center justify-between px-6 py-6 border-b border-navy-700/50">
           <Link to="/dashboard" className="flex items-center gap-3 group">
-            <img src="/logos/logo-white-text.png" alt="TanıLog Logo" className="h-12 md:h-14 w-auto group-hover:scale-105 transition-transform" />
+            <img src="/logos/logo-white-text.png" alt="TanÄ±Log Logo" className="h-12 md:h-14 w-auto group-hover:scale-105 transition-transform" />
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -168,14 +171,14 @@ function DashboardLayout({ children }) {
           })}
         </nav>
 
-        {/* Kullanıcı bilgi & çıkış */}
+        {/* KullanÄ±cÄ± bilgi & Ã§Ä±kÄ±ÅŸ */}
         <div className="hidden border-t border-navy-700/50 p-5 bg-navy-900/30">
           <div className="flex items-center gap-3 mb-4 px-2">
             <div className="w-10 h-10 bg-gradient-to-br from-teal-500/20 to-blue-500/20 border border-teal-500/30 rounded-xl flex items-center justify-center text-teal-400 font-bold shadow-inner">
               {getInitials(user?.full_name)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-semibold truncate">{user?.full_name || 'Kullanıcı'}</p>
+              <p className="text-white text-sm font-semibold truncate">{user?.full_name || 'KullanÄ±cÄ±'}</p>
               <p className="text-navy-400 text-xs truncate">{user?.email || ''}</p>
               <span
                 className={`inline-flex items-center gap-1.5 mt-2 text-[11px] font-semibold px-2.5 py-1 rounded-full ${
@@ -187,7 +190,7 @@ function DashboardLayout({ children }) {
                 {user?.is_premium ? (
                   <><FiStar className="fill-current text-yellow-400" size={11}/> Premium Plan</>
                 ) : (
-                  'Ücretsiz Plan'
+                  'Ãœcretsiz Plan'
                 )}
               </span>
             </div>
@@ -197,22 +200,25 @@ function DashboardLayout({ children }) {
             className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-red-400 bg-red-500/5 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all"
           >
             <FiLogOut size={16} />
-            <span>Güvenli Çıkış</span>
+            <span>GÃ¼venli Ã‡Ä±kÄ±ÅŸ</span>
           </button>
         </div>
       </aside>
 
-      {/* Ana içerik */}
+      {/* Ana iÃ§erik */}
       <div className="flex-1 flex flex-col h-screen relative z-10">
-        {/* Üst header */}
+        {/* Ãœst header */}
         <header className="sticky top-0 z-30 glass border-b border-navy-700/50 px-6 py-4 transition-all">
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-navy-300 hover:text-white transition-colors bg-navy-800/50 p-2 rounded-lg"
-            >
-              <FiMenu size={22} />
-            </button>
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+            <div className="min-w-0 flex items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden text-navy-300 hover:text-white transition-colors bg-navy-800/50 p-2 rounded-lg"
+              >
+                <FiMenu size={22} />
+              </button>
+              <GlobalSearch />
+            </div>
             <div className="text-center">
               <h1 className="text-lg md:text-xl font-bold text-white">{pageTitle}</h1>
             </div>
@@ -232,8 +238,8 @@ function DashboardLayout({ children }) {
                   title="Hesap"
                 >
                   <span className="hidden xl:block text-left max-w-[150px]">
-                    <span className="block text-white text-xs font-semibold truncate">{user?.full_name || 'Kullanıcı'}</span>
-                    <span className="block text-navy-400 text-[11px] truncate">{user?.is_premium ? 'Premium Plan' : 'Ücretsiz Plan'}</span>
+                    <span className="block text-white text-xs font-semibold truncate">{user?.full_name || 'KullanÄ±cÄ±'}</span>
+                    <span className="block text-navy-400 text-[11px] truncate">{user?.is_premium ? 'Premium Plan' : 'Ãœcretsiz Plan'}</span>
                   </span>
                   <FiChevronDown className="text-navy-300" />
                 </button>
@@ -245,7 +251,7 @@ function DashboardLayout({ children }) {
                           {getInitials(user?.full_name)}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-white text-sm font-semibold truncate">{user?.full_name || 'Kullanıcı'}</p>
+                          <p className="text-white text-sm font-semibold truncate">{user?.full_name || 'KullanÄ±cÄ±'}</p>
                           <p className="text-navy-400 text-xs truncate">{user?.email || ''}</p>
                         </div>
                       </div>
@@ -259,7 +265,7 @@ function DashboardLayout({ children }) {
                         {user?.is_premium ? (
                           <><FiStar className="fill-current text-yellow-400" size={11}/> Premium Plan</>
                         ) : (
-                          'Ücretsiz Plan'
+                          'Ãœcretsiz Plan'
                         )}
                       </span>
                     </div>
@@ -282,7 +288,7 @@ function DashboardLayout({ children }) {
                         onClick={handleLogout}
                         className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-colors"
                       >
-                        <FiLogOut /> Güvenli Çıkış
+                        <FiLogOut /> GÃ¼venli Ã‡Ä±kÄ±ÅŸ
                       </button>
                     </div>
                   </div>
@@ -292,7 +298,7 @@ function DashboardLayout({ children }) {
           </div>
         </header>
 
-        {/* Sayfa içeriği */}
+        {/* Sayfa iÃ§eriÄŸi */}
         <main className="flex-1 p-6 lg:p-8 overflow-y-auto overflow-x-hidden hide-scrollbar">
           <motion.div
             key={location.pathname}

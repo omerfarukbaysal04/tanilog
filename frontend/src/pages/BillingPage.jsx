@@ -95,9 +95,6 @@ function BillingPage() {
           <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-teal-500/10 blur-3xl" />
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/25 bg-teal-500/10 text-teal-200 px-3 py-1 text-xs font-semibold mb-4">
-                <FiCreditCard /> Faz 11
-              </div>
               <h1 className="text-3xl md:text-4xl font-bold text-white">Ödeme ve Premium</h1>
               <p className="text-navy-300 mt-3 max-w-2xl">
                 Premium planını yönet, test ödeme akışını çalıştır ve reklamsız TanıLog deneyimini aç.

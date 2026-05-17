@@ -6,9 +6,15 @@ import DashboardLayout from '../components/DashboardLayout';
 import useAdminStore from '../stores/adminStore';
 import useAuthStore from '../stores/authStore';
 
+const planLabels = {
+  free: 'Ücretsiz',
+  monthly: 'Premium Aylık',
+  yearly: 'Premium Yıllık',
+};
+
 function AdminPage() {
   const { user } = useAuthStore();
-  const { overview, users, isLoading, fetchAdminData, updatePremium, updateAdmin } = useAdminStore();
+  const { overview, users, auditLogs, isLoading, fetchAdminData, updatePremium, updateAdmin } = useAdminStore();
 
   useEffect(() => {
     fetchAdminData().catch((error) => toast.error(error.message));
@@ -82,12 +88,12 @@ function AdminPage() {
                       <p className="text-white font-semibold">{item.full_name}</p>
                       <p className="text-navy-400 text-xs">{item.email}</p>
                     </td>
-                    <td className="py-4 px-3 text-navy-200">{item.is_premium ? item.subscription_plan : 'free'}</td>
+                    <td className="py-4 px-3 text-navy-200">{item.is_premium ? planLabels[item.subscription_plan] || item.subscription_plan : 'Ücretsiz'}</td>
                     <td className="py-4 px-3 text-navy-200">{item.is_admin ? 'admin' : 'user'}</td>
                     <td className="py-4 px-3">
                       <div className="flex justify-end gap-2">
                         <button onClick={() => handlePremium(item, item.is_premium ? 'free' : 'monthly')} className="rounded-lg bg-teal-500/15 text-teal-200 px-3 py-2 font-semibold hover:bg-teal-500/25">
-                          {item.is_premium ? 'Free yap' : 'Premium yap'}
+                          {item.is_premium ? 'Ücretsiz yap' : 'Premium yap'}
                         </button>
                         <button onClick={() => handleAdmin(item)} className="rounded-lg bg-blue-500/15 text-blue-200 px-3 py-2 font-semibold hover:bg-blue-500/25">
                           {item.is_admin ? 'Admin kaldır' : 'Admin yap'}
@@ -98,6 +104,27 @@ function AdminPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </section>
+
+        <section className="glass rounded-2xl border border-navy-700/50 p-5 overflow-hidden">
+          <h2 className="text-xl font-bold text-white mb-4">Audit Log</h2>
+          <div className="space-y-3 max-h-96 overflow-y-auto hide-scrollbar">
+            {(auditLogs || []).length === 0 ? (
+              <div className="rounded-xl border border-dashed border-navy-700 p-5 text-navy-400 text-sm text-center">Henüz admin aksiyonu yok.</div>
+            ) : (
+              auditLogs.map((log) => (
+                <div key={log.id} className="rounded-xl border border-navy-700/60 bg-navy-900/35 p-4">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <div>
+                      <p className="text-white font-semibold">{log.action}</p>
+                      <p className="text-navy-400 text-sm">Admin: {log.admin_name || log.admin_user_id} · Hedef: {log.target_name || log.target_user_id}</p>
+                    </div>
+                    <p className="text-navy-500 text-xs">{new Date(log.created_at).toLocaleString('tr-TR')}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </section>
       </div>
