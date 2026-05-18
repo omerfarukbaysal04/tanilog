@@ -1,4 +1,4 @@
-# TanıLog
+﻿# TanıLog
 
 **Sağlığını anla, hayatını yönet.**
 
@@ -22,12 +22,12 @@ docker compose up --build
 
 Uygulama çalıştıktan sonra:
 
-| Servis | URL |
-| --- | --- |
-| Frontend Web | http://localhost:3000 |
-| Backend API | http://localhost:8000 |
-| API Docs | http://localhost:8000/docs |
-| ReDoc | http://localhost:8000/redoc |
+| Servis       | URL                         |
+| ------------ | --------------------------- |
+| Frontend Web | http://localhost:3000       |
+| Backend API  | http://localhost:8000       |
+| API Docs     | http://localhost:8000/docs  |
+| ReDoc        | http://localhost:8000/redoc |
 
 ### Test ve Doğrulama
 
@@ -40,6 +40,47 @@ docker compose exec -e TANILOG_API_URL=http://localhost:8000/api/v1 -e TANILOG_W
 ```
 
 `scripts/e2e_smoke.py` komutu çalışan Docker servisleri üzerinden uçtan uca temel kayıt, giriş, ayarlar, dashboard ve yasal sayfa kontrollerini yapar.
+
+### Yayın ve Mobil Öncesi Notlar
+
+Web ve mobil uygulama aynı backend API'sini kullanacak şekilde tasarlanmalıdır. Canlı veya sınıf dışı demo ortamında önerilen yapı:
+
+```text
+Web:     https://app.example.com
+Backend: https://api.example.com/api/v1
+```
+
+Production ortamında dikkat edilmesi gerekenler:
+
+- `TANILOG_DEBUG=false` kullanılmalı.
+- `SECRET_KEY` güçlü ve en az 32 karakter olmalı.
+- `ALLOWED_ORIGINS` sadece gerçek web domainini içermeli.
+- `PUBLIC_WEB_URL` web uygulamasının public adresi olmalı.
+- `VITE_API_URL` frontend build sırasında public backend API adresine ayarlanmalı.
+- Yüklenen belgeler public `/uploads` üzerinden değil, kimlik doğrulamalı `/api/v1/documents/{id}/file` endpoint'i üzerinden servis edilir.
+
+Ücretsiz VPS hedefi için en güçlü aday Oracle Cloud Always Free'dir. Coolify yazılımı self-hosted kullanımda ücretsizdir; maliyet genelde Coolify'dan değil, seçilen VPS sağlayıcısından gelir.
+
+### Mobil Uygulama
+
+Mobil MVP Expo + TypeScript ile `mobile/` klasöründedir. Demo ortamında backend erişimi için Cloudflare Tunnel adresini mobil env dosyasına yazın:
+
+```bash
+cd mobile
+cp .env.example .env
+# .env içindeki EXPO_PUBLIC_API_URL değerini güncelle:
+# EXPO_PUBLIC_API_URL=https://your-cloudflare-tunnel.trycloudflare.com/api/v1
+npm install
+npm run start
+```
+
+Android emülatörde lokal backend kullanmak için alternatif API adresi:
+
+```text
+EXPO_PUBLIC_API_URL=http://10.0.2.2:8000/api/v1
+```
+
+Mobil MVP kapsamı: giriş/kayıt, dashboard özeti, günlük sağlık kayıtları, belge kamera/dosya yükleme ve analiz, sesli kayıtla AI ayrıştırma, AI chat.
 
 ## Proje Yapısı
 
@@ -80,39 +121,39 @@ tanilog/
 
 ## Teknoloji Yığını
 
-| Katman | Teknoloji |
-| --- | --- |
-| Backend | Python, FastAPI, SQLAlchemy |
-| Frontend | React, Vite, Tailwind CSS, Zustand |
-| Veritabanı | PostgreSQL |
-| Auth | JWT, python-jose, passlib |
-| AI | Gemini entegrasyonu |
-| DevOps | Docker, Docker Compose, Alembic |
+| Katman     | Teknoloji                          |
+| ---------- | ---------------------------------- |
+| Backend    | Python, FastAPI, SQLAlchemy        |
+| Frontend   | React, Vite, Tailwind CSS, Zustand |
+| Veritabanı | PostgreSQL                         |
+| Auth       | JWT, python-jose, passlib          |
+| AI         | Gemini entegrasyonu                |
+| DevOps     | Docker, Docker Compose, Alembic    |
 
 ## Önemli API Endpointleri
 
-| Metot | Endpoint | Açıklama |
-| --- | --- | --- |
-| GET | `/` | API bilgisi |
-| GET | `/health` | Sistem sağlık kontrolü |
-| POST | `/api/v1/auth/register` | Yeni kullanıcı kaydı |
-| POST | `/api/v1/auth/login` | Kullanıcı girişi |
-| GET | `/api/v1/auth/me` | Mevcut kullanıcı bilgisi |
-| GET | `/api/v1/dashboard/summary` | Dashboard özeti |
-| GET | `/api/v1/dashboard/search` | Sağlık verilerinde global arama |
-| GET | `/api/v1/search` | Gelişmiş arama ve filtreleme |
-| GET | `/api/v1/timeline` | Sağlık zaman çizelgesi |
-| GET / POST | `/api/v1/risk-alerts/*` | Açıklanabilir risk uyarıları |
-| GET / POST | `/api/v1/onboarding/*` | İlk kurulum adımları |
-| GET / POST | `/api/v1/push/*` | Opsiyonel Web Push altyapısı |
-| GET / POST | `/api/v1/notifications/*` | Bildirim merkezi olayları |
-| GET / PUT | `/api/v1/settings` | Kullanıcı ayarları |
-| GET / POST | `/api/v1/health/*` | Sağlık takip kayıtları |
-| GET / POST | `/api/v1/documents/*` | Belge yönetimi |
-| POST | `/api/v1/ai/*` | AI analizleri |
-| GET / POST | `/api/v1/chat/*` | Premium AI asistan |
-| GET / POST | `/api/v1/family/*` | Aile takibi |
-| GET / POST | `/api/v1/billing/*` | Premium ve ödeme yönetimi |
+| Metot      | Endpoint                    | Açıklama                        |
+| ---------- | --------------------------- | ------------------------------- |
+| GET        | `/`                         | API bilgisi                     |
+| GET        | `/health`                   | Sistem sağlık kontrolü          |
+| POST       | `/api/v1/auth/register`     | Yeni kullanıcı kaydı            |
+| POST       | `/api/v1/auth/login`        | Kullanıcı girişi                |
+| GET        | `/api/v1/auth/me`           | Mevcut kullanıcı bilgisi        |
+| GET        | `/api/v1/dashboard/summary` | Dashboard özeti                 |
+| GET        | `/api/v1/dashboard/search`  | Sağlık verilerinde global arama |
+| GET        | `/api/v1/search`            | Gelişmiş arama ve filtreleme    |
+| GET        | `/api/v1/timeline`          | Sağlık zaman çizelgesi          |
+| GET / POST | `/api/v1/risk-alerts/*`     | Açıklanabilir risk uyarıları    |
+| GET / POST | `/api/v1/onboarding/*`      | İlk kurulum adımları            |
+| GET / POST | `/api/v1/push/*`            | Opsiyonel Web Push altyapısı    |
+| GET / POST | `/api/v1/notifications/*`   | Bildirim merkezi olayları       |
+| GET / PUT  | `/api/v1/settings`          | Kullanıcı ayarları              |
+| GET / POST | `/api/v1/health/*`          | Sağlık takip kayıtları          |
+| GET / POST | `/api/v1/documents/*`       | Belge yönetimi                  |
+| POST       | `/api/v1/ai/*`              | AI analizleri                   |
+| GET / POST | `/api/v1/chat/*`            | Premium AI asistan              |
+| GET / POST | `/api/v1/family/*`          | Aile takibi                     |
+| GET / POST | `/api/v1/billing/*`         | Premium ve ödeme yönetimi       |
 
 ## Marka
 
@@ -234,7 +275,7 @@ tanilog/
 - [x] Reklamsız Premium deneyim
 - [ ] Gerçek ödeme sağlayıcısı entegrasyonu
 
-### Ara Faz - Ayarlar & Sağlık Profili
+### Ara Faz I- Ayarlar & Sağlık Profili
 
 - [x] `/settings` sayfası ve sidebar erişimi
 - [x] Bildirim tercihleri ve sessiz saatler
@@ -246,7 +287,7 @@ tanilog/
 - [x] Verilerimi dışa aktar özelliği
 - [x] Şifre ve onay metniyle hesap silme akışı
 
-### Mobil Öncesi Web Sertleştirme
+### Ara Faz II - Mobil Öncesi Son Ayarlar
 
 - [x] Dashboard hızlı eylemler, son aktiviteler, günlük özet ve haftalık trend
 - [x] Header içinde global sağlık verisi araması

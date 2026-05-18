@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "TanıLog",
+    "slug": "tanilog-mobile",
+    "scheme": "tanilog",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "TanıLog belge ve rapor fotoğraflarını yüklemek için galeri erişimi ister.",
+          "cameraPermission": "TanıLog belge fotoğraflamak için kamera erişimi ister."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "TanıLog sesli sağlık kaydı oluşturmak için mikrofon erişimi ister."
+        }
+      ]
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0b1722"
+      },
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO"
+      ]
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

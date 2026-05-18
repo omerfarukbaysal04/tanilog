@@ -22,6 +22,7 @@ export default defineConfig({
     allowedHosts: [
       'cereless-occasionally-chrystal.ngrok-free.dev',
       '.ngrok-free.dev',
+      '.trycloudflare.com',
       'frontend',
       'tanilog-frontend',
     ],

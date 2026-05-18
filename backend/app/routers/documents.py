@@ -15,6 +15,7 @@ from app.models.user import User
 from app.models.document import Document
 from app.schemas.document import DocumentResponse
 from app.routers.auth import get_current_user
+from app.routers.users import get_daily_limit
 
 router = APIRouter()
 
@@ -38,22 +39,22 @@ async def upload_document(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Free tier control (aylık 3 belge sınırı) - TEST İÇİN KALDIRILDI
-    # if not current_user.is_premium:
-    #     current_month = datetime.utcnow().month
-    #     current_year = datetime.utcnow().year
-    #     
-    #     doc_count = db.query(Document).filter(
-    #         Document.user_id == current_user.id,
-    #         extract('month', Document.created_at) == current_month,
-    #         extract('year', Document.created_at) == current_year
-    #     ).count()
-    #     
-    #     if doc_count >= 3:
-    #         raise HTTPException(
-    #             status_code=403, 
-    #             detail="Aylık ücretsiz yükleme limitine (3 belge) ulaştınız. Sınırsız yükleme için Premium'a geçin."
-    #         )
+    monthly_limit = get_daily_limit(current_user, "document_upload_monthly")
+    if monthly_limit != -1:
+        current_month = datetime.utcnow().month
+        current_year = datetime.utcnow().year
+
+        doc_count = db.query(Document).filter(
+            Document.user_id == current_user.id,
+            extract('month', Document.created_at) == current_month,
+            extract('year', Document.created_at) == current_year
+        ).count()
+
+        if doc_count >= monthly_limit:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Aylık ücretsiz yükleme limitine ({monthly_limit} belge) ulaştınız. Sınırsız yükleme için Premium'a geçin."
+            )
 
     # Validate file type
     if file.content_type not in ALLOWED_TYPES:

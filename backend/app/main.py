@@ -5,7 +5,6 @@ import asyncio
 from datetime import date, datetime
 
 from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
@@ -40,9 +39,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static files
+# Uploaded files are served through authenticated document endpoints.
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 
 @app.middleware("http")

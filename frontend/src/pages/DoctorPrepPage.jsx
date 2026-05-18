@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
@@ -24,9 +24,11 @@ import DashboardLayout from '../components/DashboardLayout';
 import { ModalContainer } from '../components/health/LogModals';
 import useAuthStore from '../stores/authStore';
 import useDoctorPrepStore from '../stores/doctorPrepStore';
+import useNotificationStore from '../stores/notificationStore';
 
 function DoctorPrepPage() {
   const { user } = useAuthStore();
+  const pushLocal = useNotificationStore((state) => state.pushLocal);
   const {
     report,
     savedReports,
@@ -44,6 +46,8 @@ function DoctorPrepPage() {
   } = useDoctorPrepStore();
   const isPremium = !!user?.is_premium;
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const speechUtteranceRef = useRef(null);
+  const speechStopRequestedRef = useRef(false);
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
   const [specialty, setSpecialty] = useState('family');
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -52,7 +56,12 @@ function DoctorPrepPage() {
   const printableHtml = useMemo(() => (report ? buildPrintableReport(report) : ''), [report]);
 
   useEffect(() => () => {
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    if ('speechSynthesis' in window) {
+      speechStopRequestedRef.current = true;
+      speechUtteranceRef.current = null;
+      window.speechSynthesis.pause();
+      window.speechSynthesis.cancel();
+    }
   }, []);
 
   useEffect(() => {
@@ -63,8 +72,15 @@ function DoctorPrepPage() {
     clearError();
     toast('Rapor arka planda hazırlanıyor. Bu sırada sitede gezinmeye devam edebilirsin.');
     try {
-      await createDoctorPrepReport(specialty);
+      const generatedReport = await createDoctorPrepReport(specialty);
       toast.success('Doktor raporu hazır.');
+      pushLocal({
+        type: 'doctor_report',
+        title: 'Doktor raporu hazır',
+        body: generatedReport?.summary || 'Doktora hazırlık raporun oluşturuldu.',
+        route: '/doctor-prep',
+        priority: 'important',
+      });
     } catch {
       // Store handles visible error state.
     }
@@ -150,24 +166,51 @@ function DoctorPrepPage() {
       return;
     }
 
-    if (isSpeaking) {
+    const stopSpeech = () => {
+      speechStopRequestedRef.current = true;
+      speechUtteranceRef.current = null;
+      window.speechSynthesis.pause();
       window.speechSynthesis.cancel();
+      window.setTimeout(() => window.speechSynthesis.cancel(), 0);
+      window.setTimeout(() => {
+        if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+          window.speechSynthesis.cancel();
+        }
+      }, 120);
       setIsSpeaking(false);
+    };
+
+    if (isSpeaking || window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+      stopSpeech();
       return;
     }
 
+    speechStopRequestedRef.current = true;
+    window.speechSynthesis.cancel();
+    speechStopRequestedRef.current = false;
+
     const text = buildVoiceSummary(report);
     const utterance = new SpeechSynthesisUtterance(text);
+    speechUtteranceRef.current = utterance;
     utterance.lang = 'tr-TR';
     utterance.rate = 0.95;
     utterance.pitch = 1;
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => {
+    utterance.onend = () => {
+      if (speechUtteranceRef.current === utterance) {
+        speechUtteranceRef.current = null;
+      }
       setIsSpeaking(false);
+    };
+    utterance.onerror = (event) => {
+      const expectedCancel = speechStopRequestedRef.current || ['interrupted', 'canceled', 'cancelled'].includes(event.error);
+      if (speechUtteranceRef.current === utterance) {
+        speechUtteranceRef.current = null;
+      }
+      setIsSpeaking(false);
+      if (expectedCancel) return;
       toast.error('Sesli özet okunamadı.');
     };
 
-    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
     setIsSpeaking(true);
   };

@@ -121,7 +121,7 @@ const useNotificationStore = create((set, get) => ({
         read: readIds.has(`family-invite-${item.id}`),
       }));
 
-      const manualItems = get().items.filter((item) => item.type === 'system_test');
+      const manualItems = get().items.filter((item) => item.type === 'system_test' || String(item.id).startsWith('local-'));
       const serverItems = (serverResponse.data || []).map((item) => ({
         ...item,
         read: item.read || readIds.has(item.id),

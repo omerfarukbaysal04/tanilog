@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -9,7 +9,7 @@ from app.models.user import User
 from app.routers.auth import get_current_user
 from app.routers.users import get_daily_limit, is_premium_active
 from app.schemas.voice import VoiceParseRequest, VoiceParseResponse, VoiceUsageResponse
-from app.services.voice_service import parse_voice_transcript
+from app.services.voice_service import parse_voice_transcript, transcribe_voice_audio
 
 router = APIRouter()
 
@@ -83,3 +83,22 @@ async def parse_voice_input(
         warnings=parsed.get("warnings", []),
         usage=_usage_response(current_user, usage),
     )
+
+
+@router.post("/transcribe")
+async def transcribe_voice_input(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    _ = current_user
+    audio_bytes = await file.read()
+    if not audio_bytes:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ses kaydı boş görünüyor.")
+    if len(audio_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Ses kaydı 10 MB sınırını aşıyor.")
+
+    transcript = transcribe_voice_audio(audio_bytes, file.content_type or "audio/webm")
+    if not transcript:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Ses kaydı metne çevrilemedi. Lütfen tekrar deneyin.")
+
+    return {"transcript": transcript}

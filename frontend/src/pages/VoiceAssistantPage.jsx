@@ -245,20 +245,32 @@ function TextArea({ label, value, onChange }) {
   );
 }
 
-export function useVoiceRecorder({ selectedDate, onSaved }) {
+export function useVoiceRecorder({ selectedDate, onSaved }) {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [draft, setDraft] = useState({});
-  const recognitionRef = useRef(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [draft, setDraft] = useState({});
+  const recognitionRef = useRef(null);
+  const stopRequestedRef = useRef(false);
+  const mediaRecorderRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const cancelRecordingRef = useRef(false);
 
   const { addSymptom, addMedication, addSleep, addNutrition } = useHealthStore();
-  const { usage, parseResult, isLoading, fetchUsage, parseTranscript, clearResult } = useVoiceStore();
+  const { usage, parseResult, isLoading, fetchUsage, parseTranscript, transcribeAudio, clearResult } = useVoiceStore();
 
   const support = useMemo(() => {
     if (typeof window === 'undefined') return { supported: false };
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    return { supported: !!SpeechRecognition, SpeechRecognition };
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const audioSupported = !!window.navigator?.mediaDevices?.getUserMedia && typeof window.MediaRecorder !== 'undefined';
+    return {
+      supported: !!SpeechRecognition || audioSupported,
+      speechSupported: !!SpeechRecognition,
+      audioSupported,
+      SpeechRecognition,
+    };
   }, []);
 
   useEffect(() => {
@@ -269,13 +281,100 @@ export function useVoiceRecorder({ selectedDate, onSaved }) {
     if (parseResult?.extracted_data) setDraft(parseResult.extracted_data);
   }, [parseResult]);
 
-  const startListening = () => {
-    if (!support.supported) {
+  useEffect(() => () => {
+    stopRequestedRef.current = true;
+    try {
+      recognitionRef.current?.abort?.();
+    } catch {
+      // Browser speech APIs can throw when the recognizer is already closed.
+    }
+    cancelRecordingRef.current = true;
+    try {
+      mediaRecorderRef.current?.stop?.();
+    } catch {
+      // Ignore stale recorder cleanup errors.
+    }
+    mediaStreamRef.current?.getTracks?.().forEach((track) => track.stop());
+    mediaRecorderRef.current = null;
+    mediaStreamRef.current = null;
+    recognitionRef.current = null;
+  }, []);
+
+  const startAudioRecording = async () => {
+    if (!support.audioSupported) {
+      toast.error('Bu tarayıcı ses kaydını desteklemiyor.');
+      return;
+    }
+
+    try {
+      cancelRecordingRef.current = false;
+      audioChunksRef.current = [];
+      const stream = await window.navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      const mimeType = window.MediaRecorder.isTypeSupported?.('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+      const recorder = new window.MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data?.size) audioChunksRef.current.push(event.data);
+      };
+
+      recorder.onstop = async () => {
+        const chunks = audioChunksRef.current;
+        audioChunksRef.current = [];
+        mediaStreamRef.current?.getTracks?.().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+        mediaRecorderRef.current = null;
+        setIsListening(false);
+
+        if (cancelRecordingRef.current || chunks.length === 0) return;
+
+        setIsTranscribing(true);
+        try {
+          const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+          const text = await transcribeAudio(blob);
+          setTranscript(text);
+          toast.success('Ses kaydı metne çevrildi.');
+        } catch (error) {
+          toast.error(error.response?.data?.detail || 'Ses kaydı metne çevrilemedi.');
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+
+      recorder.start();
+      setIsListening(true);
+      toast('Bu tarayıcıda ses kaydı modu kullanılıyor. Konuşmayı bitirince tekrar mikrofona bas.');
+    } catch {
+      mediaStreamRef.current?.getTracks?.().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+      mediaRecorderRef.current = null;
+      setIsListening(false);
+      toast.error('Mikrofon başlatılamadı. Tarayıcı izinlerini kontrol edin.');
+    }
+  };
+
+  const startListening = () => {
+    if (!support.supported) {
       toast.error('Bu tarayıcı ses tanımayı desteklemiyor.');
       return;
     }
 
-    const recognition = new support.SpeechRecognition();
+    if (isListening) return;
+
+    stopRequestedRef.current = false;
+    try {
+      recognitionRef.current?.abort?.();
+    } catch {
+      // Ignore stale recognizer cleanup errors.
+    }
+
+    if (!support.speechSupported) {
+      startAudioRecording();
+      return;
+    }
+
+    const recognition = new support.SpeechRecognition();
     recognition.lang = 'tr-TR';
     recognition.interimResults = true;
     recognition.continuous = false;
@@ -283,20 +382,58 @@ export function useVoiceRecorder({ selectedDate, onSaved }) {
       const text = Array.from(event.results).map((result) => result[0]?.transcript || '').join(' ').trim();
       setTranscript(text);
     };
-    recognition.onerror = () => {
-      setIsListening(false);
+    recognition.onerror = (event) => {
+      setIsListening(false);
+      recognitionRef.current = null;
+
+      const expectedStop = stopRequestedRef.current || ['aborted', 'no-speech'].includes(event.error);
+      if (expectedStop) {
+        if (event.error === 'no-speech' && !stopRequestedRef.current) {
+          toast.error('Ses algılanamadı. Tekrar deneyebilirsin.');
+        }
+        return;
+      }
       toast.error('Ses alınamadı. Tarayıcı izinlerini kontrol edin.');
     };
-    recognition.onend = () => setIsListening(false);
+    recognition.onend = () => {
+      recognitionRef.current = null;
+      setIsListening(false);
+    };
     recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
+    try {
+      recognition.start();
+      setIsListening(true);
+    } catch {
+      recognitionRef.current = null;
+      setIsListening(false);
+      toast.error('Ses kaydı başlatılamadı. Tarayıcı izinlerini kontrol edin.');
+    }
   };
 
-  const stopListening = () => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
-  };
+  const stopListening = () => {
+    if (mediaRecorderRef.current) {
+      cancelRecordingRef.current = false;
+      try {
+        if (mediaRecorderRef.current.state !== 'inactive') {
+          mediaRecorderRef.current.stop();
+        }
+      } catch {
+        mediaRecorderRef.current = null;
+        mediaStreamRef.current?.getTracks?.().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+      setIsListening(false);
+      return;
+    }
+
+    stopRequestedRef.current = true;
+    try {
+      recognitionRef.current?.stop();
+    } catch {
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+  };
 
   const reset = () => {
     setTranscript('');
@@ -311,7 +448,7 @@ export function useVoiceRecorder({ selectedDate, onSaved }) {
     }
 
     try {
-      await parseTranscript({ transcript: transcript.trim(), targetDate: format(selectedDate, 'yyyy-MM-dd') });
+      await parseTranscript({ transcript: transcript.trim(), targetDate: format(selectedDate || new Date(), 'yyyy-MM-dd') });
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Sesli giriş analiz edilemedi.');
     }
@@ -321,13 +458,15 @@ export function useVoiceRecorder({ selectedDate, onSaved }) {
     if (!parseResult) return;
     setIsSaving(true);
     try {
-      if (parseResult.intent === 'symptom') {
-        await addSymptom({ date: draft.date, symptom_name: draft.symptom_name, severity: Number(draft.severity || 5), notes: draft.notes || transcript });
+      const recordDate = draft.date || format(selectedDate || new Date(), 'yyyy-MM-dd');
+
+      if (parseResult.intent === 'symptom') {
+        await addSymptom({ date: recordDate, symptom_name: draft.symptom_name, severity: Number(draft.severity || 5), notes: draft.notes || transcript });
         toast.success('Semptom kaydı eklendi.');
       }
       if (parseResult.intent === 'medication') {
         await addMedication({
-          date: draft.date,
+          date: recordDate,
           name: draft.name,
           dosage: draft.dosage || 'Belirtilmedi',
           time_taken: draft.time_taken || null,
@@ -338,11 +477,11 @@ export function useVoiceRecorder({ selectedDate, onSaved }) {
         toast.success('İlaç kaydı eklendi.');
       }
       if (parseResult.intent === 'sleep') {
-        await addSleep({ date: draft.date, hours_slept: Number(draft.hours_slept || 0), quality: draft.quality || 'good', notes: draft.notes || transcript });
+        await addSleep({ date: recordDate, hours_slept: Number(draft.hours_slept || 0), quality: draft.quality || 'good', notes: draft.notes || transcript });
         toast.success('Uyku kaydı eklendi.');
       }
       if (parseResult.intent === 'nutrition') {
-        await addNutrition({ date: draft.date, meal_type: draft.meal_type || 'snack', water_ml: Number(draft.water_ml || 0), notes: draft.notes || (Number(draft.water_ml || 0) ? 'Sadece su' : transcript) });
+        await addNutrition({ date: recordDate, meal_type: draft.meal_type || 'snack', water_ml: Number(draft.water_ml || 0), notes: draft.notes || (Number(draft.water_ml || 0) ? 'Sadece su' : transcript) });
         toast.success('Beslenme kaydı eklendi.');
       }
       reset();
@@ -357,7 +496,8 @@ export function useVoiceRecorder({ selectedDate, onSaved }) {
   return {
     transcript,
     setTranscript,
-    isListening,
+    isListening,
+    isTranscribing,
     isSaving,
     draft,
     setDraft,
@@ -396,7 +536,7 @@ function VoiceAssistantPage() {
 
               {!voice.support.supported && (
                 <div className="mb-5 rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100">
-                  Bu tarayıcıda Web Speech API yok. Metni manuel yazarak aynı AI akışını kullanabilirsiniz.
+                  Bu tarayıcı canlı ses tanımayı desteklemiyor. Mikrofon kaydı alınıp AI ile metne çevrilecek; istersen metni manuel de yazabilirsin.
                 </div>
               )}
 
@@ -411,11 +551,11 @@ function VoiceAssistantPage() {
                 <button
                   type="button"
                   onClick={voice.handleParse}
-                  disabled={voice.isLoading}
+                  disabled={voice.isLoading || voice.isTranscribing}
                   className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-semibold transition-colors"
                 >
-                  {voice.isLoading ? <FiRefreshCw className="animate-spin" /> : <FiCheck />}
-                  Analiz Et
+                  {(voice.isLoading || voice.isTranscribing) ? <FiRefreshCw className="animate-spin" /> : <FiCheck />}
+                  {voice.isTranscribing ? 'Metne Çevriliyor' : 'Analiz Et'}
                 </button>
                 <button
                   type="button"

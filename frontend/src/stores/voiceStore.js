@@ -33,6 +33,20 @@ const useVoiceStore = create((set) => ({
     }
   },
 
+  transcribeAudio: async (audioBlob) => {
+    set({ isLoading: true, error: null });
+    try {
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'voice-input.webm');
+      const { data } = await api.post('/voice/transcribe', formData);
+      set({ isLoading: false });
+      return data.transcript;
+    } catch (error) {
+      set({ error, isLoading: false });
+      throw error;
+    }
+  },
+
   clearResult: () => set({ parseResult: null, error: null }),
 }));
 

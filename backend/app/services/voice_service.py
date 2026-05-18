@@ -2,7 +2,9 @@ import re
 from datetime import date, datetime
 from typing import Any, Dict
 
-from app.services.ai_service import _json_from_gemini
+from google.genai import types
+
+from app.services.ai_service import MODEL_NAME, _json_from_gemini, get_genai_client
 
 
 def _current_time() -> str:
@@ -241,6 +243,8 @@ def parse_voice_transcript(transcript: str, target_date: date) -> Dict[str, Any]
     """
 
     parsed = _json_from_gemini(prompt, fallback, temperature=0.1)
+    if parsed.get("intent") == "unknown" and fallback.get("intent") != "unknown":
+        parsed = fallback
     parsed.setdefault("warnings", [])
     parsed.setdefault("extracted_data", {})
 
@@ -292,3 +296,27 @@ def parse_voice_transcript(transcript: str, target_date: date) -> Dict[str, Any]
 
     parsed["confidence"] = max(0, min(1, float(parsed.get("confidence") or 0)))
     return parsed
+
+
+def transcribe_voice_audio(audio_bytes: bytes, mime_type: str) -> str:
+    """Transcribe a short Turkish voice recording for browsers without SpeechRecognition."""
+    if not audio_bytes:
+        return ""
+
+    try:
+        client = get_genai_client()
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=[
+                types.Part.from_bytes(data=audio_bytes, mime_type=mime_type or "audio/webm"),
+                (
+                    "Bu kısa ses kaydını Türkçe düz metne çevir. "
+                    "Sadece kullanıcının söylediği metni yaz; açıklama, başlık veya yorum ekleme."
+                ),
+            ],
+            config=types.GenerateContentConfig(temperature=0.0),
+        )
+        return (response.text or "").strip()
+    except Exception as exc:
+        print(f"Voice transcription error: {exc}")
+        return ""

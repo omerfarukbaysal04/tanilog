@@ -40,3 +40,8 @@ docker-compose.override.yml
 frontend/dist/
 backend/htmlcov/
 backend/.coverage
+mobile/.expo/
+mobile/dist/
+
+# User uploads
+backend/uploads/
