@@ -57,8 +57,8 @@ function SharedDoctorReportPage() {
                 <p className="text-navy-400 text-sm">{report.date_range?.start} - {report.date_range?.end}</p>
               </div>
             </div>
-            <div className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-navy-100 prose-li:text-navy-100">
-              <ReactMarkdown>{report.full_report_markdown || report.markdown_report || report.summary || ''}</ReactMarkdown>
+            <div className="prose prose-invert prose-teal max-w-none prose-sm prose-headings:text-white prose-p:text-navy-300 prose-li:text-navy-300 prose-strong:text-white">
+              <ReactMarkdown>{(report.full_report || report.full_analysis || report.full_report_markdown || report.markdown_report || report.summary || '').replace(/\n/g, '\n\n').replace(/\n\n\n+/g, '\n\n')}</ReactMarkdown>
             </div>
           </article>
         )}

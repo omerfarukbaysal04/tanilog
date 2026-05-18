@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import toast from 'react-hot-toast';
 import {
   FiAlertCircle,
   FiCheckCircle,
+  FiChevronDown,
+  FiChevronUp,
   FiClipboard,
   FiDownload,
   FiFileText,
@@ -412,6 +415,9 @@ function SavedReports({ reports, isLoading, onRefresh, onOpen, onDelete }) {
 }
 
 function DoctorReport({ report, onPrint, onShare, onSave, onVoiceSummary, isSaving, isSpeaking }) {
+  const isCrossAnalysis = report.type === 'cross_analysis';
+  const isHealthReport = report.type === 'health_report';
+
   return (
     <div className="grid xl:grid-cols-[0.9fr_1.1fr] gap-6">
       <div className="space-y-5">
@@ -422,33 +428,68 @@ function DoctorReport({ report, onPrint, onShare, onSave, onVoiceSummary, isSavi
           </div>
         )}
 
-        <Panel title="Hasta ve Dönem">
-          <div className="grid sm:grid-cols-2 gap-3">
-            <Info label="Hasta" value={report.patient?.full_name || '-'} />
-            <Info label="E-posta" value={report.patient?.email || '-'} />
-            <Info label="Başlangıç" value={report.date_range?.start || '-'} />
-            <Info label="Bitiş" value={report.date_range?.end || '-'} />
-          </div>
-        </Panel>
+        {!isCrossAnalysis && !isHealthReport && (
+          <>
+            <Panel title="Hasta ve Dönem">
+              <div className="grid sm:grid-cols-2 gap-3">
+                <Info label="Hasta" value={report.patient?.full_name || '-'} />
+                <Info label="E-posta" value={report.patient?.email || '-'} />
+                <Info label="Başlangıç" value={report.date_range?.start || '-'} />
+                <Info label="Bitiş" value={report.date_range?.end || '-'} />
+              </div>
+            </Panel>
 
-        <Panel title="Kaynak Özeti">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <Count label="Semptom" value={report.source_counts?.symptoms} />
-            <Count label="İlaç" value={report.source_counts?.medications} />
-            <Count label="Uyku" value={report.source_counts?.sleep} />
-            <Count label="Beslenme" value={report.source_counts?.nutrition} />
-            <Count label="Belge" value={report.source_counts?.documents} />
-          </div>
-        </Panel>
+            <Panel title="Kaynak Özeti">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <Count label="Semptom" value={report.source_counts?.symptoms} />
+                <Count label="İlaç" value={report.source_counts?.medications} />
+                <Count label="Uyku" value={report.source_counts?.sleep} />
+                <Count label="Beslenme" value={report.source_counts?.nutrition} />
+                <Count label="Belge" value={report.source_counts?.documents} />
+              </div>
+            </Panel>
+          </>
+        )}
 
         <Panel title="Rapor Özeti">
-          <p className="text-navy-300 text-sm leading-relaxed">{report.summary}</p>
+           {report.date_range && isHealthReport && (
+               <p className="text-navy-500 text-xs mb-3 font-semibold">{report.date_range.start} - {report.date_range.end}</p>
+           )}
+           <p className="text-navy-300 text-sm leading-relaxed">{report.summary}</p>
         </Panel>
 
-        <ListPanel title="Önemli Bulgular" items={report.key_findings} />
-        <ListPanel title="Risk / Dikkat Noktaları" items={report.risk_flags} icon="alert" />
-        <ListPanel title="Doktoruna Bunları Sor" items={report.doctor_questions} />
-        <ListPanel title="Randevu Hazırlık Listesi" items={report.preparation_checklist} />
+        {!isCrossAnalysis && !isHealthReport && (
+          <>
+            <ListPanel title="Önemli Bulgular" items={report.key_findings} />
+            <ListPanel title="Risk / Dikkat Noktaları" items={report.risk_flags} icon="alert" />
+            <ListPanel title="Doktoruna Bunları Sor" items={report.doctor_questions} />
+            <ListPanel title="Randevu Hazırlık Listesi" items={report.preparation_checklist} />
+          </>
+        )}
+
+        {isCrossAnalysis && (
+          <>
+            {report.has_critical_alert && (
+              <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 flex gap-3">
+                 <FiAlertCircle className="text-red-300 mt-0.5 flex-shrink-0" size={20} />
+                 <div>
+                    <h4 className="text-red-300 font-semibold text-sm">Kritik uyarı var</h4>
+                    <p className="text-red-200/90 text-sm mt-1">{report.critical_findings || 'Dikkat gerektiren bir bulgu işaretlendi.'}</p>
+                 </div>
+              </div>
+            )}
+            <ListPanel title="Bağlantılı Bulgular" items={report.linked_findings} />
+            <ListPanel title="Öneriler" items={report.recommendations} />
+          </>
+        )}
+
+        {isHealthReport && (
+          <>
+            <ListPanel title="Trendler" items={report.trends} />
+            <ListPanel title="Öneriler" items={report.recommendations} />
+            <ListPanel title="Doktora Sorulacaklar" items={report.doctor_questions} />
+          </>
+        )}
 
         <div className="flex flex-wrap gap-3">
           <ActionButton onClick={onPrint} tone="light">
@@ -466,11 +507,9 @@ function DoctorReport({ report, onPrint, onShare, onSave, onVoiceSummary, isSavi
         </div>
       </div>
 
-      <Panel title="Tam Rapor">
-        <div className="prose prose-invert prose-teal max-w-none prose-sm prose-headings:text-white prose-p:text-navy-300 prose-li:text-navy-300 prose-strong:text-white">
-          <ReactMarkdown>{report.full_report}</ReactMarkdown>
-        </div>
-      </Panel>
+      <div className="space-y-5">
+        <CollapsibleMarkdown title="Tam Rapor" content={report.full_report || report.full_analysis} />
+      </div>
     </div>
   );
 }
@@ -524,7 +563,7 @@ function PdfPreview({ report, onPrint, onClose }) {
           <section className="mt-7">
             <h2 className="text-lg font-bold text-teal-800 mb-3">Tam Rapor</h2>
             <div className="text-sm leading-6 text-slate-700 rounded-xl border border-slate-200 p-5 prose prose-slate max-w-none prose-sm prose-headings:text-teal-800 prose-strong:text-slate-900">
-              <ReactMarkdown>{report.full_report}</ReactMarkdown>
+              <ReactMarkdown>{(report.full_report || report.full_analysis || '').replace(/\n/g, '\n\n').replace(/\n\n\n+/g, '\n\n')}</ReactMarkdown>
             </div>
           </section>
 
@@ -619,52 +658,98 @@ function buildPrintableReport(report) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
   const list = (items) => (items || []).map((item) => `<li>${escape(item)}</li>`).join('');
-  const reportHtml = markdownToPrintHtml(report.full_report || '');
+  const reportHtml = markdownToPrintHtml(report.full_report || report.full_analysis || '');
+
+  const isCrossAnalysis = report.type === 'cross_analysis';
+  const isHealthReport = report.type === 'health_report';
+
+  let title = 'Doktora Hazırlık Raporu';
+  if (isCrossAnalysis) title = 'Sağlık Verileri Çapraz Analizi';
+  if (isHealthReport) title = 'Sağlık Raporu';
+
+  let dynamicSections = '';
+  
+  if (isCrossAnalysis) {
+    if (report.related_findings?.length) {
+      dynamicSections += `<h2>Bağlantılı Bulgular</h2><ul>${list(report.related_findings)}</ul>`;
+    }
+    if (report.recommendations?.length) {
+      dynamicSections += `<h2>Öneriler</h2><ul>${list(report.recommendations)}</ul>`;
+    }
+    if (report.doctor_questions?.length) {
+      dynamicSections += `<h2>Doktora Sorulacaklar</h2><ul>${list(report.doctor_questions)}</ul>`;
+    }
+    if (report.risk_flags?.length) {
+      dynamicSections += `<h2>Dikkat Noktaları</h2><ul class="alert">${list(report.risk_flags)}</ul>`;
+    }
+  } else if (isHealthReport) {
+    if (report.trends?.length) {
+      dynamicSections += `<h2>Trendler</h2><ul>${list(report.trends)}</ul>`;
+    }
+    if (report.recommendations?.length) {
+      dynamicSections += `<h2>Öneriler</h2><ul>${list(report.recommendations)}</ul>`;
+    }
+  } else {
+    if (report.key_findings?.length) {
+      dynamicSections += `<h2>Önemli Bulgular</h2><ul>${list(report.key_findings)}</ul>`;
+    }
+    if (report.medication_summary) {
+      dynamicSections += `<h2>İlaç Özeti</h2><p>${escape(report.medication_summary)}</p>`;
+    }
+    if (report.document_summary) {
+      dynamicSections += `<h2>Belge Özeti</h2><p>${escape(report.document_summary)}</p>`;
+    }
+    if (report.doctor_questions?.length) {
+      dynamicSections += `<h2>Doktora Sorulacaklar</h2><ul>${list(report.doctor_questions)}</ul>`;
+    }
+    if (report.preparation_checklist?.length) {
+      dynamicSections += `<h2>Hazırlık Listesi</h2><ul>${list(report.preparation_checklist)}</ul>`;
+    }
+  }
+
+  const patientInfo = report.patient?.full_name ? escape(report.patient.full_name) + ' • ' : '';
+  const dateInfo = escape(report.date_range?.start || '') + ' - ' + escape(report.date_range?.end || '');
 
   return `
 <!doctype html>
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <title>TanıLog Doktor Raporu</title>
+  <title>TanıLog - ${title}</title>
   <style>
     @page { margin: 18mm; }
-    body { font-family: Arial, sans-serif; color: #152033; line-height: 1.5; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #334155; line-height: 1.6; }
     header { border-bottom: 3px solid #0fb8a5; padding-bottom: 14px; margin-bottom: 24px; }
-    h1 { margin: 0; font-size: 26px; }
-    h2 { margin-top: 24px; color: #0f766e; font-size: 17px; }
-    h3 { margin-top: 18px; color: #115e59; font-size: 14px; }
-    p { margin: 8px 0; }
-    .muted { color: #607086; font-size: 12px; }
-    .box { border: 1px solid #d7e2ee; border-radius: 10px; padding: 14px; margin: 12px 0; }
-    ul { padding-left: 20px; }
-    li { margin: 4px 0; }
-    strong { color: #111827; }
-    .footer { margin-top: 28px; font-size: 11px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px; }
+    h1 { margin: 0; font-size: 26px; color: #0f172a; }
+    h2 { margin-top: 24px; color: #0f766e; font-size: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 12px; }
+    h3 { margin-top: 18px; color: #0f766e; font-size: 15px; margin-bottom: 8px; }
+    p { margin: 10px 0; color: #475569; }
+    .muted { color: #64748b; font-size: 13px; margin-top: 6px; }
+    .box { border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 16px 0; background-color: #f8fafc; }
+    .box h2 { margin-top: 0; border: none; font-size: 18px; color: #0f766e; }
+    ul { padding-left: 0; list-style: none; margin: 12px 0; }
+    ul.alert li::before { color: #eab308; }
+    li { margin: 8px 0; padding-left: 24px; position: relative; color: #475569; }
+    li::before { content: '•'; color: #0fb8a5; font-size: 20px; font-weight: bold; position: absolute; left: 6px; top: -2px; }
+    strong { color: #0f766e; font-weight: 600; }
+    .footer { margin-top: 32px; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: center; }
   </style>
 </head>
 <body>
   <header>
-    <h1>TanıLog Doktora Hazırlık Raporu</h1>
-    <p class="muted">${escape(report.patient?.full_name)} • ${escape(report.date_range?.start)} - ${escape(report.date_range?.end)}</p>
+    <h1>${title}</h1>
+    <p class="muted">${patientInfo}${dateInfo}</p>
   </header>
   <section class="box">
     <h2>Özet</h2>
     <p>${escape(report.summary)}</p>
   </section>
-  <h2>Önemli Bulgular</h2>
-  <ul>${list(report.key_findings)}</ul>
-  <h2>İlaç Özeti</h2>
-  <p>${escape(report.medication_summary)}</p>
-  <h2>Belge Özeti</h2>
-  <p>${escape(report.document_summary)}</p>
-  <h2>Doktora Sorulacaklar</h2>
-  <ul>${list(report.doctor_questions)}</ul>
-  <h2>Hazırlık Listesi</h2>
-  <ul>${list(report.preparation_checklist)}</ul>
+  
+  ${dynamicSections}
+  
   <h2>Tam Rapor</h2>
   <div class="box">${reportHtml}</div>
-  <p class="footer">Bu rapor bilgilendirme ve randevu hazırlığı içindir; teşhis veya tedavi yerine geçmez.</p>
+  <p class="footer">Bu rapor bilgilendirme ve doktor randevusuna hazırlık içindir; tıbbi teşhis veya tedavi yerine geçmez.</p>
 </body>
 </html>`;
 }
@@ -741,6 +826,25 @@ function buildVoiceSummary(report) {
     questions ? `Doktoruna sorabileceğin sorular: ${questions}.` : '',
     'Bu sesli özet bilgilendirme amaçlıdır; teşhis veya tedavi yerine geçmez.',
   ].filter(Boolean).join(' ');
+}
+
+
+function CollapsibleMarkdown({ title, content }) {
+  if (!content) return null;
+  const formattedContent = content.replace(/\n/g, '\n\n').replace(/\n\n\n+/g, '\n\n');
+
+  return (
+    <div className="rounded-2xl border border-navy-700/50 overflow-hidden bg-navy-900/30">
+      <div className="px-5 py-4 border-b border-navy-700/50 bg-navy-900/60">
+        <h3 className="text-white font-semibold text-sm">{title}</h3>
+      </div>
+      <div className="px-5 py-5">
+        <div className="prose prose-invert prose-teal max-w-none prose-sm prose-headings:text-white prose-headings:font-semibold prose-p:text-navy-300 prose-li:text-navy-300 prose-strong:text-teal-200 prose-h2:text-base prose-h3:text-sm">
+          <ReactMarkdown>{formattedContent}</ReactMarkdown>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default DoctorPrepPage;

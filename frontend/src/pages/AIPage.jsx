@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import {
@@ -92,14 +93,23 @@ function AIPage() {
             </p>
           </div>
 
-          <button
-            onClick={fetchAnalyzedDocuments}
-            disabled={isLoadingDocuments}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-navy-800 border border-navy-700 text-navy-200 hover:text-white hover:border-teal-500/40 transition-colors disabled:opacity-60"
-          >
-            <FiRefreshCw className={isLoadingDocuments ? 'animate-spin' : ''} size={16} />
-            Belgeleri Yenile
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/doctor-prep"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-300 hover:text-teal-200 hover:bg-teal-500/20 transition-colors"
+            >
+              <FiFileText size={16} />
+              Kayıtlı Raporlar
+            </Link>
+            <button
+              onClick={fetchAnalyzedDocuments}
+              disabled={isLoadingDocuments}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-navy-800 border border-navy-700 text-navy-200 hover:text-white hover:border-teal-500/40 transition-colors disabled:opacity-60"
+            >
+              <FiRefreshCw className={isLoadingDocuments ? 'animate-spin' : ''} size={16} />
+              Belgeleri Yenile
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -331,11 +341,12 @@ function StatusAlert({ hasAlert, text }) {
 
 function MarkdownPanel({ title, content }) {
   if (!content) return null;
+  const formattedContent = content.replace(/\n/g, '\n\n').replace(/\n\n\n+/g, '\n\n');
   return (
     <div className="rounded-2xl bg-navy-900/50 border border-navy-700/50 p-5">
       <h4 className="text-white font-semibold text-sm mb-4 pb-3 border-b border-navy-700/50">{title}</h4>
       <div className="prose prose-invert prose-teal max-w-none prose-sm prose-headings:text-white prose-p:text-navy-300 prose-li:text-navy-300 prose-strong:text-white">
-        <ReactMarkdown>{content}</ReactMarkdown>
+        <ReactMarkdown>{formattedContent}</ReactMarkdown>
       </div>
     </div>
   );
