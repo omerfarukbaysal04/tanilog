@@ -25,6 +25,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.navy400,
         headerStyle: { backgroundColor: colors.navy900 },
         headerTintColor: colors.white,
+        headerShown: false,
       }}
     >
       <Tabs.Screen name="dashboard" options={{ title: 'Dashboard', tabBarIcon: ({ color }) => <Ionicons name="home" color={color} size={21} /> }} />
@@ -32,6 +33,12 @@ export default function TabsLayout() {
       <Tabs.Screen name="documents" options={{ title: 'Belgeler', tabBarIcon: ({ color }) => <Ionicons name="document-text" color={color} size={21} /> }} />
       <Tabs.Screen name="voice" options={{ title: 'Sesli', tabBarIcon: ({ color }) => <Ionicons name="mic" color={color} size={21} /> }} />
       <Tabs.Screen name="chat" options={{ title: 'Chat', tabBarIcon: ({ color }) => <Ionicons name="chatbubble-ellipses" color={color} size={21} /> }} />
+      <Tabs.Screen name="tools" options={{ title: 'Araçlar', tabBarIcon: ({ color }) => <Ionicons name="construct-outline" color={color} size={21} /> }} />
+
+      {/* Stack screens: tab bar'da gizli, header'lı */}
+      <Tabs.Screen name="profile" options={{ href: null, headerShown: true, title: 'Profilim' }} />
+      <Tabs.Screen name="settings" options={{ href: null, headerShown: true, title: 'Ayarlar' }} />
+      <Tabs.Screen name="notifications" options={{ href: null, headerShown: true, title: 'Bildirimler' }} />
     </Tabs>
   );
 }

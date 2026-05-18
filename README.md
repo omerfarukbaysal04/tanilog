@@ -316,10 +316,71 @@ tanilog/
 
 ### Faz 12 - Mobil Uygulama
 
-- [ ] React Native proje kurulumu
-- [ ] Kamera ile belge fotoğraflama
-- [ ] Push notification
-- [ ] Android yayın süreci
+#### Altyapı & Kimlik Doğrulama
+- [x] Expo + React Native + TypeScript proje kurulumu
+- [x] Expo Router dosya tabanlı navigasyon
+- [x] Zustand state yönetimi altyapısı
+- [x] Axios API istemcisi ve JWT interceptor
+- [x] Secure token saklama (Expo SecureStore)
+- [x] Giriş ve kayıt ekranları
+- [x] Yasal metin / sorumluluk reddi ekranı
+- [x] Otomatik auth yönlendirme (splash → login / tabs)
+
+#### Ana Ekranlar (Tab Navigasyon)
+- [x] Dashboard — metrik grid, son aktiviteler, veri kalitesi
+- [x] Sağlık Takibi — semptom, ilaç, uyku, beslenme sekmeleri
+- [x] Belgeler — kamera/dosya yükleme, önizleme, AI analiz
+- [x] Sesli Asistan — ses kaydı, transkripsiyon, AI ayrıştırma
+- [x] AI Chat — oturum yönetimi, mesajlaşma
+
+#### Kullanıcı Hesap Yönetimi
+- [x] Profil ekranı — ad düzenleme, avatar, üyelik bilgisi
+- [x] Şifre değiştirme
+- [x] Ayarlar ekranı — bildirim toggle'ları, AI izinleri
+- [x] Sağlık profili — doğum yılı, boy, kilo, kan grubu, kronik hastalık, alerji
+- [x] Acil iletişim bilgileri
+- [x] Veri dışa aktarma (Share sheet)
+- [x] Hesap silme (şifre + onay metni ile)
+
+#### Dashboard Geliştirmeleri
+- [x] Risk uyarı kartları (inline, kapat butonu)
+- [x] Bildirim zili ve okunmamış badge
+- [x] Avatar butonu → profil ekranı yönlendirmesi
+
+#### Bildirimler
+- [x] Bildirim merkezi ekranı
+- [x] Okunmamış / okunmuş görsel ayrımı
+- [x] Tümünü okundu işaretle
+- [ ] Push notification (FCM / Expo Notifications)
+- [ ] İlaç hatırlatma bildirimleri
+
+#### Araçlar Tab'ı (6. Tab)
+- [x] Araçlar hub ekranı (kart listesi)
+- [x] Zaman çizelgesi — 7/30/90 gün, tarih gruplu liste
+- [x] Gelişmiş arama — metin + kategori filtresi, riskli sonuç işareti
+- [x] AI Analiz — belge çapraz analizi, haftalık/aylık sağlık raporu
+- [x] Doktora Hazırlan — branş seçimi, rapor oluşturma, kaydetme, paylaşma
+- [x] Premium gate (Doktora Hazırlan)
+
+#### Premium & Ödeme
+- [ ] Abonelik / plan görüntüleme ekranı
+- [ ] Mevcut plan ve bitiş tarihi gösterimi
+- [ ] RevenueCat veya benzer in-app purchase entegrasyonu
+
+#### Aile Takibi (Premium)
+- [ ] Aile üyeleri listeleme ekranı
+- [ ] Manuel aile üyesi ekleme
+- [ ] E-posta ile davet gönderme
+- [ ] Aile üyesi sağlık kayıtlarını görüntüleme
+- [ ] İzin matrisi yönetimi
+
+#### Yayın Hazırlığı
+- [ ] Android APK / AAB build süreci
+- [ ] iOS build süreci (Expo EAS Build)
+- [ ] App icon ve splash screen tasarımı
+- [ ] Google Play Store yayın hazırlığı
+- [ ] Apple App Store yayın hazırlığı
+- [ ] Uygulama içi hata izleme (Sentry veya benzeri)
 
 ### Faz 13 - Test & Yayın
 

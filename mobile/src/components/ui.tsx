@@ -4,6 +4,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TextInputProps,
@@ -78,6 +79,53 @@ export function AppButton({
     </Pressable>
   );
 }
+
+export function ToggleRow({
+  label,
+  value,
+  onValueChange,
+  description,
+}: {
+  label: string;
+  value: boolean;
+  onValueChange: (val: boolean) => void;
+  description?: string;
+}) {
+  return (
+    <View style={{ gap: 2 }}>
+      <View style={toggleStyles.row}>
+        <Text style={toggleStyles.label}>{label}</Text>
+        <Switch
+          value={value}
+          onValueChange={onValueChange}
+          trackColor={{ false: colors.navy700, true: colors.teal500 }}
+          thumbColor={colors.white}
+        />
+      </View>
+      {description ? <Text style={toggleStyles.description}>{description}</Text> : null}
+    </View>
+  );
+}
+
+const toggleStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  label: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '600',
+    flex: 1,
+    marginRight: 12,
+  },
+  description: {
+    color: colors.navy400,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+});
 
 const styles = StyleSheet.create({
   safe: {

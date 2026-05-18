@@ -92,3 +92,114 @@ export type ChatMessage = {
   content: string;
   created_at: string;
 };
+
+export type Notification = {
+  id: number | string;
+  type: string;
+  title: string;
+  body: string;
+  route?: string | null;
+  priority: 'normal' | 'important';
+  read: boolean;
+  created_at: string;
+};
+
+export type RiskAlert = {
+  id: number;
+  type: string;
+  title: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high';
+  dismissed: boolean;
+  created_at: string;
+};
+
+export type UserSettings = {
+  notifications_enabled: boolean;
+  voice_notifications_enabled: boolean;
+  medication_reminders_enabled: boolean;
+  family_invite_notifications_enabled: boolean;
+  quiet_hours_enabled: boolean;
+  quiet_hours_start: string | null;
+  quiet_hours_end: string | null;
+  ai_use_health_records: boolean;
+  ai_use_documents: boolean;
+  ai_use_doctor_reports: boolean;
+  ai_use_profile: boolean;
+  birth_year: number | null;
+  biological_sex: string | null;
+  height_cm: number | null;
+  weight_kg: number | null;
+  blood_type: string | null;
+  chronic_conditions: string | null;
+  allergies: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+};
+
+export type TimelineItem = {
+  kind: string;
+  kind_label: string;
+  title: string;
+  description: string;
+  created_at: string;
+};
+
+export type TimelineGroup = {
+  date: string;
+  items: TimelineItem[];
+};
+
+export type SearchResult = {
+  kind: string;
+  title: string;
+  description: string;
+  is_risky: boolean;
+  created_at: string;
+};
+
+export type CrossAnalysis = {
+  summary: string;
+  linked_findings: string[];
+  recommendations: string[];
+  has_critical_alert: boolean;
+  critical_findings?: string | null;
+  risk_flags?: string[];
+  doctor_questions?: string[];
+  full_analysis?: string;
+};
+
+export type HealthReport = {
+  summary: string;
+  date_range: { start: string; end: string };
+  trends: string[];
+  recommendations: string[];
+  doctor_questions: string[];
+  full_report?: string;
+};
+
+export type DoctorPrepReport = {
+  summary: string;
+  key_findings: string[];
+  risk_flags: string[];
+  doctor_questions: string[];
+  preparation_checklist: string[];
+  medication_summary?: string;
+  document_summary?: string;
+  full_report?: string;
+  date_range?: { start: string; end: string };
+  patient?: { full_name: string; email: string };
+  source_counts?: Record<string, number>;
+  saved_report_id?: number;
+  saved_title?: string;
+  share_text?: string;
+};
+
+export type SavedDoctorReport = {
+  id: number;
+  title: string;
+  summary: string;
+  period_start: string;
+  period_end: string;
+  created_at: string;
+};
