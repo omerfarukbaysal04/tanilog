@@ -12,6 +12,8 @@ type AuthState = {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName: string) => Promise<void>;
   fetchUser: () => Promise<void>;
+  updateProfile: (fullName: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -70,6 +72,25 @@ const useAuthStore = create<AuthState>((set, get) => ({
   fetchUser: async () => {
     const { data } = await api.get<User>('/auth/me');
     set({ user: data, isAuthenticated: true });
+  },
+
+  updateProfile: async (fullName) => {
+    set({ isLoading: true });
+    try {
+      const { data } = await api.put<User>('/auth/me', { full_name: fullName });
+      set({ user: data });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  changePassword: async (currentPassword, newPassword) => {
+    set({ isLoading: true });
+    try {
+      await api.put('/auth/me/password', { current_password: currentPassword, new_password: newPassword });
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   logout: async () => {
