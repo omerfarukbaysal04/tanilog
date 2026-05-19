@@ -7,6 +7,7 @@ type FamilyState = {
   selectedMember: FamilyMember | null;
   entries: FamilyHealthEntry[];
   sentInvitations: FamilyInvitation[];
+  receivedInvitations: FamilyInvitation[];
   receivedAccesses: FamilyAccess[];
   isLoading: boolean;
   isSaving: boolean;
@@ -41,6 +42,10 @@ type FamilyState = {
 
   fetchReceivedAccesses: () => Promise<void>;
   revokeAccess: (id: number) => Promise<void>;
+
+  fetchReceivedInvitations: () => Promise<void>;
+  acceptInvitation: (token: string) => Promise<void>;
+  declineInvitation: (token: string) => Promise<void>;
 };
 
 const useFamilyStore = create<FamilyState>((set, get) => ({
@@ -48,6 +53,7 @@ const useFamilyStore = create<FamilyState>((set, get) => ({
   selectedMember: null,
   entries: [],
   sentInvitations: [],
+  receivedInvitations: [],
   receivedAccesses: [],
   isLoading: false,
   isSaving: false,
@@ -136,6 +142,23 @@ const useFamilyStore = create<FamilyState>((set, get) => ({
   revokeAccess: async (id) => {
     await api.delete(`/family/shared-accesses/${id}`);
     set({ receivedAccesses: get().receivedAccesses.filter((a) => a.id !== id) });
+  },
+
+  fetchReceivedInvitations: async () => {
+    const { data } = await api.get<FamilyInvitation[]>('/family/invitations/received');
+    set({ receivedInvitations: data });
+  },
+
+  acceptInvitation: async (token) => {
+    await api.post(`/family/invitations/${token}/accept`);
+    // Listeyi yenile
+    set({ receivedInvitations: get().receivedInvitations.filter((i) => i.token !== token) });
+    await get().fetchReceivedAccesses();
+  },
+
+  declineInvitation: async (token) => {
+    await api.post(`/family/invitations/${token}/decline`);
+    set({ receivedInvitations: get().receivedInvitations.filter((i) => i.token !== token) });
   },
 }));
 

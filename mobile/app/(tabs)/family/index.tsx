@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppButton, EmptyState, FadeIn, GlassCard, LinearGradient, Muted, Screen } from '../../../src/components/ui';
+import { AppButton, EmptyState, FadeIn, GlassCard, LinearGradient, Muted, PremiumGate, Screen } from '../../../src/components/ui';
 import useFamilyStore from '../../../src/stores/familyStore';
 import useAuthStore from '../../../src/stores/authStore';
 import { colors } from '../../../src/theme';
@@ -12,10 +12,14 @@ export default function FamilyIndexScreen() {
   const {
     members,
     sentInvitations,
+    receivedInvitations,
     receivedAccesses,
     fetchMembers,
     fetchSentInvitations,
     fetchReceivedAccesses,
+    fetchReceivedInvitations,
+    acceptInvitation,
+    declineInvitation,
     deleteMember,
     cancelInvitation,
     revokeAccess,
@@ -25,49 +29,88 @@ export default function FamilyIndexScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      // Gelen davetler her kullanıcı için çekilir (free de davet alabilir)
+      fetchReceivedInvitations().catch(() => {});
       if (!user?.is_premium) return;
       fetchMembers().catch(() => {});
       fetchSentInvitations().catch(() => {});
       fetchReceivedAccesses().catch(() => {});
-    }, [fetchMembers, fetchSentInvitations, fetchReceivedAccesses, user?.is_premium]),
+    }, [fetchMembers, fetchSentInvitations, fetchReceivedAccesses, fetchReceivedInvitations, user?.is_premium]),
   );
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([fetchMembers(), fetchSentInvitations(), fetchReceivedAccesses()]);
+      await Promise.all([
+        fetchReceivedInvitations(),
+        ...(user?.is_premium
+          ? [fetchMembers(), fetchSentInvitations(), fetchReceivedAccesses()]
+          : []),
+      ]);
     } finally {
       setRefreshing(false);
     }
   };
 
+  const handleAccept = async (token: string, inviterName: string | null | undefined) => {
+    try {
+      await acceptInvitation(token);
+      Alert.alert('Davet Kabul Edildi ✓', `${inviterName || 'Davetin sahibi'} artık verilerine erişebilecek.`);
+    } catch (e: any) {
+      Alert.alert('Hata', e.response?.data?.detail || e.message);
+    }
+  };
+
+  const handleDecline = async (token: string) => {
+    try {
+      await declineInvitation(token);
+    } catch (e: any) {
+      Alert.alert('Hata', e.response?.data?.detail || e.message);
+    }
+  };
+
+  // Gelen pending davetler her kullanıcı için
+  const pendingReceived = receivedInvitations.filter((i) => i.status === 'pending');
+
   if (!user?.is_premium) {
     return (
-      <Screen withOrbs>
+      <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
         <FadeIn delay={0}>
           <View style={styles.header}>
             <Text style={styles.eyebrow}>Aile</Text>
             <Text style={styles.title}>Aile Takibi</Text>
           </View>
         </FadeIn>
-        <FadeIn delay={100}>
-          <GlassCard accent="yellow">
-            <View style={styles.gateContent}>
-              <View style={styles.gateIcon}>
-                <Ionicons name="people" color={colors.yellow} size={32} />
-              </View>
-              <Text style={styles.gateTitle}>Premium Özellik</Text>
-              <Muted>
-                Aile takibi özelliği Premium üyelere özeldir. Yakınlarınızın sağlığını takip
-                edebilir, kayıt ekleyebilir ve rapor oluşturabilirsiniz.
-              </Muted>
-              <AppButton
-                title="Premium'a Geç"
-                onPress={() => router.push('/billing')}
-                icon={<Ionicons name="star-outline" color={colors.white} size={18} />}
-              />
-            </View>
-          </GlassCard>
+
+        {/* Gelen davetler — free için de görünür */}
+        {pendingReceived.length > 0 && (
+          <>
+            <FadeIn delay={60}>
+              <Text style={styles.sectionLabel}>Sana Gelen Davetler ({pendingReceived.length})</Text>
+            </FadeIn>
+            {pendingReceived.map((inv, idx) => (
+              <FadeIn key={inv.id} delay={100 + idx * 50}>
+                <ReceivedInviteCard
+                  invitation={inv}
+                  onAccept={() => handleAccept(inv.token!, inv.inviter_name)}
+                  onDecline={() => handleDecline(inv.token!)}
+                />
+              </FadeIn>
+            ))}
+          </>
+        )}
+
+        <FadeIn delay={200}>
+          <PremiumGate
+            title="Aile Takibi"
+            icon="people"
+            description="Yakınlarının sağlığını yönet, sağlık verilerini paylaş, kayıt ve rapor oluştur."
+            bullets={[
+              'Aile üyesi ekle ve verilerini takip et',
+              'TanıLog kullanıcılarına davet gönder',
+              'Yakınlarının dosyalarına ortak erişim',
+            ]}
+          />
         </FadeIn>
       </Screen>
     );
@@ -110,6 +153,24 @@ export default function FamilyIndexScreen() {
           </View>
         </View>
       </FadeIn>
+
+      {/* Gelen Davetler */}
+      {pendingReceived.length > 0 && (
+        <>
+          <FadeIn delay={100}>
+            <Text style={styles.sectionLabel}>Sana Gelen Davetler ({pendingReceived.length})</Text>
+          </FadeIn>
+          {pendingReceived.map((inv, idx) => (
+            <FadeIn key={inv.id} delay={120 + idx * 50}>
+              <ReceivedInviteCard
+                invitation={inv}
+                onAccept={() => handleAccept(inv.token!, inv.inviter_name)}
+                onDecline={() => handleDecline(inv.token!)}
+              />
+            </FadeIn>
+          ))}
+        </>
+      )}
 
       {/* Aile Üyeleri */}
       <FadeIn delay={120}>
@@ -266,6 +327,80 @@ export default function FamilyIndexScreen() {
         </>
       )}
     </Screen>
+  );
+}
+
+function ReceivedInviteCard({
+  invitation,
+  onAccept,
+  onDecline,
+}: {
+  invitation: any;
+  onAccept: () => void;
+  onDecline: () => void;
+}) {
+  const perms: string[] = [];
+  if (invitation.can_view_documents) perms.push('Belgeler');
+  if (invitation.can_add_records) perms.push('Kayıt ekleme');
+  if (invitation.can_edit_records) perms.push('Kayıt düzenleme');
+  if (invitation.can_generate_reports) perms.push('Rapor');
+
+  return (
+    <GlassCard accent="teal">
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <LinearGradient
+          colors={['#2dd4bf', '#0fb8a5']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.memberAvatar}
+        >
+          <Ionicons name="mail-open" color={colors.white} size={18} />
+        </LinearGradient>
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={styles.memberName}>{invitation.inviter_name || 'Davet sahibi'}</Text>
+          <View style={styles.memberMeta}>
+            <View style={styles.relationBadge}>
+              <Text style={styles.relationText}>{invitation.relation}</Text>
+            </View>
+            <Text style={styles.metaText}>seni takip etmek istiyor</Text>
+          </View>
+        </View>
+      </View>
+
+      {invitation.message ? (
+        <View style={styles.inviteMsgBox}>
+          <Ionicons name="chatbubble-outline" color={colors.teal300} size={12} />
+          <Text style={styles.inviteMsgText}>{invitation.message}</Text>
+        </View>
+      ) : null}
+
+      {perms.length > 0 && (
+        <View style={{ gap: 4 }}>
+          <Text style={styles.permsLabel}>Vereceğin İzinler</Text>
+          <View style={styles.permsRow}>
+            {perms.map((p) => (
+              <View key={p} style={styles.permBadge}>
+                <Ionicons name="checkmark-circle" color={colors.teal300} size={11} />
+                <Text style={styles.permText}>{p}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <View style={{ flex: 1 }}>
+          <AppButton title="Reddet" variant="secondary" onPress={onDecline} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <AppButton
+            title="Kabul Et"
+            onPress={onAccept}
+            icon={<Ionicons name="checkmark-outline" color={colors.white} size={18} />}
+          />
+        </View>
+      </View>
+    </GlassCard>
   );
 }
 
@@ -461,5 +596,46 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(239,68,68,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  inviteMsgBox: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(15,184,165,0.08)',
+    borderColor: 'rgba(15,184,165,0.2)',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 10,
+  },
+  inviteMsgText: {
+    color: colors.navy200,
+    fontSize: 12,
+    fontFamily: 'Poppins_500Medium',
+    flex: 1,
+    fontStyle: 'italic',
+  },
+  permsLabel: {
+    color: colors.navy400,
+    fontSize: 10,
+    fontFamily: 'Poppins_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  permsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  permBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(15,184,165,0.12)',
+    borderColor: 'rgba(15,184,165,0.3)',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  permText: {
+    color: colors.teal300,
+    fontSize: 10,
+    fontFamily: 'Poppins_700Bold',
   },
 });

@@ -2,8 +2,9 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { FadeIn, GlassCard, Muted, Screen } from '../../../src/components/ui';
+import { FadeIn, GlassCard, Muted, PremiumGate, Screen } from '../../../src/components/ui';
 import useTimelineStore from '../../../src/stores/timelineStore';
+import useAuthStore from '../../../src/stores/authStore';
 import { colors } from '../../../src/theme';
 
 const DAY_OPTIONS = [
@@ -23,11 +24,13 @@ const KIND_ICON: Record<string, { icon: keyof typeof import('@expo/vector-icons'
 export default function TimelineScreen() {
   const [selectedDays, setSelectedDays] = useState(30);
   const { groups, isLoading, fetchTimeline } = useTimelineStore();
+  const { user } = useAuthStore();
 
   useFocusEffect(
     useCallback(() => {
+      if (!user?.is_premium) return;
       fetchTimeline(selectedDays).catch((e) => Alert.alert('Zaman çizelgesi yüklenemedi', e.message));
-    }, [fetchTimeline, selectedDays]),
+    }, [fetchTimeline, selectedDays, user?.is_premium]),
   );
 
   const handleDaysChange = (days: number) => {
@@ -43,6 +46,22 @@ export default function TimelineScreen() {
           <Text style={styles.headerTitle}>Zaman Çizelgesi</Text>
         </View>
       </FadeIn>
+
+      {!user?.is_premium ? (
+        <FadeIn delay={60}>
+          <PremiumGate
+            title="Zaman Çizelgesi"
+            icon="time"
+            description="Sağlık olaylarını kronolojik tek bir akışta gör — semptomlar, ilaçlar, uyku, beslenme ve belgeler."
+            bullets={[
+              '7 / 30 / 90 günlük dönem seçici',
+              'Olay tipi ve renkli ikonlar',
+              'Hızlıca trend tespiti',
+            ]}
+          />
+        </FadeIn>
+      ) : (
+        <>
 
       <FadeIn delay={80}>
         <View style={styles.segmentRow}>
@@ -106,6 +125,8 @@ export default function TimelineScreen() {
           </FadeIn>
         ))
       )}
+        </>
+      )}
     </Screen>
   );
 }
@@ -116,7 +137,7 @@ function formatDate(dateStr: string) {
 }
 
 const styles = StyleSheet.create({
-  header: { paddingTop: 50, paddingBottom: 4, gap: 4 },
+  header: { paddingTop: 12, paddingBottom: 4, gap: 4 },
   headerEyebrow: {
     color: colors.teal300,
     fontSize: 11,

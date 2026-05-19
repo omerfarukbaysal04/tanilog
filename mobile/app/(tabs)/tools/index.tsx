@@ -28,13 +28,7 @@ const TOOLS: Tool[] = [
     icon: 'time-outline',
     route: '/tools/timeline',
     accent: 'blue',
-  },
-  {
-    title: 'Gelişmiş Arama',
-    description: 'Tüm verilerde arama ve filtreleme',
-    icon: 'search-outline',
-    route: '/tools/search',
-    accent: 'purple',
+    premium: true,
   },
   {
     title: 'AI Analiz',
@@ -42,20 +36,13 @@ const TOOLS: Tool[] = [
     icon: 'analytics-outline',
     route: '/tools/ai-analysis',
     accent: 'teal',
+    premium: true,
   },
   {
     title: 'Doktora Hazırlan',
     description: 'Randevu hazırlık raporu oluştur',
     icon: 'medical-outline',
     route: '/tools/doctor-prep',
-    accent: 'pink',
-    premium: true,
-  },
-  {
-    title: 'İlaç Etkileşimi',
-    description: 'Son 30 gün ilaç ve reçete etkileşim analizi',
-    icon: 'shield-checkmark-outline',
-    route: '/tools/medication-interactions',
     accent: 'pink',
     premium: true,
   },
@@ -72,6 +59,7 @@ const TOOLS: Tool[] = [
     icon: 'people-outline',
     route: '/family',
     accent: 'blue',
+    premium: true,
   },
 ];
 

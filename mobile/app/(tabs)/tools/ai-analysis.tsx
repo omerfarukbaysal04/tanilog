@@ -2,8 +2,9 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppButton, FadeIn, GlassCard, Muted, Screen } from '../../../src/components/ui';
+import { AppButton, FadeIn, GlassCard, Muted, PremiumGate, Screen } from '../../../src/components/ui';
 import useAIStore from '../../../src/stores/aiStore';
+import useAuthStore from '../../../src/stores/authStore';
 import { colors } from '../../../src/theme';
 
 const DAY_OPTIONS = [7, 30, 60];
@@ -16,6 +17,7 @@ export default function AIAnalysisScreen() {
   const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
   const [selectedDays, setSelectedDays] = useState(30);
   const [selectedPeriod, setSelectedPeriod] = useState<'weekly' | 'monthly'>('weekly');
+  const { user } = useAuthStore();
 
   const {
     analyzedDocuments,
@@ -58,7 +60,23 @@ export default function AIAnalysisScreen() {
         </View>
       </FadeIn>
 
-      {error && (
+      {!user?.is_premium ? (
+        <FadeIn delay={60}>
+          <PremiumGate
+            title="AI Analiz"
+            icon="analytics"
+            description="Belgelerini sağlık verilerinle çapraz analiz et veya haftalık/aylık sağlık raporu üret."
+            bullets={[
+              'Belge çapraz analizi (semptom + lab + ilaç)',
+              'Haftalık ve aylık AI sağlık raporu',
+              'Trend analizi ve öneriler',
+              'Raporları kaydet ve paylaş',
+            ]}
+          />
+        </FadeIn>
+      ) : null}
+
+      {user?.is_premium && error && (
         <FadeIn delay={0}>
           <GlassCard accent="red">
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -70,6 +88,8 @@ export default function AIAnalysisScreen() {
         </FadeIn>
       )}
 
+      {user?.is_premium && (
+        <>
       {/* Çapraz Analiz */}
       <FadeIn delay={80}>
         <GlassCard>
@@ -215,11 +235,13 @@ export default function AIAnalysisScreen() {
             {healthReport.recommendations?.length > 0 && (
               <BulletList title="Öneriler" items={healthReport.recommendations} icon="bulb-outline" />
             )}
-            {healthReport.doctor_questions?.length > 0 && (
+            {healthReport.doctor_questions && healthReport.doctor_questions.length > 0 && (
               <BulletList title="Doktora Sorular" items={healthReport.doctor_questions} icon="help-circle-outline" />
             )}
           </GlassCard>
         </FadeIn>
+      )}
+        </>
       )}
     </Screen>
   );

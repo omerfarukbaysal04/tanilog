@@ -108,6 +108,270 @@ const logoStyles = StyleSheet.create({
 });
 
 /* ============================================================================
+   PREMIUM GATE — Standard "premium required" card with bullets + upgrade CTA
+   ============================================================================ */
+export function PremiumGate({
+  title,
+  description,
+  bullets,
+  icon = 'star',
+}: {
+  title: string;
+  description: string;
+  bullets?: string[];
+  icon?: string;
+}) {
+  const { Ionicons } = require('@expo/vector-icons');
+  const router = require('expo-router').router;
+  return (
+    <GlassCard accent="yellow">
+      <View style={{ alignItems: 'center', gap: 6 }}>
+        <View style={pgStyles.iconBox}>
+          <Ionicons name={icon} color={colors.yellow} size={28} />
+        </View>
+        <Text style={pgStyles.title}>{title}</Text>
+        <View style={pgStyles.premiumBadge}>
+          <Ionicons name="star" color={colors.yellow} size={11} />
+          <Text style={pgStyles.premiumText}>Premium Özellik</Text>
+        </View>
+      </View>
+      <Text style={pgStyles.desc}>{description}</Text>
+      {bullets && bullets.length > 0 && (
+        <View style={{ gap: 6, marginTop: 4 }}>
+          {bullets.map((b, i) => (
+            <View key={i} style={pgStyles.bulletRow}>
+              <Ionicons name="checkmark-circle" color={colors.teal300} size={16} />
+              <Text style={pgStyles.bulletText}>{b}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+      <AppButton
+        title="Premium'a Geç"
+        onPress={() => router.push('/billing')}
+        icon={<Ionicons name="sparkles-outline" color={colors.white} size={18} />}
+      />
+    </GlassCard>
+  );
+}
+
+const pgStyles = StyleSheet.create({
+  iconBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: 'rgba(251,191,36,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    color: colors.white,
+    fontSize: 18,
+    fontFamily: 'Poppins_700Bold',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  premiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(251,191,36,0.15)',
+    borderColor: 'rgba(251,191,36,0.4)',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  premiumText: {
+    color: colors.yellow,
+    fontSize: 11,
+    fontFamily: 'Poppins_700Bold',
+  },
+  desc: {
+    color: colors.navy300,
+    fontSize: 13,
+    fontFamily: 'Poppins_400Regular',
+    lineHeight: 19,
+    textAlign: 'center',
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  bulletText: {
+    color: colors.navy200,
+    fontSize: 12,
+    fontFamily: 'Poppins_500Medium',
+    flex: 1,
+    lineHeight: 18,
+  },
+});
+
+/* ============================================================================
+   PREMIUM PROMO BANNER — Compact CTA banner for free users on non-gated screens
+   ============================================================================ */
+export function PremiumPromo({
+  text = 'Premium ile sınırsız AI, sınırsız belge ve aile takibi',
+}: { text?: string }) {
+  const { Ionicons } = require('@expo/vector-icons');
+  const router = require('expo-router').router;
+  return (
+    <View style={promoStyles.banner}>
+      <View style={promoStyles.iconWrap}>
+        <Ionicons name="sparkles" color={colors.yellow} size={16} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={promoStyles.title}>Premium'a Geç</Text>
+        <Text style={promoStyles.desc} numberOfLines={2}>{text}</Text>
+      </View>
+      <View
+        onTouchEnd={() => router.push('/billing')}
+        style={promoStyles.cta}
+      >
+        <Text style={promoStyles.ctaText}>Yükselt</Text>
+      </View>
+    </View>
+  );
+}
+
+const promoStyles = StyleSheet.create({
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(251,191,36,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.3)',
+    borderRadius: 16,
+    padding: 12,
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(251,191,36,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    color: colors.yellow,
+    fontSize: 13,
+    fontFamily: 'Poppins_700Bold',
+  },
+  desc: {
+    color: colors.navy300,
+    fontSize: 11,
+    fontFamily: 'Poppins_400Regular',
+    lineHeight: 15,
+  },
+  cta: {
+    backgroundColor: colors.yellow,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  ctaText: {
+    color: '#1f1300',
+    fontSize: 12,
+    fontFamily: 'Poppins_800ExtraBold',
+  },
+});
+
+/* ============================================================================
+   USAGE LIMIT BAR — Shows daily usage with progress and upgrade CTA
+   ============================================================================ */
+export function UsageLimitBar({
+  label,
+  used,
+  total,
+  isPremium,
+}: {
+  label: string;
+  used: number;
+  total: number;
+  isPremium?: boolean;
+}) {
+  const { Ionicons } = require('@expo/vector-icons');
+  if (isPremium) {
+    return (
+      <View style={usageStyles.row}>
+        <View style={usageStyles.iconBg}>
+          <Ionicons name="infinite" color={colors.teal300} size={14} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={usageStyles.label}>{label}</Text>
+          <Text style={usageStyles.value}>Sınırsız (Premium)</Text>
+        </View>
+      </View>
+    );
+  }
+  const remaining = Math.max(0, total - used);
+  const percent = total > 0 ? Math.min(100, (used / total) * 100) : 0;
+  const isFull = remaining === 0;
+  return (
+    <View style={usageStyles.row}>
+      <View style={[usageStyles.iconBg, isFull && { backgroundColor: 'rgba(239,68,68,0.12)', borderColor: 'rgba(239,68,68,0.3)' }]}>
+        <Ionicons name={isFull ? 'lock-closed' : 'flash'} color={isFull ? colors.red : colors.yellow} size={14} />
+      </View>
+      <View style={{ flex: 1, gap: 4 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Text style={usageStyles.label}>{label}</Text>
+          <Text style={[usageStyles.value, isFull && { color: colors.redLight }]}>{used}/{total}</Text>
+        </View>
+        <View style={usageStyles.track}>
+          <View style={[usageStyles.fill, { width: `${percent}%` }, isFull && { backgroundColor: colors.red }]} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const usageStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 6,
+  },
+  iconBg: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: 'rgba(251,191,36,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  label: {
+    color: colors.navy200,
+    fontSize: 12,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  value: {
+    color: colors.teal300,
+    fontSize: 11,
+    fontFamily: 'Poppins_700Bold',
+  },
+  track: {
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: 'rgba(159,179,200,0.1)',
+    overflow: 'hidden',
+  },
+  fill: {
+    height: '100%',
+    backgroundColor: colors.yellow,
+    borderRadius: 3,
+  },
+});
+
+/* ============================================================================
    EMPTY STATE — Friendly placeholder for empty lists
    ============================================================================ */
 export function EmptyState({

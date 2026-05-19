@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppButton, FadeIn, Field, GlassCard, Muted, Screen } from '../../../src/components/ui';
+import { AppButton, FadeIn, Field, GlassCard, Muted, PremiumGate, Screen } from '../../../src/components/ui';
 import useDoctorPrepStore from '../../../src/stores/doctorPrepStore';
 import useAuthStore from '../../../src/stores/authStore';
 import { colors } from '../../../src/theme';
@@ -81,28 +81,22 @@ export default function DoctorPrepScreen() {
         </View>
       </FadeIn>
 
-      {!user?.is_premium && (
+      {!user?.is_premium ? (
         <FadeIn delay={60}>
-          <GlassCard accent="yellow">
-            <View style={styles.cardHeader}>
-              <View style={[styles.cardHeaderIcon, { backgroundColor: 'rgba(251,191,36,0.12)', borderColor: 'rgba(251,191,36,0.35)' }]}>
-                <Ionicons name="lock-closed-outline" color={colors.yellow} size={16} />
-              </View>
-              <Text style={styles.cardTitle}>Premium Özellik</Text>
-            </View>
-            <Muted>
-              Doktor hazırlık raporları Premium üyelere özeldir. Sınırsız rapor oluşturmak için Premium'a geç.
-            </Muted>
-            <AppButton
-              title="Premium'a Geç"
-              onPress={() => router.push('/billing')}
-              icon={<Ionicons name="sparkles-outline" color={colors.white} size={18} />}
-            />
-          </GlassCard>
+          <PremiumGate
+            title="Doktora Hazırlan"
+            description="Son 30 günlük sağlık verilerinden uzmanlığa özel bir rapor ürettir. Doktora soracağın sorular, kilit bulgular ve risk uyarıları otomatik çıkarılır."
+            icon="medical"
+            bullets={[
+              'Uzmanlığa özel (Aile, Dahiliye, Nöroloji, Kardiyoloji)',
+              'AI ile doktor soruları + risk uyarıları',
+              'Rapor kaydet ve paylaş',
+            ]}
+          />
         </FadeIn>
-      )}
+      ) : null}
 
-      {error && (
+      {user?.is_premium && error && (
         <FadeIn delay={0}>
           <GlassCard accent="red">
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -114,6 +108,7 @@ export default function DoctorPrepScreen() {
         </FadeIn>
       )}
 
+      {user?.is_premium && (
       <FadeIn delay={120}>
         <GlassCard>
           <View style={styles.cardHeader}>
@@ -146,8 +141,9 @@ export default function DoctorPrepScreen() {
           />
         </GlassCard>
       </FadeIn>
+      )}
 
-      {report && (
+      {user?.is_premium && report && (
         <>
           <FadeIn delay={0}>
             <GlassCard accent="teal">
@@ -223,7 +219,7 @@ export default function DoctorPrepScreen() {
         </>
       )}
 
-      {savedReports.length > 0 && (
+      {user?.is_premium && savedReports.length > 0 && (
         <FadeIn delay={360}>
           <GlassCard>
             <View style={styles.cardHeader}>
@@ -272,7 +268,7 @@ function BulletList({ title, items, icon, color }: { title: string; items: strin
 }
 
 const styles = StyleSheet.create({
-  header: { paddingTop: 50, paddingBottom: 4, gap: 4 },
+  header: { paddingTop: 12, paddingBottom: 4, gap: 4 },
   headerEyebrow: {
     color: colors.teal300,
     fontSize: 11,

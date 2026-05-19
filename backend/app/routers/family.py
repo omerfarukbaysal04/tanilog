@@ -799,6 +799,23 @@ async def accept_family_invitation(
     return _access_to_dict(access, current_user, member) | {"watcher_name": inviter.full_name if inviter else None}
 
 
+@router.post("/invitations/{token}/decline")
+async def decline_family_invitation(
+    token: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    invitation = db.query(FamilyInvitation).filter(FamilyInvitation.token == token).first()
+    if not invitation or invitation.status != "pending":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Geçerli davet bulunamadı.")
+    if invitation.invitee_email != current_user.email.lower():
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Bu davet bu kullanıcıya ait değil.")
+    invitation.status = "declined"
+    invitation.updated_at = datetime.utcnow()
+    db.commit()
+    return {"status": "declined"}
+
+
 @router.post("/invitations/{invitation_id}/cancel")
 async def cancel_family_invitation(
     invitation_id: int,

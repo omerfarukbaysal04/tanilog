@@ -260,8 +260,11 @@ export type FamilyHealthEntry = {
 
 export type FamilyInvitation = {
   id: number;
+  inviter_user_id?: number;
+  inviter_name?: string | null;
   invitee_email: string;
   relation: string;
+  token?: string;
   can_view_documents: boolean;
   can_add_records: boolean;
   can_edit_records: boolean;
