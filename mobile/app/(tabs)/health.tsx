@@ -37,12 +37,22 @@ export default function HealthScreen() {
   const [form, setForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       fetchDailySummary().catch((error) => Alert.alert('Sağlık verisi alınamadı', error.message));
     }, [fetchDailySummary]),
   );
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchDailySummary();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const setValue = (field: string, value: string) => setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -78,7 +88,7 @@ export default function HealthScreen() {
   };
 
   return (
-    <Screen withOrbs>
+    <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
       <FadeIn delay={0}>
         <View style={styles.header}>
           <Text style={styles.headerEyebrow}>Günlük Takip</Text>

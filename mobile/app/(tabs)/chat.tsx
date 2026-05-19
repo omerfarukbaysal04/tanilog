@@ -17,12 +17,22 @@ export default function ChatScreen() {
   const { sessions, activeSession, messages, fetchSessions, openSession, sendMessage, isSending } = useChatStore();
   const [message, setMessage] = useState('');
   const [showHistory, setShowHistory] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       fetchSessions().catch((error) => Alert.alert('Sohbetler alınamadı', error.message));
     }, [fetchSessions]),
   );
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchSessions();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleSend = async (text?: string) => {
     const finalText = (text ?? message).trim();
@@ -36,7 +46,7 @@ export default function ChatScreen() {
   };
 
   return (
-    <Screen withOrbs>
+    <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
       <FadeIn delay={0}>
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>

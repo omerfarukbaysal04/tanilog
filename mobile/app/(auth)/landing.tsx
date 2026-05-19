@@ -1,7 +1,7 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppButton, FadeIn, LinearGradient, Muted, Screen } from '../../src/components/ui';
+import { AppButton, AppLogo, FadeIn, Muted, Screen } from '../../src/components/ui';
 import { colors } from '../../src/theme';
 
 type Feature = {
@@ -46,14 +46,7 @@ export default function LandingScreen() {
       {/* Logo + Brand */}
       <FadeIn delay={0}>
         <View style={styles.brandSection}>
-          <LinearGradient
-            colors={['#2dd4bf', '#0fb8a5', '#0d9488']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.logoBox}
-          >
-            <Image source={require('../../assets/icon.png')} style={styles.logoImg} resizeMode="contain" />
-          </LinearGradient>
+          <AppLogo size="lg" />
           <Text style={styles.brand}>TanıLog</Text>
           <Text style={styles.tagline}>Sağlığını anla, hayatını yönet</Text>
         </View>
@@ -133,23 +126,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingBottom: 10,
-  },
-  logoBox: {
-    width: 84,
-    height: 84,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.teal500,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.45,
-    shadowRadius: 16,
-    elevation: 10,
-    marginBottom: 10,
-  },
-  logoImg: {
-    width: 52,
-    height: 52,
   },
   brand: {
     color: colors.white,

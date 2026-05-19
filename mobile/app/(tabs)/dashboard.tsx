@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,6 +28,7 @@ export default function DashboardScreen() {
   const { summary, fetchSummary, isLoading } = useDashboardStore();
   const { alerts, fetchAlerts, dismissAlert } = useRiskAlertStore();
   const { items: notifications, fetchNotifications } = useNotificationStore();
+  const [refreshing, setRefreshing] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const firstName = user?.full_name?.split(' ')[0] || 'Hoşgeldin';
@@ -41,8 +42,17 @@ export default function DashboardScreen() {
     }, [fetchSummary, fetchAlerts, fetchNotifications]),
   );
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([fetchSummary(), fetchAlerts(), fetchNotifications()]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
-    <Screen withOrbs>
+    <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
       {/* Header */}
       <FadeIn delay={0}>
         <View style={styles.headerRow}>

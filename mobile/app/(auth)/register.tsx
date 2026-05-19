@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppButton, FadeIn, Field, GlassCard, LinearGradient, Muted, Screen } from '../../src/components/ui';
+import { AppButton, AppLogo, FadeIn, Field, GlassCard, LinearGradient, Muted, Screen } from '../../src/components/ui';
 import useAuthStore from '../../src/stores/authStore';
 import { colors } from '../../src/theme';
 
@@ -28,9 +28,7 @@ export default function RegisterScreen() {
   return (
     <Screen withOrbs>
       <FadeIn delay={0} style={styles.brandRow}>
-        <LinearGradient colors={['#2dd4bf', '#0fb8a5']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.logoBox}>
-          <Ionicons name="medical" color={colors.white} size={28} />
-        </LinearGradient>
+        <AppLogo size="sm" />
         <View>
           <Text style={styles.brand}>TanıLog'a Katıl</Text>
           <Text style={styles.tagline}>Sağlık yolculuğun başlıyor</Text>
@@ -123,18 +121,6 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingTop: 30,
     paddingBottom: 10,
-  },
-  logoBox: {
-    width: 58,
-    height: 58,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.teal500,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
   },
   brand: {
     color: colors.white,

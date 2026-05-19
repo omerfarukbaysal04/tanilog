@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Easing,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Switch,
@@ -14,6 +15,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../theme';
 
 export function LinearGradient({ colors: c, style, children, start, end, pointerEvents, ...rest }: any) {
@@ -32,10 +34,14 @@ export function Screen({
   children,
   scroll = true,
   withOrbs = false,
+  onRefresh,
+  refreshing = false,
 }: {
   children: ReactNode;
   scroll?: boolean;
   withOrbs?: boolean;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }) {
   const content = <View style={styles.content}>{children}</View>;
   return (
@@ -46,6 +52,17 @@ export function Screen({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 24 }}
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.teal300}
+                colors={[colors.teal300, colors.blue]}
+                progressBackgroundColor={colors.navy850}
+              />
+            ) : undefined
+          }
         >
           {content}
         </ScrollView>
@@ -55,6 +72,151 @@ export function Screen({
     </SafeAreaView>
   );
 }
+
+/* ============================================================================
+   APP LOGO — Consistent brand mark used across auth & landing screens
+   ============================================================================ */
+export function AppLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
+  const dim = size === 'sm' ? 48 : size === 'lg' ? 96 : 72;
+  const iconSz = size === 'sm' ? 24 : size === 'lg' ? 46 : 34;
+  const br = size === 'sm' ? 15 : size === 'lg' ? 28 : 22;
+  return (
+    <View style={[
+      logoStyles.box,
+      {
+        width: dim, height: dim, borderRadius: br,
+        shadowColor: colors.teal500,
+        shadowOffset: { width: 0, height: size === 'lg' ? 14 : 8 },
+        shadowOpacity: 0.55,
+        shadowRadius: size === 'lg' ? 22 : 14,
+        elevation: size === 'lg' ? 14 : 8,
+      },
+    ]}>
+      <Ionicons name="medical" color={colors.white} size={iconSz} />
+    </View>
+  );
+}
+
+const logoStyles = StyleSheet.create({
+  box: {
+    backgroundColor: colors.teal500,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.18)',
+  },
+});
+
+/* ============================================================================
+   EMPTY STATE — Friendly placeholder for empty lists
+   ============================================================================ */
+export function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+}: {
+  icon?: ReactNode;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <View style={emptyStyles.container}>
+      {icon && <View style={emptyStyles.iconWrap}>{icon}</View>}
+      <Text style={emptyStyles.title}>{title}</Text>
+      {description ? <Text style={emptyStyles.desc}>{description}</Text> : null}
+      {action ? <View style={{ marginTop: 4 }}>{action}</View> : null}
+    </View>
+  );
+}
+
+const emptyStyles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    gap: 10,
+    paddingHorizontal: 24,
+  },
+  iconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: 'rgba(15,184,165,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(15,184,165,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  title: {
+    color: colors.white,
+    fontSize: 16,
+    fontFamily: 'Poppins_700Bold',
+    textAlign: 'center',
+  },
+  desc: {
+    color: colors.navy400,
+    fontSize: 13,
+    fontFamily: 'Poppins_400Regular',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+});
+
+/* ============================================================================
+   ERROR STATE — Retry-able error screen
+   ============================================================================ */
+export function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <View style={errorStyles.container}>
+      <View style={errorStyles.iconWrap}>
+        <Ionicons name="cloud-offline-outline" color={colors.redLight} size={32} />
+      </View>
+      <Text style={errorStyles.title}>Bir hata oluştu</Text>
+      <Text style={errorStyles.message}>{message}</Text>
+      {onRetry ? <AppButton title="Tekrar Dene" variant="secondary" onPress={onRetry} size="sm" /> : null}
+    </View>
+  );
+}
+
+const errorStyles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    paddingVertical: 36,
+    gap: 10,
+    paddingHorizontal: 24,
+  },
+  iconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  title: {
+    color: colors.white,
+    fontSize: 16,
+    fontFamily: 'Poppins_700Bold',
+  },
+  message: {
+    color: colors.navy400,
+    fontSize: 13,
+    fontFamily: 'Poppins_400Regular',
+    textAlign: 'center',
+    lineHeight: 19,
+  },
+});
 
 /* ============================================================================
    FLOATING ORBS — Decorative animated background blobs

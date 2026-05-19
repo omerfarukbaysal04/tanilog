@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { WebView } from 'react-native-webview';
-import { AppButton, FadeIn, Field, GlassCard, Muted, Screen } from '../../src/components/ui';
+import { AppButton, EmptyState, FadeIn, Field, GlassCard, Muted, Screen } from '../../src/components/ui';
 import useDocumentStore, { UploadAsset } from '../../src/stores/documentStore';
 import { DocumentItem } from '../../src/types';
 import { colors } from '../../src/theme';
@@ -26,6 +26,7 @@ export default function DocumentsScreen() {
   const [headers, setHeaders] = useState<Record<string, string>>({});
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -33,6 +34,16 @@ export default function DocumentsScreen() {
       authHeaders().then(setHeaders).catch(() => {});
     }, [authHeaders, fetchDocuments]),
   );
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchDocuments();
+      await authHeaders().then(setHeaders);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const pickCamera = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -83,7 +94,7 @@ export default function DocumentsScreen() {
   };
 
   return (
-    <Screen withOrbs>
+    <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
       <FadeIn delay={0}>
         <View style={styles.header}>
           <Text style={styles.headerEyebrow}>Arşiv</Text>
@@ -224,7 +235,13 @@ export default function DocumentsScreen() {
             </View>
             <Text style={styles.cardTitle}>Arşiv ({documents.length})</Text>
           </View>
-          {documents.length ? documents.map((item, i) => (
+          {documents.length === 0 ? (
+            <EmptyState
+              icon={<Ionicons name="documents-outline" color={colors.teal300} size={28} />}
+              title="Henüz belge yok"
+              description="Lab sonuçları, reçeteler ve görüntülemelerini buraya ekle."
+            />
+          ) : documents.map((item, i) => (
             <Pressable
               key={item.id}
               onPress={() => setSelected(item)}
@@ -247,7 +264,7 @@ export default function DocumentsScreen() {
               </View>
               <Ionicons name="chevron-forward" color={colors.navy400} size={18} />
             </Pressable>
-          )) : <Muted>Henüz belge yok. İlk belgeni yükle.</Muted>}
+          ))}
         </GlassCard>
       </FadeIn>
     </Screen>

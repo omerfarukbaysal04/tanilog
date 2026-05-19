@@ -158,6 +158,34 @@ export default function SettingsScreen() {
               value={settings.family_invite_notifications_enabled}
               onValueChange={toggle('family_invite_notifications_enabled')}
             />
+            <ToggleRow
+              label="Sessiz saatler"
+              value={settings.quiet_hours_enabled}
+              onValueChange={toggle('quiet_hours_enabled')}
+              description="Belirtilen saatler arasında bildirim gönderilmez"
+            />
+            {settings.quiet_hours_enabled && (
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <View style={{ flex: 1 }}>
+                  <Field
+                    label="Başlangıç"
+                    value={settings.quiet_hours_start ?? ''}
+                    onChangeText={setField('quiet_hours_start')}
+                    placeholder="22:00"
+                    keyboardType="numbers-and-punctuation"
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Field
+                    label="Bitiş"
+                    value={settings.quiet_hours_end ?? ''}
+                    onChangeText={setField('quiet_hours_end')}
+                    placeholder="08:00"
+                    keyboardType="numbers-and-punctuation"
+                  />
+                </View>
+              </View>
+            )}
             <View style={{ height: 8 }} />
             <AppButton
               title="Test Bildirimi Gönder"
