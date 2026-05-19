@@ -46,12 +46,13 @@ class MedicationInteractionRequest(BaseModel):
 
 class DoctorPrepRequest(BaseModel):
     days: int = Field(30, ge=30, le=30)
-    specialty: Literal["family", "internal", "neurology", "cardiology"] = "family"
+    specialty: Literal["family", "internal", "internal_medicine", "neurology", "cardiology"] = "family"
 
 
 class SaveDoctorPrepReportRequest(BaseModel):
     title: str | None = Field(None, max_length=255)
-    report: dict
+    report: dict | None = None
+    report_data: dict | None = None
 
 
 class CreateDoctorShareRequest(BaseModel):
@@ -346,6 +347,7 @@ async def create_doctor_prep_report(
         "specialty_instruction": {
             "family": "Aile hekimi için genel, anlaşılır ve önceliklendirilmiş bir özet hazırla.",
             "internal": "Dahiliye odaklı; metabolik, ilaç, uyku ve beslenme ilişkilerini daha görünür yap.",
+            "internal_medicine": "Dahiliye odaklı; metabolik, ilaç, uyku ve beslenme ilişkilerini daha görünür yap.",
             "neurology": "Nöroloji odaklı; baş ağrısı, uyku, nörolojik semptomlar ve tetikleyicileri öne çıkar.",
             "cardiology": "Kardiyoloji odaklı; göğüs ağrısı, tansiyon ima eden kayıtlar, uyku ve ilaç uyumunu öne çıkar.",
         }.get(payload.specialty),
@@ -451,7 +453,9 @@ async def save_doctor_prep_report(
             detail="Doktor raporu kaydetme Premium kullanıcılar için kullanılabilir."
         )
 
-    report = payload.report
+    report = payload.report or payload.report_data
+    if not report:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Kaydedilecek rapor verisi eksik.")
     date_range = report.get("date_range") or {}
     try:
         period_start = date.fromisoformat(date_range.get("start"))

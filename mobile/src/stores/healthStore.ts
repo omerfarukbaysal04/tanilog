@@ -18,6 +18,7 @@ export type MedicationScanResult = {
   summary: string;
   medications: MedicationCandidate[];
   warnings: string[];
+  error?: string;
 };
 
 type HealthState = {

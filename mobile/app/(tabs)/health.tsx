@@ -118,7 +118,9 @@ export default function HealthScreen() {
     try {
       const result = await scanMedication(asset);
       setScanResult(result);
-      if (!result.medications?.length) {
+      if (result.error) {
+        Alert.alert('AI tarama tamamlanamadı', result.error);
+      } else if (!result.medications?.length) {
         Alert.alert('Bulunamadı', 'Görselde ilaç adayı bulunamadı. Daha net bir fotoğraf dene.');
       }
     } catch (e: any) {
@@ -253,6 +255,10 @@ export default function HealthScreen() {
     setInteractionResult(null);
     try {
       const { data } = await api.post('/ai/medication-interactions', { days: 7 });
+      if (data.error) {
+        Alert.alert('AI kontrol tamamlanamadı', data.error);
+        return;
+      }
       const summary = data.summary || data.interactions_summary || 'Analiz tamamlandı.';
       const warnings = data.warnings || data.critical_findings || '';
       setInteractionResult(warnings ? `${summary}\n\n⚠️ ${warnings}` : summary);

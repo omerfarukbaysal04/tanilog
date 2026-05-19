@@ -317,6 +317,7 @@ tanilog/
 ### Faz 12 - Mobil Uygulama
 
 #### Altyapı & Kimlik Doğrulama
+
 - [x] Expo + React Native + TypeScript proje kurulumu
 - [x] Expo Router dosya tabanlı navigasyon
 - [x] Zustand state yönetimi altyapısı
@@ -327,6 +328,7 @@ tanilog/
 - [x] Otomatik auth yönlendirme (splash → login / tabs)
 
 #### Ana Ekranlar (Tab Navigasyon)
+
 - [x] Dashboard — metrik grid, son aktiviteler, veri kalitesi
 - [x] Sağlık Takibi — semptom, ilaç, uyku, beslenme sekmeleri
 - [x] Belgeler — kamera/dosya yükleme, önizleme, AI analiz
@@ -334,6 +336,7 @@ tanilog/
 - [x] AI Chat — oturum yönetimi, mesajlaşma
 
 #### Kullanıcı Hesap Yönetimi
+
 - [x] Profil ekranı — ad düzenleme, avatar, üyelik bilgisi
 - [x] Şifre değiştirme
 - [x] Ayarlar ekranı — bildirim toggle'ları, AI izinleri
@@ -343,11 +346,13 @@ tanilog/
 - [x] Hesap silme (şifre + onay metni ile)
 
 #### Dashboard Geliştirmeleri
+
 - [x] Risk uyarı kartları (inline, kapat butonu)
 - [x] Bildirim zili ve okunmamış badge
 - [x] Avatar butonu → profil ekranı yönlendirmesi
 
 #### Bildirimler
+
 - [x] Bildirim merkezi ekranı
 - [x] Okunmamış / okunmuş görsel ayrımı
 - [x] Tümünü okundu işaretle
@@ -355,6 +360,7 @@ tanilog/
 - [x] İlaç hatırlatma — günlük yerel bildirim, health.tsx'ten toggle ile kurulum
 
 #### Araçlar Tab'ı (6. Tab)
+
 - [x] Araçlar hub ekranı (kart listesi)
 - [x] Zaman çizelgesi — 7/30/90 gün, tarih gruplu liste
 - [x] Gelişmiş arama — metin + kategori filtresi, riskli sonuç işareti
@@ -363,26 +369,20 @@ tanilog/
 - [x] Premium gate (Doktora Hazırlan)
 
 #### Premium & Ödeme
+
 - [x] Abonelik / plan görüntüleme ekranı
 - [x] Mevcut plan ve bitiş tarihi gösterimi
 - [x] Mock ödeme akışı (demo — gerçek ücret alınmaz)
 - [x] Abonelik iptal ve işlem geçmişi
 
 #### Aile Takibi (Premium)
+
 - [x] Aile üyeleri listeleme (Premium gate ile)
 - [x] Manuel aile üyesi ekleme
 - [x] Aile üyesi detay ve sağlık kayıtları (semptom / ilaç / uyku / beslenme / not / randevu)
 - [x] E-posta ile davet gönderme (izin seçimiyle)
 - [x] Gönderilen davet iptal
 - [x] Bana erişim verenleri görme ve erişimi kaldırma
-
-#### Yayın Hazırlığı
-- [ ] Android APK / AAB build süreci
-- [ ] iOS build süreci (Expo EAS Build)
-- [ ] App icon ve splash screen tasarımı
-- [ ] Google Play Store yayın hazırlığı
-- [ ] Apple App Store yayın hazırlığı
-- [ ] Uygulama içi hata izleme (Sentry veya benzeri)
 
 ### Faz 13 - Test & Yayın
 

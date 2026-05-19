@@ -76,7 +76,7 @@ export default function FamilyIndexScreen() {
     return (
       <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
         <FadeIn delay={0}>
-          <Pressable onPress={() => router.push('/tools')} style={styles.backBtn}>
+          <Pressable onPress={() => router.replace('/(tabs)/tools' as any)} style={styles.backBtn}>
             <Ionicons name="arrow-back" color={colors.teal300} size={20} />
             <Text style={styles.backText}>Araçlar</Text>
           </Pressable>
@@ -123,7 +123,7 @@ export default function FamilyIndexScreen() {
   return (
     <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
       <FadeIn delay={0}>
-        <Pressable onPress={() => router.push('/tools')} style={styles.backBtn}>
+        <Pressable onPress={() => router.replace('/(tabs)/tools' as any)} style={styles.backBtn}>
           <Ionicons name="arrow-back" color={colors.teal300} size={20} />
           <Text style={styles.backText}>Araçlar</Text>
         </Pressable>

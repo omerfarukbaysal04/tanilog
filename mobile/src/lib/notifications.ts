@@ -49,10 +49,18 @@ async function setupAndroidChannel() {
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#0fb8a5',
-      sound: 'default',
       enableVibrate: true,
     });
   } catch {}
+}
+
+function normalizeNotificationRoute(route: string): string {
+  if (route.startsWith('/tools')) return `/(tabs)${route}`;
+  if (route.startsWith('/family')) return `/(tabs)${route}`;
+  if (route === '/health' || route.startsWith('/health?')) return `/(tabs)${route}`;
+  if (route === '/documents' || route.startsWith('/documents?')) return `/(tabs)${route}`;
+  if (route === '/notifications' || route.startsWith('/notifications?')) return `/(tabs)${route}`;
+  return route;
 }
 
 /**
@@ -162,12 +170,12 @@ export function setupNotificationListeners() {
     if (typeof route === 'string' && route.length > 0) {
       try {
         // Backend route formatı: /health, /notifications, /family/invitations vb.
-        router.push(route as any);
+        router.push(normalizeNotificationRoute(route) as any);
       } catch {
-        router.push('/notifications');
+        router.push('/(tabs)/notifications' as any);
       }
     } else {
-      router.push('/notifications');
+      router.push('/(tabs)/notifications' as any);
     }
   });
 }

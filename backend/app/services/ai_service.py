@@ -6,6 +6,20 @@ from app.config import settings
 
 MODEL_NAME = "gemini-2.5-flash"
 
+
+def _is_quota_error(error: Exception) -> bool:
+    text = str(error).lower()
+    return "429" in text or "resource_exhausted" in text or "quota" in text or "rate-limit" in text
+
+
+def _friendly_ai_error(error: Exception) -> str:
+    if _is_quota_error(error):
+        return (
+            "Gemini API kotasi doldu. Bir sure sonra tekrar deneyin veya Google AI Studio/API "
+            "faturalandirma ve kota ayarlarinizi kontrol edin."
+        )
+    return str(error)
+
 def get_genai_client():
     if not settings.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY ortam değișkeni tanımlanmamış.")
@@ -26,7 +40,7 @@ def _json_from_gemini(prompt: str, fallback: dict, temperature: float = 0.25) ->
     except Exception as e:
         print(f"AI Text Analysis Error: {str(e)}")
         fallback = fallback.copy()
-        fallback["error"] = str(e)
+        fallback["error"] = _friendly_ai_error(e)
         return fallback
 
 
@@ -463,5 +477,6 @@ def scan_medications_from_file(file_bytes: bytes, mime_type: str) -> dict:
         return json.loads(response.text)
     except Exception as e:
         print(f"Medication Scan Error: {str(e)}")
-        fallback["warnings"].append(f"Sistem hatası: {str(e)}")
+        fallback["error"] = _friendly_ai_error(e)
+        fallback["warnings"].append(f"Sistem hatasi: {fallback['error']}")
         return fallback

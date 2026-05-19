@@ -52,7 +52,8 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
-      "package": "com.baysalsoft.tanilogmobile"
+      "package": "com.baysalsoft.tanilogmobile",
+      "googleServicesFile": "./android/app/google-services.json"
     },
     "experiments": {
       "typedRoutes": true

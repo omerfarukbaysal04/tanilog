@@ -10,7 +10,7 @@ import { colors } from '../../../src/theme';
 
 const SPECIALTIES: { label: string; value: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { label: 'Aile Hekimi', value: 'family', icon: 'people-outline' },
-  { label: 'Dahiliye', value: 'internal_medicine', icon: 'medkit-outline' },
+  { label: 'Dahiliye', value: 'internal', icon: 'medkit-outline' },
   { label: 'Nöroloji', value: 'neurology', icon: 'pulse-outline' },
   { label: 'Kardiyoloji', value: 'cardiology', icon: 'heart-outline' },
 ];
@@ -103,7 +103,7 @@ export default function DoctorPrepScreen() {
   return (
     <Screen withOrbs>
       <FadeIn delay={0}>
-        <Pressable onPress={() => router.push('/tools')} style={styles.backBtn}>
+        <Pressable onPress={() => router.replace('/(tabs)/tools' as any)} style={styles.backBtn}>
           <Ionicons name="arrow-back" color={colors.teal300} size={20} />
           <Text style={styles.backText}>Araçlar</Text>
         </Pressable>
