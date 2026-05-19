@@ -7,15 +7,15 @@ import useDoctorPrepStore from '../../../src/stores/doctorPrepStore';
 import useAuthStore from '../../../src/stores/authStore';
 import { colors } from '../../../src/theme';
 
-const SPECIALTIES: { label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { label: 'Aile Hekimi', icon: 'people-outline' },
-  { label: 'Dahiliye', icon: 'medkit-outline' },
-  { label: 'Nöroloji', icon: 'pulse-outline' },
-  { label: 'Kardiyoloji', icon: 'heart-outline' },
+const SPECIALTIES: { label: string; value: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { label: 'Aile Hekimi', value: 'family', icon: 'people-outline' },
+  { label: 'Dahiliye', value: 'internal_medicine', icon: 'medkit-outline' },
+  { label: 'Nöroloji', value: 'neurology', icon: 'pulse-outline' },
+  { label: 'Kardiyoloji', value: 'cardiology', icon: 'heart-outline' },
 ];
 
 export default function DoctorPrepScreen() {
-  const [selectedSpecialty, setSelectedSpecialty] = useState(SPECIALTIES[0].label);
+  const [selectedSpecialty, setSelectedSpecialty] = useState(SPECIALTIES[0].value);
   const [saveTitle, setSaveTitle] = useState('');
   const [showSaveForm, setShowSaveForm] = useState(false);
 
@@ -119,12 +119,12 @@ export default function DoctorPrepScreen() {
           </View>
           <View style={styles.pillGrid}>
             {SPECIALTIES.map((spec) => {
-              const active = selectedSpecialty === spec.label;
+              const active = selectedSpecialty === spec.value;
               return (
                 <Pressable
-                  key={spec.label}
+                  key={spec.value}
                   style={[styles.pill, active && styles.pillActive]}
-                  onPress={() => setSelectedSpecialty(spec.label)}
+                  onPress={() => setSelectedSpecialty(spec.value)}
                 >
                   <Ionicons name={spec.icon} color={active ? colors.teal300 : colors.navy400} size={14} />
                   <Text style={[styles.pillText, active && styles.pillTextActive]}>{spec.label}</Text>

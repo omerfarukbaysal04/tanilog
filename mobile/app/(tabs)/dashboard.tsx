@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { FadeIn, GlassCard, LinearGradient, Muted, PremiumPromo, Screen, StatCard } from '../../src/components/ui';
+import { AppLogo, FadeIn, GlassCard, LinearGradient, Muted, PremiumPromo, Screen, StatCard } from '../../src/components/ui';
 import { fmtShortTR } from '../../src/lib/dateFmt';
 import useAuthStore from '../../src/stores/authStore';
 import useDashboardStore from '../../src/stores/dashboardStore';
@@ -72,6 +72,7 @@ export default function DashboardScreen() {
             <Text style={styles.greeting}>{greeting},</Text>
             <Text style={styles.name}>{firstName} 👋</Text>
           </View>
+          <AppLogo size="sm" />
           <View style={styles.headerActions}>
             <Pressable onPress={() => router.push('/notifications')} style={styles.iconBtn}>
               <Ionicons name="notifications-outline" color={colors.white} size={20} />
