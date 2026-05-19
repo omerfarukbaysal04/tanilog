@@ -22,6 +22,17 @@ function notifIcon(type: string): { name: keyof typeof Ionicons.glyphMap; color:
   return { name: 'notifications', color: colors.teal300 };
 }
 
+function normalizeRoute(route: string): string {
+  if (route === '/tools') return '/(tabs)/tools/index';
+  if (route.startsWith('/tools')) return `/(tabs)${route}`;
+  if (route === '/family' || route.startsWith('/family/invitations')) return '/(tabs)/family/index';
+  if (route.startsWith('/family')) return `/(tabs)${route}`;
+  if (route === '/health' || route.startsWith('/health?')) return `/(tabs)${route}`;
+  if (route === '/documents' || route.startsWith('/documents?')) return `/(tabs)${route}`;
+  if (route === '/notifications' || route.startsWith('/notifications?')) return `/(tabs)${route}`;
+  return route;
+}
+
 export default function NotificationsScreen() {
   const { items, isLoading, fetchNotifications, markRead, markAllRead } = useNotificationStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -55,9 +66,7 @@ export default function NotificationsScreen() {
     if (!item.read) markRead(item.id).catch(() => {});
     let route = item.route;
     if (typeof route === 'string' && route.length > 0) {
-      // Backend'den gelen route'ları normalize et
-      if (route.includes('family')) route = '/family';
-      else if (route.includes('notification')) route = '/notifications';
+      route = normalizeRoute(route);
       try { router.push(route as any); } catch {
         // Geçersiz route → bildirimlerde kal
       }

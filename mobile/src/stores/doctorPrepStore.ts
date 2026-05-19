@@ -12,6 +12,7 @@ type DoctorPrepState = {
   error: string | null;
   createReport: (specialty: string) => Promise<void>;
   fetchSavedReports: () => Promise<void>;
+  openSavedReport: (reportId: number) => Promise<void>;
   saveReport: (title: string) => Promise<void>;
   shareReport: (reportId: number) => Promise<void>;
   clearError: () => void;
@@ -55,6 +56,20 @@ const useDoctorPrepStore = create<DoctorPrepState>((set, get) => ({
     }
   },
 
+  openSavedReport: async (reportId) => {
+    set({ isLoadingSaved: true, error: null });
+    try {
+      const { data } = await api.get<DoctorPrepReport>(`/ai/doctor-prep/saved/${reportId}`);
+      set({ report: data });
+    } catch (e: any) {
+      const detail = e.response?.data?.detail;
+      set({ error: typeof detail === 'string' ? detail : e.message });
+      throw e;
+    } finally {
+      set({ isLoadingSaved: false });
+    }
+  },
+
   saveReport: async (title) => {
     const { report } = get();
     if (!report) return;
@@ -77,10 +92,11 @@ const useDoctorPrepStore = create<DoctorPrepState>((set, get) => ({
 
   shareReport: async (reportId) => {
     const { data } = await api.post<{ share_url: string }>(`/ai/doctor-prep/saved/${reportId}/share`, {
+      password: 'tanilog',
       hours: 24,
     });
     await Share.share({
-      message: `TanıLog doktor raporum: ${data.share_url}`,
+      message: `TanıLog doktor raporum: ${data.share_url}\nŞifre: tanilog`,
       title: 'Doktor Hazırlık Raporumu Paylaş',
     });
   },

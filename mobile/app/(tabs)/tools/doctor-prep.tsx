@@ -30,6 +30,7 @@ export default function DoctorPrepScreen() {
     error,
     createReport,
     fetchSavedReports,
+    openSavedReport,
     saveReport,
     shareReport,
     clearError,
@@ -73,6 +74,14 @@ export default function DoctorPrepScreen() {
     }
   };
 
+  const handleOpenSaved = async (id: number) => {
+    try {
+      await openSavedReport(id);
+    } catch (e: any) {
+      Alert.alert('Rapor açılamadı', e.response?.data?.detail || e.message);
+    }
+  };
+
   const handleShareFull = async () => {
     if (!report) return;
     const sections = [
@@ -103,7 +112,7 @@ export default function DoctorPrepScreen() {
   return (
     <Screen withOrbs>
       <FadeIn delay={0}>
-        <Pressable onPress={() => router.replace('/(tabs)/tools' as any)} style={styles.backBtn}>
+        <Pressable onPress={() => router.replace('/(tabs)/tools/index' as any)} style={styles.backBtn}>
           <Ionicons name="arrow-back" color={colors.teal300} size={20} />
           <Text style={styles.backText}>Araçlar</Text>
         </Pressable>
@@ -277,15 +286,21 @@ export default function DoctorPrepScreen() {
               <Muted>Yükleniyor...</Muted>
             ) : (
               savedReports.map((saved, i) => (
-                <View key={saved.id} style={[styles.savedRow, i > 0 && styles.savedDivider]}>
+                <Pressable key={saved.id} onPress={() => handleOpenSaved(saved.id)} style={[styles.savedRow, i > 0 && styles.savedDivider]}>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text style={styles.savedTitle} numberOfLines={1}>{saved.title}</Text>
                     <Muted>{new Date(saved.created_at).toLocaleDateString('tr-TR')}</Muted>
                   </View>
-                  <Pressable onPress={() => handleShare(saved.id)} style={styles.shareBtn}>
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation?.();
+                      handleShare(saved.id);
+                    }}
+                    style={styles.shareBtn}
+                  >
                     <Ionicons name="share-outline" color={colors.teal300} size={18} />
                   </Pressable>
-                </View>
+                </Pressable>
               ))
             )}
           </GlassCard>

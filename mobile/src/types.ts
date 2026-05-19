@@ -257,7 +257,7 @@ export type FamilyMember = {
 };
 
 export type FamilyHealthEntry = {
-  id: number;
+  id: number | string;
   entry_date: string;
   category: string;
   title: string;

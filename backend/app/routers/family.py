@@ -409,6 +409,97 @@ def _shared_record_or_404(db: Session, owner_user_id: int, category: str, record
     return record
 
 
+def _linked_record_to_entry_dict(record, category: str) -> dict:
+    if category == "symptom":
+        return {
+            "id": f"symptom-{record.id}",
+            "family_member_id": None,
+            "entry_date": record.date,
+            "category": "symptom",
+            "title": record.symptom_name,
+            "severity": record.severity,
+            "status": "note",
+            "details": record.notes,
+            "created_at": record.created_at,
+        }
+    if category == "medication":
+        return {
+            "id": f"medication-{record.id}",
+            "family_member_id": None,
+            "entry_date": record.date,
+            "category": "medication",
+            "title": record.name,
+            "severity": None,
+            "status": "note",
+            "details": record.notes,
+            "created_at": record.created_at,
+        }
+    if category == "sleep":
+        return {
+            "id": f"sleep-{record.id}",
+            "family_member_id": None,
+            "entry_date": record.date,
+            "category": "sleep",
+            "title": f"{record.hours_slept} saat uyku",
+            "severity": None,
+            "status": "note",
+            "details": record.notes,
+            "created_at": record.created_at,
+        }
+    return {
+        "id": f"nutrition-{record.id}",
+        "family_member_id": None,
+        "entry_date": record.date,
+        "category": "nutrition",
+        "title": record.notes or record.meal_type,
+        "severity": None,
+        "status": "note",
+        "details": f"Su: {record.water_ml} ml",
+        "created_at": record.created_at,
+    }
+
+
+def _create_linked_family_record(db: Session, owner_user_id: int, payload: FamilyEntryCreate):
+    note = payload.details or "Aile takibi üzerinden eklendi."
+    if payload.category == "symptom":
+        return SymptomLog(
+            user_id=owner_user_id,
+            date=payload.entry_date,
+            symptom_name=payload.title.strip(),
+            severity=payload.severity or 5,
+            notes=note,
+        )
+    if payload.category == "medication":
+        return MedicationLog(
+            user_id=owner_user_id,
+            date=payload.entry_date,
+            name=payload.title.strip(),
+            dosage="Belirtilmedi",
+            notes=note,
+        )
+    if payload.category == "nutrition":
+        return NutritionLog(
+            user_id=owner_user_id,
+            date=payload.entry_date,
+            meal_type="snack",
+            water_ml=0,
+            notes=payload.title.strip() if not payload.details else note,
+        )
+    if payload.category == "sleep":
+        try:
+            hours = float(payload.title.replace(",", "."))
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Uyku kaydı için başlığa saat sayısı yazın. Örn: 7.5")
+        return SleepLog(
+            user_id=owner_user_id,
+            date=payload.entry_date,
+            hours_slept=hours,
+            quality="good",
+            notes=note,
+        )
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Gerçek kullanıcı kaydı için bu kategori desteklenmiyor.")
+
+
 @router.get("/members")
 async def list_family_members(
     current_user: User = Depends(get_current_user),
@@ -526,11 +617,25 @@ async def create_family_entry(
     db: Session = Depends(get_db),
 ):
     _require_premium(current_user)
-    _member_or_404(db, current_user.id, member_id)
+    member = _member_or_404(db, current_user.id, member_id)
     if payload.category not in ENTRY_CATEGORIES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Geçersiz kayıt kategorisi.")
     if payload.status not in ENTRY_STATUSES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Geçersiz kayıt durumu.")
+
+    if member.linked_user_id:
+        access = db.query(FamilyAccess).filter(
+            FamilyAccess.owner_user_id == member.linked_user_id,
+            FamilyAccess.watcher_user_id == current_user.id,
+            FamilyAccess.is_active == True,
+        ).first()
+        if not access or not access.can_add_records:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Bu aile erişiminde kayıt ekleme izni yok.")
+        record = _create_linked_family_record(db, member.linked_user_id, payload)
+        db.add(record)
+        db.commit()
+        db.refresh(record)
+        return _linked_record_to_entry_dict(record, payload.category)
 
     entry = FamilyHealthEntry(
         user_id=current_user.id,

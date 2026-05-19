@@ -128,14 +128,16 @@ export default function MemberScreen() {
               {entry.details && <Muted>{entry.details}</Muted>}
               <Muted>{new Date(entry.entry_date).toLocaleDateString('tr-TR')}</Muted>
             </View>
-            <Pressable onPress={() =>
-              Alert.alert('Kaydı Sil', entry.title, [
-                { text: 'İptal', style: 'cancel' },
-                { text: 'Sil', style: 'destructive', onPress: () => deleteEntry(selectedMember.id, entry.id).catch(() => {}) },
-              ])
-            }>
-              <Ionicons name="trash-outline" color={colors.red} size={18} />
-            </Pressable>
+            {typeof entry.id === 'number' && (
+              <Pressable onPress={() =>
+                Alert.alert('Kaydı Sil', entry.title, [
+                  { text: 'İptal', style: 'cancel' },
+                  { text: 'Sil', style: 'destructive', onPress: () => deleteEntry(selectedMember.id, entry.id as number).catch(() => {}) },
+                ])
+              }>
+                <Ionicons name="trash-outline" color={colors.red} size={18} />
+              </Pressable>
+            )}
           </View>
         ))
       )}

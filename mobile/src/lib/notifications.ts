@@ -55,7 +55,9 @@ async function setupAndroidChannel() {
 }
 
 function normalizeNotificationRoute(route: string): string {
+  if (route === '/tools') return '/(tabs)/tools/index';
   if (route.startsWith('/tools')) return `/(tabs)${route}`;
+  if (route === '/family' || route.startsWith('/family/invitations')) return '/(tabs)/family/index';
   if (route.startsWith('/family')) return `/(tabs)${route}`;
   if (route === '/health' || route.startsWith('/health?')) return `/(tabs)${route}`;
   if (route === '/documents' || route.startsWith('/documents?')) return `/(tabs)${route}`;
