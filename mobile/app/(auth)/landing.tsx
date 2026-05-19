@@ -43,12 +43,10 @@ export default function LandingScreen() {
     <Screen withOrbs>
       <View style={{ height: 40 }} />
 
-      {/* Logo + Brand */}
+      {/* Logo — sadece görsel */}
       <FadeIn delay={0}>
-        <View style={styles.brandSection}>
+        <View style={styles.logoSection}>
           <AppLogo size="lg" />
-          <Text style={styles.brand}>TanıLog</Text>
-          <Text style={styles.tagline}>Sağlığını anla, hayatını yönet</Text>
         </View>
       </FadeIn>
 
@@ -88,6 +86,14 @@ export default function LandingScreen() {
         </View>
       </FadeIn>
 
+      {/* Marka — CTA'nın altında */}
+      <FadeIn delay={620}>
+        <View style={styles.brandSection}>
+          <Text style={styles.brand}>TanıLog</Text>
+          <Text style={styles.tagline}>Sağlığını anla, hayatını yönet</Text>
+        </View>
+      </FadeIn>
+
       <FadeIn delay={680}>
         <View style={styles.disclaimerBox}>
           <Ionicons name="shield-checkmark-outline" color={colors.teal300} size={14} />
@@ -122,16 +128,21 @@ function FeatureCard({ feature, delay }: { feature: Feature; delay: number }) {
 }
 
 const styles = StyleSheet.create({
+  logoSection: {
+    alignItems: 'center',
+    paddingBottom: 6,
+  },
   brandSection: {
     alignItems: 'center',
-    gap: 6,
-    paddingBottom: 10,
+    gap: 4,
+    paddingTop: 12,
+    paddingBottom: 4,
   },
   brand: {
     color: colors.white,
-    fontSize: 36,
+    fontSize: 28,
     fontFamily: 'Poppins_800ExtraBold',
-    letterSpacing: -1,
+    letterSpacing: -0.6,
   },
   tagline: {
     color: colors.teal300,

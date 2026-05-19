@@ -76,6 +76,10 @@ export default function FamilyIndexScreen() {
     return (
       <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
         <FadeIn delay={0}>
+          <Pressable onPress={() => router.push('/tools')} style={styles.backBtn}>
+            <Ionicons name="arrow-back" color={colors.teal300} size={20} />
+            <Text style={styles.backText}>Araçlar</Text>
+          </Pressable>
           <View style={styles.header}>
             <Text style={styles.eyebrow}>Aile</Text>
             <Text style={styles.title}>Aile Takibi</Text>
@@ -119,6 +123,10 @@ export default function FamilyIndexScreen() {
   return (
     <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
       <FadeIn delay={0}>
+        <Pressable onPress={() => router.push('/tools')} style={styles.backBtn}>
+          <Ionicons name="arrow-back" color={colors.teal300} size={20} />
+          <Text style={styles.backText}>Araçlar</Text>
+        </Pressable>
         <View style={styles.header}>
           <Text style={styles.eyebrow}>Premium</Text>
           <Text style={styles.title}>Aile Takibi</Text>
@@ -423,7 +431,20 @@ function statusPillText(s: string) {
 }
 
 const styles = StyleSheet.create({
-  header: { paddingTop: 12, paddingBottom: 4, gap: 4 },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+    alignSelf: 'flex-start',
+    paddingTop: 12,
+  },
+  backText: {
+    color: colors.teal300,
+    fontSize: 13,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  header: { paddingTop: 4, paddingBottom: 4, gap: 4 },
   eyebrow: {
     color: colors.teal300,
     fontSize: 11,

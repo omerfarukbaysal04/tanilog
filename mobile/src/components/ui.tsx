@@ -51,8 +51,8 @@ export function Screen({
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === 'android' ? 24 : 0}
     >
       <SafeAreaView style={styles.safe} edges={['left', 'right']}>
         {withOrbs && <FloatingOrbs />}

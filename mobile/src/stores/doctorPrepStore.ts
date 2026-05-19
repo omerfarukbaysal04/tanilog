@@ -62,7 +62,12 @@ const useDoctorPrepStore = create<DoctorPrepState>((set, get) => ({
     try {
       const { data } = await api.post<SavedDoctorReport>('/ai/doctor-prep/save', {
         title,
-        content: report,
+        report_data: report,
+        summary: report.summary,
+        key_findings: report.key_findings,
+        risk_flags: report.risk_flags,
+        doctor_questions: report.doctor_questions,
+        preparation_checklist: report.preparation_checklist,
       });
       set({ savedReports: [data, ...get().savedReports] });
     } finally {

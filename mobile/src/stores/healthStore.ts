@@ -92,8 +92,10 @@ const useHealthStore = create<HealthState>((set, get) => ({
       name: asset.name,
       type: asset.mimeType,
     } as any);
-    // Content-Type'ı elle setleme — Axios otomatik boundary ekler, elle setlersek bozulur
-    const { data } = await api.post<MedicationScanResult>('/ai/medication-scan', formData);
+    const { data } = await api.post<MedicationScanResult>('/ai/medication-scan', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 30000,
+    });
     return data;
   },
 }));

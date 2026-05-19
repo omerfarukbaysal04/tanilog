@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton, FadeIn, Field, GlassCard, Muted, PremiumGate, Screen } from '../../../src/components/ui';
 import useDoctorPrepStore from '../../../src/stores/doctorPrepStore';
 import useAuthStore from '../../../src/stores/authStore';
+import { isTTSAvailable, speak } from '../../../src/lib/tts';
 import { colors } from '../../../src/theme';
 
 const SPECIALTIES: { label: string; value: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -72,9 +73,40 @@ export default function DoctorPrepScreen() {
     }
   };
 
+  const handleShareFull = async () => {
+    if (!report) return;
+    const sections = [
+      `📋 DOKTOR HAZIRLIK RAPORU`,
+      `\n📝 Özet:\n${report.summary}`,
+      report.key_findings?.length ? `\n🔑 Kilit Bulgular:\n${report.key_findings.map((f) => `• ${f}`).join('\n')}` : '',
+      report.risk_flags?.length ? `\n⚠️ Risk Uyarıları:\n${report.risk_flags.map((f) => `• ${f}`).join('\n')}` : '',
+      report.doctor_questions?.length ? `\n❓ Doktora Sorular:\n${report.doctor_questions.map((q) => `• ${q}`).join('\n')}` : '',
+      report.preparation_checklist?.length ? `\n✅ Hazırlık:\n${report.preparation_checklist.map((c) => `• ${c}`).join('\n')}` : '',
+      `\n\nTanıLog ile oluşturuldu.`,
+    ].filter(Boolean).join('');
+    try {
+      await Share.share({ message: sections, title: 'Doktor Hazırlık Raporum' });
+    } catch {}
+  };
+
+  const handleTTS = () => {
+    if (!report) return;
+    const text = [
+      `Özet: ${report.summary}`,
+      report.key_findings?.length ? `Kilit Bulgular: ${report.key_findings.join('. ')}` : '',
+      report.risk_flags?.length ? `Risk Uyarıları: ${report.risk_flags.join('. ')}` : '',
+      report.doctor_questions?.length ? `Doktora Soracağın Sorular: ${report.doctor_questions.join('. ')}` : '',
+    ].filter(Boolean).join('. ');
+    speak(text);
+  };
+
   return (
     <Screen withOrbs>
       <FadeIn delay={0}>
+        <Pressable onPress={() => router.push('/tools')} style={styles.backBtn}>
+          <Ionicons name="arrow-back" color={colors.teal300} size={20} />
+          <Text style={styles.backText}>Araçlar</Text>
+        </Pressable>
         <View style={styles.header}>
           <Text style={styles.headerEyebrow}>Hazırlık</Text>
           <Text style={styles.headerTitle}>Doktora Hazırlan</Text>
@@ -154,6 +186,19 @@ export default function DoctorPrepScreen() {
                 <Text style={styles.cardTitle}>Rapor Özeti</Text>
               </View>
               <Text style={styles.summary}>{report.summary}</Text>
+              {/* Aksiyon butonları */}
+              <View style={styles.actionRow}>
+                {isTTSAvailable() && (
+                  <Pressable onPress={handleTTS} style={styles.actionBtn}>
+                    <Ionicons name="volume-high-outline" color={colors.teal300} size={16} />
+                    <Text style={styles.actionBtnText}>Sesli Oku</Text>
+                  </Pressable>
+                )}
+                <Pressable onPress={handleShareFull} style={styles.actionBtn}>
+                  <Ionicons name="share-outline" color={colors.teal300} size={16} />
+                  <Text style={styles.actionBtnText}>Tümünü Paylaş</Text>
+                </Pressable>
+              </View>
             </GlassCard>
           </FadeIn>
 
@@ -268,7 +313,42 @@ function BulletList({ title, items, icon, color }: { title: string; items: strin
 }
 
 const styles = StyleSheet.create({
-  header: { paddingTop: 12, paddingBottom: 4, gap: 4 },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+    alignSelf: 'flex-start',
+    paddingTop: 12,
+  },
+  backText: {
+    color: colors.teal300,
+    fontSize: 13,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+    flexWrap: 'wrap',
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(15,184,165,0.12)',
+    borderColor: 'rgba(15,184,165,0.3)',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+  },
+  actionBtnText: {
+    color: colors.teal300,
+    fontSize: 12,
+    fontFamily: 'Poppins_700Bold',
+  },
+  header: { paddingTop: 4, paddingBottom: 4, gap: 4 },
   headerEyebrow: {
     color: colors.teal300,
     fontSize: 11,
