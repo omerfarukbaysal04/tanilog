@@ -84,15 +84,25 @@ export async function getExpoPushToken(): Promise<string | null> {
  * Permission isteme akışını da içerir.
  */
 export async function registerPushToken(): Promise<string | null> {
-  if (!Notifications) return null;
+  if (!Notifications) {
+    console.warn('[push] expo-notifications native modülü yok');
+    return null;
+  }
   const granted = await requestNotificationPermission();
-  if (!granted) return null;
+  if (!granted) {
+    console.warn('[push] Bildirim izni verilmedi');
+    return null;
+  }
 
   const token = await getExpoPushToken();
-  if (!token) return null;
+  if (!token) {
+    console.warn('[push] Expo push token alınamadı (Firebase/projectId kontrolü gerekli)');
+    return null;
+  }
 
   try {
     await api.post('/push/expo/register', { token, platform: Platform.OS });
+    console.log('[push] Token backend\'e kayıtlandı:', token.slice(0, 30) + '...');
     return token;
   } catch (error: any) {
     console.warn('[push] Backend kayıt başarısız:', error?.response?.data || error?.message);

@@ -18,6 +18,7 @@ def _payload(item: NotificationEvent) -> dict:
         "body": item.body,
         "route": item.route,
         "priority": item.priority,
+        "created_at": item.created_at,
         "eventTime": item.created_at,
         "read": item.is_read,
         "delivered_at": item.delivered_at,

@@ -7,6 +7,16 @@ import useNotificationStore from '../../src/stores/notificationStore';
 import { Notification } from '../../src/types';
 import { colors } from '../../src/theme';
 
+function formatNotifTime(item: any): string {
+  const raw = item.created_at || item.eventTime || item.event_time;
+  if (!raw) return '';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('tr-TR', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  });
+}
+
 function notifIcon(type: string): { name: keyof typeof Ionicons.glyphMap; color: string } {
   if (type.includes('risk') || type.includes('alert')) return { name: 'warning', color: colors.yellow };
   if (type.includes('medication') || type.includes('reminder')) return { name: 'medkit', color: colors.teal300 };
@@ -107,11 +117,7 @@ function NotifCard({ item, onPress }: { item: Notification; onPress: () => void 
           <Text style={styles.body}>{item.body}</Text>
           <View style={styles.metaRow}>
             <Ionicons name="time-outline" color={colors.navy500} size={11} />
-            <Text style={styles.time}>
-              {new Date(item.created_at).toLocaleString('tr-TR', {
-                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-              })}
-            </Text>
+            <Text style={styles.time}>{formatNotifTime(item)}</Text>
           </View>
         </View>
 

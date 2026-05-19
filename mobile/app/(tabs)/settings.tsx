@@ -27,14 +27,29 @@ export default function SettingsScreen() {
     }
     setTestingPush(true);
     try {
-      await registerPushToken();
+      // 1) Token alımı + backend kayıt
+      const token = await registerPushToken();
+      if (!token) {
+        Alert.alert(
+          'Push hazırlanamadı',
+          'Token alınamadı veya backend\'e kaydedilemedi.\n\n' +
+          '• Bildirim izni verilmiş mi?\n' +
+          '• Firebase ayarı tamam mı?\n' +
+          '• İnternet bağlantın var mı?',
+        );
+        return;
+      }
+      // 2) Test bildirimi
       await api.post('/push/expo/test');
-      Alert.alert('Test gönderildi', 'Birkaç saniye içinde bir bildirim alacaksın.');
+      Alert.alert(
+        'Test gönderildi ✓',
+        'Birkaç saniye içinde bildirim ulaşmalı. Telefona düşmezse Bildirim Merkezi\'nde göreceksin.',
+      );
     } catch (e: any) {
       const detail = e?.response?.data?.detail;
       Alert.alert(
         'Push gönderilemedi',
-        detail || e?.message || 'Token kaydedildi mi kontrol et.',
+        detail || e?.message || 'Beklenmeyen bir hata oluştu.',
       );
     } finally {
       setTestingPush(false);

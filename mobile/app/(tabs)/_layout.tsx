@@ -55,7 +55,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="health"
         options={{
-          title: 'Sağlık',
+          title: 'Sağlığım',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'heart' : 'heart-outline'} color={color} size={22} />
           ),
@@ -84,7 +84,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="chat"
         options={{
-          title: 'Chat',
+          title: 'Asistan',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline'} color={color} size={22} />
           ),
@@ -92,7 +92,6 @@ export default function TabsLayout() {
       />
 
       {/* Stack screens: tab bar'da gizli, header'lı */}
-      <Tabs.Screen name="voice" options={{ href: null, headerShown: true, title: 'Sesli Asistan' }} />
       <Tabs.Screen name="profile" options={{ href: null, headerShown: true, title: 'Profilim' }} />
       <Tabs.Screen name="settings" options={{ href: null, headerShown: true, title: 'Ayarlar' }} />
       <Tabs.Screen name="notifications" options={{ href: null, headerShown: true, title: 'Bildirimler' }} />

@@ -17,6 +17,9 @@ export default function ToolsLayout() {
       <Stack.Screen name="search" />
       <Stack.Screen name="ai-analysis" />
       <Stack.Screen name="doctor-prep" />
+      <Stack.Screen name="medication-interactions" />
+      <Stack.Screen name="voice" />
+      <Stack.Screen name="reports" />
     </Stack>
   );
 }

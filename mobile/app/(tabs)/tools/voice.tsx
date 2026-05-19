@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { AppButton, FadeIn, Field, GlassCard, LinearGradient, Muted, Screen } from '../../src/components/ui';
-import useHealthStore from '../../src/stores/healthStore';
-import useVoiceStore from '../../src/stores/voiceStore';
-import { colors } from '../../src/theme';
+import { AppButton, FadeIn, Field, GlassCard, LinearGradient, Muted, Screen } from '../../../src/components/ui';
+import useHealthStore from '../../../src/stores/healthStore';
+import useVoiceStore from '../../../src/stores/voiceStore';
+import { colors } from '../../../src/theme';
 
 const INTENT_META: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; accent: string }> = {
   symptom: { label: 'Semptom', icon: 'pulse-outline', accent: '#f472b6' },
@@ -108,6 +108,7 @@ export default function VoiceScreen() {
         <View style={styles.header}>
           <Text style={styles.headerEyebrow}>Sesli Asistan</Text>
           <Text style={styles.headerTitle}>Konuş, AI Yazsın</Text>
+          <Muted>Mikrofona basıp konuş, AI metnini sağlık kaydına dönüştürsün.</Muted>
         </View>
       </FadeIn>
 
@@ -209,7 +210,7 @@ export default function VoiceScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { paddingTop: 50, paddingBottom: 4, gap: 4 },
+  header: { paddingTop: 12, paddingBottom: 4, gap: 4 },
   headerEyebrow: {
     color: colors.teal300,
     fontSize: 11,

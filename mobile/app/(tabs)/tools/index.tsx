@@ -19,7 +19,7 @@ const TOOLS: Tool[] = [
     title: 'Sesli Asistan',
     description: 'Sesli konuşarak hızlıca sağlık kaydı oluştur',
     icon: 'mic-outline',
-    route: '/voice',
+    route: '/tools/voice',
     accent: 'teal',
   },
   {

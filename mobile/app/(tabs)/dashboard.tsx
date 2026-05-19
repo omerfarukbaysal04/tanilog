@@ -19,7 +19,7 @@ type QuickAction = {
 const QUICK_ACTIONS: QuickAction[] = [
   { label: 'Sağlık', icon: 'heart', route: '/health', accent: 'pink' },
   { label: 'Belge', icon: 'document-text', route: '/documents', accent: 'blue' },
-  { label: 'Sesli', icon: 'mic', route: '/voice', accent: 'purple' },
+  { label: 'Sesli', icon: 'mic', route: '/tools/voice', accent: 'purple' },
   { label: 'Araçlar', icon: 'apps', route: '/tools', accent: 'teal' },
 ];
 
