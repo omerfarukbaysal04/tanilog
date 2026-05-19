@@ -7,6 +7,7 @@ import useAuthStore from '../../src/stores/authStore';
 import useDashboardStore from '../../src/stores/dashboardStore';
 import useRiskAlertStore from '../../src/stores/riskAlertStore';
 import useNotificationStore from '../../src/stores/notificationStore';
+import useOnboardingStore, { OnboardingStep } from '../../src/stores/onboardingStore';
 import { colors } from '../../src/theme';
 
 type QuickAction = {
@@ -15,6 +16,14 @@ type QuickAction = {
   route: string;
   accent: 'teal' | 'blue' | 'purple' | 'pink';
 };
+
+const ONB_STEPS: { key: OnboardingStep; label: string; icon: keyof typeof Ionicons.glyphMap; route: string }[] = [
+  { key: 'health_profile_done', label: 'Sağlık profili', icon: 'person-outline', route: '/settings' },
+  { key: 'notifications_done', label: 'Bildirim izni', icon: 'notifications-outline', route: '/settings' },
+  { key: 'first_record_done', label: 'İlk kayıt', icon: 'heart-outline', route: '/health' },
+  { key: 'first_document_done', label: 'Belge yükle', icon: 'document-text-outline', route: '/documents' },
+  { key: 'ai_permissions_done', label: 'AI izinleri', icon: 'sparkles-outline', route: '/settings' },
+];
 
 const QUICK_ACTIONS: QuickAction[] = [
   { label: 'Sağlık', icon: 'heart', route: '/health', accent: 'pink' },
@@ -28,6 +37,7 @@ export default function DashboardScreen() {
   const { summary, fetchSummary, isLoading } = useDashboardStore();
   const { alerts, fetchAlerts, dismissAlert } = useRiskAlertStore();
   const { items: notifications, fetchNotifications } = useNotificationStore();
+  const { state: onboarding, fetchOnboarding, completeStep, skip: skipOnboarding } = useOnboardingStore();
   const [refreshing, setRefreshing] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -39,13 +49,14 @@ export default function DashboardScreen() {
       fetchSummary().catch((error) => Alert.alert('Dashboard yüklenemedi', error.message));
       fetchAlerts().catch(() => {});
       fetchNotifications().catch(() => {});
-    }, [fetchSummary, fetchAlerts, fetchNotifications]),
+      fetchOnboarding().catch(() => {});
+    }, [fetchSummary, fetchAlerts, fetchNotifications, fetchOnboarding]),
   );
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([fetchSummary(), fetchAlerts(), fetchNotifications()]);
+      await Promise.all([fetchSummary(), fetchAlerts(), fetchNotifications(), fetchOnboarding()]);
     } finally {
       setRefreshing(false);
     }
@@ -145,6 +156,66 @@ export default function DashboardScreen() {
           />
         </View>
       </View>
+
+      {/* Onboarding */}
+      {onboarding && !onboarding.is_complete && (
+        <FadeIn delay={290}>
+          <GlassCard accent="teal">
+            <View style={styles.onbHeader}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name="rocket" color={colors.teal300} size={16} />
+                  <Text style={styles.onbTitle}>Kurulumu Tamamla</Text>
+                </View>
+                <Muted>
+                  {onboarding.completed_count}/{onboarding.total_count} adım bitti
+                </Muted>
+              </View>
+              <Pressable onPress={() => skipOnboarding().catch(() => {})}>
+                <Text style={styles.onbSkip}>Atla</Text>
+              </Pressable>
+            </View>
+
+            {/* Progress bar */}
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${(onboarding.completed_count / onboarding.total_count) * 100}%` },
+                ]}
+              />
+            </View>
+
+            {/* Adımlar */}
+            <View style={styles.onbSteps}>
+              {ONB_STEPS.map((s) => {
+                const done = onboarding.steps?.[s.key];
+                return (
+                  <Pressable
+                    key={s.key}
+                    onPress={() => {
+                      if (!done) completeStep(s.key).catch(() => {});
+                      router.push(s.route as any);
+                    }}
+                    style={({ pressed }) => [
+                      styles.onbStep,
+                      done && styles.onbStepDone,
+                      pressed && { opacity: 0.85 },
+                    ]}
+                  >
+                    <Ionicons
+                      name={done ? 'checkmark-circle' : s.icon}
+                      color={done ? colors.teal300 : colors.navy400}
+                      size={16}
+                    />
+                    <Text style={[styles.onbStepText, done && styles.onbStepTextDone]}>{s.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </GlassCard>
+        </FadeIn>
+      )}
 
       {/* Quick actions */}
       <FadeIn delay={320}>
@@ -491,5 +562,65 @@ const styles = StyleSheet.create({
   },
   dismissBtn: {
     padding: 4,
+  },
+  onbHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  onbTitle: {
+    color: colors.white,
+    fontSize: 15,
+    fontFamily: 'Poppins_700Bold',
+  },
+  onbSkip: {
+    color: colors.navy400,
+    fontSize: 12,
+    fontFamily: 'Poppins_600SemiBold',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  progressTrack: {
+    height: 6,
+    backgroundColor: 'rgba(15,184,165,0.12)',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginVertical: 4,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.teal400,
+    borderRadius: 3,
+  },
+  onbSteps: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  onbStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(20,40,58,0.55)',
+    borderColor: 'rgba(159,179,200,0.15)',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    flexGrow: 1,
+  },
+  onbStepDone: {
+    backgroundColor: 'rgba(15,184,165,0.12)',
+    borderColor: 'rgba(15,184,165,0.4)',
+  },
+  onbStepText: {
+    color: colors.navy300,
+    fontSize: 11,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  onbStepTextDone: {
+    color: colors.teal300,
+    fontFamily: 'Poppins_700Bold',
   },
 });

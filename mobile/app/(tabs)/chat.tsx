@@ -1,9 +1,11 @@
-import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { AppButton, FadeIn, Field, GlassCard, LinearGradient, Muted, Screen } from '../../src/components/ui';
 import useChatStore from '../../src/stores/chatStore';
+import useVoiceStore from '../../src/stores/voiceStore';
 import { colors } from '../../src/theme';
 
 const SUGGESTIONS = [
@@ -15,9 +17,61 @@ const SUGGESTIONS = [
 
 export default function ChatScreen() {
   const { sessions, activeSession, messages, fetchSessions, openSession, sendMessage, isSending } = useChatStore();
+  const { transcribeAudio } = useVoiceStore();
   const [message, setMessage] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(recorder);
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    (async () => {
+      try {
+        await AudioModule.requestRecordingPermissionsAsync();
+        await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      } catch {}
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (recorderState.isRecording) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulse, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulse, { toValue: 0, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      pulse.stopAnimation();
+      pulse.setValue(0);
+    }
+  }, [recorderState.isRecording]);
+
+  const startVoiceInput = async () => {
+    try {
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+    } catch {
+      Alert.alert('Ses kaydı başlatılamadı', 'Mikrofon iznini kontrol et.');
+    }
+  };
+
+  const stopVoiceInput = async () => {
+    try {
+      await recorder.stop();
+      const uri = recorder.uri;
+      if (!uri) return;
+      setTranscribing(true);
+      const text = await transcribeAudio(uri);
+      setMessage((prev) => (prev ? `${prev} ${text}` : text));
+    } catch (error: any) {
+      Alert.alert('Ses çevrilemedi', error.response?.data?.detail || 'Tekrar deneyin.');
+    } finally {
+      setTranscribing(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -159,16 +213,63 @@ export default function ChatScreen() {
             label=""
             value={message}
             onChangeText={setMessage}
-            placeholder="Mesajını yaz..."
+            placeholder={recorderState.isRecording ? 'Konuşuyorsun...' : transcribing ? 'Metne çevriliyor...' : 'Mesajını yaz veya 🎤 ile sesli söyle'}
             multiline
+            editable={!recorderState.isRecording && !transcribing}
           />
-          <AppButton
-            title="Gönder"
-            onPress={() => handleSend()}
-            loading={isSending}
-            disabled={!message.trim()}
-            icon={<Ionicons name="send" color={colors.white} size={16} />}
-          />
+
+          <View style={styles.inputActions}>
+            {/* Mikrofon */}
+            <Pressable
+              onPress={recorderState.isRecording ? stopVoiceInput : startVoiceInput}
+              disabled={transcribing}
+              style={styles.micWrap}
+            >
+              {recorderState.isRecording && (
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    styles.micPulse,
+                    {
+                      opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.5] }),
+                      transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.3] }) }],
+                    },
+                  ]}
+                />
+              )}
+              <LinearGradient
+                colors={recorderState.isRecording ? ['#ef4444', '#dc2626'] : ['#2dd4bf', '#0fb8a5']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.micBtn}
+              >
+                {transcribing ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <Ionicons name={recorderState.isRecording ? 'stop' : 'mic'} color={colors.white} size={22} />
+                )}
+              </LinearGradient>
+            </Pressable>
+
+            {/* Gönder */}
+            <View style={{ flex: 1 }}>
+              <AppButton
+                title="Gönder"
+                onPress={() => handleSend()}
+                loading={isSending}
+                disabled={!message.trim() || recorderState.isRecording || transcribing}
+                icon={<Ionicons name="send" color={colors.white} size={16} />}
+              />
+            </View>
+          </View>
+
+          {(recorderState.isRecording || transcribing) && (
+            <Muted>
+              {recorderState.isRecording
+                ? '🔴 Kayıt sürüyor — Durdurmak için tekrar bas.'
+                : 'Sesin metne çevriliyor...'}
+            </Muted>
+          )}
         </GlassCard>
       </FadeIn>
     </Screen>
@@ -282,4 +383,34 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   suggestionText: { color: colors.navy200, fontSize: 12, fontFamily: 'Poppins_500Medium', flex: 1 },
+  inputActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  micWrap: {
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  micPulse: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(239,68,68,0.4)',
+  },
+  micBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.teal500,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 5,
+  },
 });
