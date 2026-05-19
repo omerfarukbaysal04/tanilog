@@ -13,7 +13,6 @@ try {
     handleNotification: async () => ({
       shouldPlaySound: true,
       shouldSetBadge: false,
-      shouldShowAlert: true,
       shouldShowBanner: true,
       shouldShowList: true,
     }),
@@ -111,13 +110,34 @@ export async function registerPushToken(): Promise<string | null> {
 }
 
 /**
- * Logout sırasında çağrılır. Token'ı backend'den siler.
+ * Logout sırasında çağrılır.
+ * - Backend'deki Expo push aboneliğini iptal eder
+ * - Cihazdaki tüm zamanlanmış bildirimleri (ilaç hatırlatıcı vb.) iptal eder
+ * - Cache token'ı temizler
  */
 export async function unregisterPushToken(): Promise<void> {
-  if (!cachedToken) return;
-  try {
-    await api.delete('/push/expo/unregister', { data: { token: cachedToken } });
-  } catch {}
+  // 1) Backend
+  if (cachedToken) {
+    try {
+      await api.delete('/push/expo/unregister', { data: { token: cachedToken } });
+      console.log('[push] Backend aboneliği iptal edildi');
+    } catch (e: any) {
+      console.warn('[push] Backend unregister başarısız:', e?.message);
+    }
+  }
+
+  // 2) Yerel zamanlanmış bildirimler (ilaç hatırlatıcılar)
+  if (Notifications) {
+    try {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      console.log('[push] Yerel zamanlanmış bildirimler iptal edildi');
+    } catch (e: any) {
+      console.warn('[push] Local cancel başarısız:', e?.message);
+    }
+  }
+
+  // 3) Cache temizle (sonraki login'de yeniden alınsın)
+  cachedToken = null;
 }
 
 /**
