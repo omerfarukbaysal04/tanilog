@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton, EmptyState, FadeIn, GlassCard, Muted, Screen } from '../../../src/components/ui';
@@ -33,6 +33,8 @@ export default function ReportsScreen() {
   const [analyzedDocs, setAnalyzedDocs] = useState<AnalyzedDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<AnalyzedDocument | null>(null);
+  const [selectedReport, setSelectedReport] = useState<SavedDoctorReport | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -71,6 +73,10 @@ export default function ReportsScreen() {
     <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
       <FadeIn delay={0}>
         <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" color={colors.teal300} size={20} />
+            <Text style={styles.backText}>Araçlar</Text>
+          </Pressable>
           <Text style={styles.eyebrow}>Arşiv</Text>
           <Text style={styles.title}>Raporlarım</Text>
           <Muted>
@@ -135,22 +141,24 @@ export default function ReportsScreen() {
         ) : (
           doctorReports.map((rep, idx) => (
             <FadeIn key={rep.id} delay={120 + idx * 60}>
-              <ReportCard
-                title={rep.title}
-                subtitle={`${rep.period_start} → ${rep.period_end}`}
-                summary={rep.summary}
-                createdAt={rep.created_at}
-                accent="pink"
-                icon="medical"
-                onShare={async () => {
-                  try {
-                    await Share.share({
-                      title: rep.title,
-                      message: `${rep.title}\n\n${rep.summary}\n\nDönem: ${rep.period_start} → ${rep.period_end}`,
-                    });
-                  } catch {}
-                }}
-              />
+              <Pressable onPress={() => setSelectedReport(rep)}>
+                <ReportCard
+                  title={rep.title}
+                  subtitle={`${rep.period_start} → ${rep.period_end}`}
+                  summary={rep.summary}
+                  createdAt={rep.created_at}
+                  accent="pink"
+                  icon="medical"
+                  onShare={async () => {
+                    try {
+                      await Share.share({
+                        title: rep.title,
+                        message: `${rep.title}\n\n${rep.summary}\n\nDönem: ${rep.period_start} → ${rep.period_end}`,
+                      });
+                    } catch {}
+                  }}
+                />
+              </Pressable>
             </FadeIn>
           ))
         )
@@ -171,7 +179,7 @@ export default function ReportsScreen() {
       ) : (
         analyzedDocs.map((doc, idx) => (
           <FadeIn key={doc.id} delay={120 + idx * 60}>
-            <Pressable onPress={() => router.push('/documents')}>
+            <Pressable onPress={() => setSelectedDoc(doc)}>
               <ReportCard
                 title={doc.original_filename}
                 subtitle={doc.category || doc.file_type}
@@ -192,6 +200,92 @@ export default function ReportsScreen() {
           </FadeIn>
         ))
       )}
+
+      {/* Analyzed document detail modal */}
+      <Modal visible={!!selectedDoc} animationType="slide" transparent onRequestClose={() => setSelectedDoc(null)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle} numberOfLines={2}>{selectedDoc?.original_filename}</Text>
+              <Pressable onPress={() => setSelectedDoc(null)} hitSlop={10}>
+                <Ionicons name="close" color={colors.navy400} size={22} />
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 380 }}>
+              {selectedDoc?.ai_summary ? (
+                <View style={{ gap: 10 }}>
+                  <Text style={styles.modalSectionLabel}>AI Özet</Text>
+                  <Text style={styles.modalBody}>{selectedDoc.ai_summary}</Text>
+                </View>
+              ) : (
+                <Muted>Bu belge için analiz özeti bulunamadı.</Muted>
+              )}
+              {selectedDoc?.category && (
+                <View style={styles.modalMetaRow}>
+                  <Text style={styles.modalMetaLabel}>Kategori:</Text>
+                  <Text style={styles.modalMetaVal}>{selectedDoc.category}</Text>
+                </View>
+              )}
+            </ScrollView>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+              <View style={{ flex: 1 }}>
+                <AppButton
+                  title="Paylaş"
+                  variant="secondary"
+                  icon={<Ionicons name="share-outline" color={colors.teal300} size={16} />}
+                  onPress={async () => {
+                    if (!selectedDoc) return;
+                    await Share.share({ title: selectedDoc.original_filename, message: `${selectedDoc.original_filename}\n\n${selectedDoc.ai_summary || ''}` }).catch(() => {});
+                  }}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <AppButton title="Kapat" onPress={() => setSelectedDoc(null)} />
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Saved doctor report detail modal */}
+      <Modal visible={!!selectedReport} animationType="slide" transparent onRequestClose={() => setSelectedReport(null)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle} numberOfLines={2}>{selectedReport?.title}</Text>
+              <Pressable onPress={() => setSelectedReport(null)} hitSlop={10}>
+                <Ionicons name="close" color={colors.navy400} size={22} />
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 380 }}>
+              <Text style={styles.modalSectionLabel}>Özet</Text>
+              <Text style={styles.modalBody}>{selectedReport?.summary}</Text>
+              <View style={styles.modalMetaRow}>
+                <Text style={styles.modalMetaLabel}>Dönem:</Text>
+                <Text style={styles.modalMetaVal}>{selectedReport?.period_start} → {selectedReport?.period_end}</Text>
+              </View>
+            </ScrollView>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+              <View style={{ flex: 1 }}>
+                <AppButton
+                  title="Paylaş"
+                  variant="secondary"
+                  icon={<Ionicons name="share-outline" color={colors.teal300} size={16} />}
+                  onPress={async () => {
+                    if (!selectedReport) return;
+                    await Share.share({ title: selectedReport.title, message: `${selectedReport.title}\n\n${selectedReport.summary}\n\nDönem: ${selectedReport.period_start} → ${selectedReport.period_end}` }).catch(() => {});
+                  }}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <AppButton title="Kapat" onPress={() => setSelectedReport(null)} />
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }
@@ -390,5 +484,83 @@ const styles = StyleSheet.create({
     color: colors.teal300,
     fontSize: 11,
     fontFamily: 'Poppins_700Bold',
+  },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+  },
+  backText: {
+    color: colors.teal300,
+    fontSize: 13,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(6,18,32,0.75)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: '#0d2035',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: 34,
+    borderTopWidth: 1,
+    borderColor: 'rgba(15,184,165,0.18)',
+    gap: 12,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(159,179,200,0.3)',
+    alignSelf: 'center',
+    marginBottom: 4,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  modalTitle: {
+    color: colors.white,
+    fontSize: 16,
+    fontFamily: 'Poppins_700Bold',
+    flex: 1,
+  },
+  modalSectionLabel: {
+    color: colors.navy400,
+    fontSize: 10,
+    fontFamily: 'Poppins_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  modalBody: {
+    color: colors.navy200,
+    fontSize: 13,
+    fontFamily: 'Poppins_400Regular',
+    lineHeight: 20,
+    marginBottom: 10,
+  },
+  modalMetaRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+  },
+  modalMetaLabel: {
+    color: colors.navy400,
+    fontSize: 12,
+    fontFamily: 'Poppins_700Bold',
+  },
+  modalMetaVal: {
+    color: colors.white,
+    fontSize: 12,
+    fontFamily: 'Poppins_500Medium',
   },
 });

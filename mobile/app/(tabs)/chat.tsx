@@ -166,13 +166,21 @@ export default function ChatScreen() {
               {activeSession?.title || 'Yeni Sohbet'}
             </Text>
           </View>
+          {activeSession && (
+            <Pressable
+              onPress={() => { useChatStore.getState().closeSession(); setShowHistory(false); }}
+              style={[styles.historyBtn, { marginRight: 4 }]}
+            >
+              <Ionicons name="add" color={colors.teal300} size={20} />
+            </Pressable>
+          )}
           <Pressable onPress={() => setShowHistory((v) => !v)} style={styles.historyBtn}>
             <Ionicons name="time-outline" color={colors.teal300} size={18} />
           </Pressable>
         </View>
       </FadeIn>
 
-      {showHistory && sessions.length > 0 && (
+      {showHistory && (
         <FadeIn delay={0}>
           <GlassCard>
             <View style={styles.cardHeader}>
@@ -180,8 +188,18 @@ export default function ChatScreen() {
                 <Ionicons name="archive-outline" color={colors.teal300} size={16} />
               </View>
               <Text style={styles.cardTitle}>Sohbet Geçmişi</Text>
+              <View style={{ flex: 1 }} />
+              <Pressable
+                onPress={() => { useChatStore.getState().closeSession(); setShowHistory(false); }}
+                style={styles.newChatBtn}
+              >
+                <Ionicons name="add" color={colors.teal300} size={14} />
+                <Text style={styles.newChatText}>Yeni Sohbet</Text>
+              </Pressable>
             </View>
-            {sessions.map((session, i) => (
+            {sessions.length === 0 ? (
+              <Muted>Henüz sohbet geçmişi yok.</Muted>
+            ) : sessions.map((session, i) => (
               <Pressable
                 key={session.id}
                 onPress={() => { openSession(session); setShowHistory(false); }}
@@ -194,7 +212,7 @@ export default function ChatScreen() {
                 <View style={styles.sessionDot} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={styles.sessionTitle} numberOfLines={1}>{session.title}</Text>
-                  <Muted>{new Date(session.created_at).toLocaleDateString('tr-TR')}</Muted>
+                  <Muted>{new Date(session.created_at).toLocaleDateString('tr-TR', { timeZone: 'Europe/Istanbul' })}</Muted>
                 </View>
                 <Ionicons name="chevron-forward" color={colors.navy400} size={16} />
               </Pressable>
@@ -366,6 +384,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  newChatBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(15,184,165,0.12)',
+    borderColor: 'rgba(15,184,165,0.3)',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  newChatText: {
+    color: colors.teal300,
+    fontSize: 11,
+    fontFamily: 'Poppins_700Bold',
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 },
   cardHeaderIcon: {

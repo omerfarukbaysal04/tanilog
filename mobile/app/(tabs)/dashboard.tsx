@@ -3,6 +3,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { FadeIn, GlassCard, LinearGradient, Muted, PremiumPromo, Screen, StatCard } from '../../src/components/ui';
+import { fmtShortTR } from '../../src/lib/dateFmt';
 import useAuthStore from '../../src/stores/authStore';
 import useDashboardStore from '../../src/stores/dashboardStore';
 import useRiskAlertStore from '../../src/stores/riskAlertStore';
@@ -338,6 +339,7 @@ function QuickActionCard({ action, delay }: { action: QuickAction; delay: number
 }
 
 function ActivityRow({ item, isLast }: { item: any; isLast: boolean }) {
+  const timeLabel = item.created_at ? fmtShortTR(item.created_at) : null;
   return (
     <View style={[styles.activityRow, !isLast && styles.activityDivider]}>
       <View style={styles.activityDot} />
@@ -345,12 +347,19 @@ function ActivityRow({ item, isLast }: { item: any; isLast: boolean }) {
         <Text style={styles.activityTitle}>{item.title}</Text>
         <Muted>{item.description}</Muted>
       </View>
+      {timeLabel ? (
+        <View style={styles.activityTime}>
+          <Ionicons name="time-outline" color={colors.navy500} size={10} />
+          <Text style={styles.activityTimeText}>{timeLabel}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 function greetingFor() {
-  const h = new Date().getHours();
+  const tr = new Date().toLocaleString('en-US', { timeZone: 'Europe/Istanbul', hour: 'numeric', hour12: false });
+  const h = parseInt(tr, 10);
   if (h < 6) return 'İyi geceler';
   if (h < 12) return 'Günaydın';
   if (h < 18) return 'İyi günler';
@@ -546,6 +555,17 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 14,
+  },
+  activityTime: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: 4,
+  },
+  activityTimeText: {
+    color: colors.navy500,
+    fontSize: 10,
+    fontFamily: 'Poppins_500Medium',
   },
   alertRow: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton, FadeIn, Field, GlassCard, LinearGradient, Muted, Screen } from '../../src/components/ui';
@@ -61,6 +61,13 @@ export default function ProfileScreen() {
 
   return (
     <Screen withOrbs>
+      {/* Back button */}
+      <FadeIn delay={0}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" color={colors.teal300} size={20} />
+          <Text style={styles.backText}>Geri</Text>
+        </Pressable>
+      </FadeIn>
       {/* Avatar hero */}
       <FadeIn delay={0}>
         <View style={styles.heroSection}>
@@ -250,6 +257,19 @@ function InfoRow({ icon, label, value }: { icon: keyof typeof Ionicons.glyphMap;
 }
 
 const styles = StyleSheet.create({
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+    alignSelf: 'flex-start',
+    paddingTop: 12,
+  },
+  backText: {
+    color: colors.teal300,
+    fontSize: 13,
+    fontFamily: 'Poppins_600SemiBold',
+  },
   heroSection: {
     alignItems: 'center',
     gap: 8,

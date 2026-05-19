@@ -533,15 +533,11 @@ function LandingPage() {
           </div>
         </div>
         
-        <div className="max-w-7xl mx-auto border-t border-navy-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
-          <p className="text-navy-500 text-sm">
+        <div className="max-w-7xl mx-auto border-t border-navy-800 pt-8 flex flex-col items-center gap-2 relative z-10">
+          <p className="text-navy-500 text-sm text-center">
             © 2026 TanıLog (BaysalCare). Tüm hakları saklıdır.
           </p>
-          <div className="flex gap-4 text-navy-400">
-            <a href="#" className="hover:text-teal-400 transition-colors">Twitter</a>
-            <a href="#" className="hover:text-teal-400 transition-colors">LinkedIn</a>
-            <a href="#" className="hover:text-teal-400 transition-colors">Instagram</a>
-          </div>
+          
         </div>
       </footer>
     </div>

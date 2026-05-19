@@ -301,15 +301,15 @@ export default function FamilyIndexScreen() {
                     <Ionicons name="people-outline" color="#c084fc" size={16} />
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
-                    <Text style={styles.invEmail}>{access.inviter.full_name}</Text>
-                    <Text style={styles.metaText}>{access.relation} · {access.inviter.email}</Text>
+                    <Text style={styles.invEmail}>{access.inviter?.full_name ?? 'Bilinmiyor'}</Text>
+                    <Text style={styles.metaText}>{access.relation} · {access.inviter?.email ?? ''}</Text>
                   </View>
                   <Pressable
                     hitSlop={10}
                     onPress={() =>
                       Alert.alert(
                         'Erişimi Kaldır',
-                        `${access.inviter.full_name} artık verilerini göremeyecek.`,
+                        `${access.inviter?.full_name ?? 'Bu kişi'} artık verilerini göremeyecek.`,
                         [
                           { text: 'İptal', style: 'cancel' },
                           { text: 'Kaldır', style: 'destructive', onPress: () => revokeAccess(access.id).catch(() => {}) },

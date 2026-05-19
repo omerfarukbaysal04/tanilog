@@ -17,7 +17,8 @@ const useRiskAlertStore = create<RiskAlertState>((set, get) => ({
     set({ isLoading: true });
     try {
       const { data } = await api.get<RiskAlert[]>('/risk-alerts');
-      set({ alerts: data });
+      // Only show non-dismissed alerts
+      set({ alerts: (data || []).filter((a) => !a.dismissed) });
     } finally {
       set({ isLoading: false });
     }

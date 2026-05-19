@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton, Card, Field, Label, Muted, Screen, ToggleRow } from '../../src/components/ui';
@@ -147,6 +147,12 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
+      {/* Back button */}
+      <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Ionicons name="arrow-back" color={colors.teal300} size={20} />
+        <Text style={styles.backText}>Geri</Text>
+      </Pressable>
+
       {/* Bildirimler */}
       <Card>
         <Text style={styles.sectionTitle}>Bildirimler</Text>
@@ -376,6 +382,19 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+    paddingTop: 12,
+  },
+  backText: {
+    color: colors.teal300,
+    fontSize: 13,
+    fontFamily: 'Poppins_600SemiBold',
+  },
   sectionTitle: {
     color: colors.white,
     fontSize: 16,

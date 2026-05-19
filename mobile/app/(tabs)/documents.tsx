@@ -6,8 +6,11 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { AppButton, EmptyState, FadeIn, Field, GlassCard, Muted, RenamePrompt, Screen } from '../../src/components/ui';
 import useDocumentStore, { UploadAsset } from '../../src/stores/documentStore';
+import useAuthStore from '../../src/stores/authStore';
 import { DocumentItem } from '../../src/types';
 import { colors } from '../../src/theme';
+
+const FREE_MONTHLY_LIMIT = 3;
 
 const CATEGORIES: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'tahlil', label: 'Kan/İdrar Tahlili', icon: 'flask-outline' },
@@ -18,16 +21,28 @@ const CATEGORIES: { key: string; label: string; icon: keyof typeof Ionicons.glyp
 ];
 
 export default function DocumentsScreen() {
+  const { user } = useAuthStore();
   const { documents, fetchDocuments, uploadDocument, analyzeDocument, renameDocument, deleteDocument, fileUrl, authHeaders, uploading } = useDocumentStore();
   const [asset, setAsset] = useState<UploadAsset | null>(null);
   const [category, setCategory] = useState('tahlil');
   const [notes, setNotes] = useState('');
   const [selected, setSelected] = useState<DocumentItem | null>(null);
   const [headers, setHeaders] = useState<Record<string, string>>({});
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [renaming, setRenaming] = useState<DocumentItem | null>(null);
+
+  // Monthly upload count for free users
+  const thisMonthCount = (() => {
+    const now = new Date();
+    return documents.filter((d) => {
+      const dt = new Date(d.created_at);
+      return dt.getFullYear() === now.getFullYear() && dt.getMonth() === now.getMonth();
+    }).length;
+  })();
 
   useFocusEffect(
     useCallback(() => {
@@ -79,6 +94,39 @@ export default function DocumentsScreen() {
       Alert.alert('Belge yüklendi', 'Belge arşive eklendi.');
     } catch (error: any) {
       Alert.alert('Belge yüklenemedi', error.response?.data?.detail || 'Dosya veya limitleri kontrol edin.');
+    }
+  };
+
+  const selectDocument = async (item: DocumentItem) => {
+    setSelected(item);
+    setAnalysis(null);
+    setImageUri(null);
+    if (item.file_type.startsWith('image/')) {
+      setImageLoading(true);
+      try {
+        const h = await authHeaders();
+        const url = fileUrl(item.id);
+        const response = await fetch(url, { headers: h });
+        if (response.ok) {
+          // Convert ArrayBuffer → base64 data URI using btoa (available in Hermes/React Native)
+          const arrayBuffer = await response.arrayBuffer();
+          const bytes = new Uint8Array(arrayBuffer);
+          let binary = '';
+          const chunkSize = 8192;
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            const chunk = bytes.subarray(i, i + chunkSize);
+            binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
+          }
+          const base64 = btoa(binary);
+          setImageUri(`data:${item.file_type};base64,${base64}`);
+        } else {
+          setImageUri(null);
+        }
+      } catch {
+        setImageUri(null);
+      } finally {
+        setImageLoading(false);
+      }
     }
   };
 
@@ -170,11 +218,30 @@ export default function DocumentsScreen() {
             multiline
             placeholder="Belge hakkında..."
           />
+          {/* Free user monthly limit indicator */}
+          {!user?.is_premium && (
+            <View style={styles.limitBar}>
+              <View style={{ flex: 1, gap: 3 }}>
+                <View style={styles.limitRow}>
+                  <Text style={styles.limitLabel}>Bu ay yükleme</Text>
+                  <Text style={[styles.limitCount, thisMonthCount >= FREE_MONTHLY_LIMIT && { color: colors.red }]}>
+                    {thisMonthCount}/{FREE_MONTHLY_LIMIT}
+                  </Text>
+                </View>
+                <View style={styles.limitTrack}>
+                  <View style={[styles.limitFill, { width: `${Math.min(thisMonthCount / FREE_MONTHLY_LIMIT, 1) * 100}%`, backgroundColor: thisMonthCount >= FREE_MONTHLY_LIMIT ? colors.red : colors.teal300 }]} />
+                </View>
+              </View>
+              {thisMonthCount >= FREE_MONTHLY_LIMIT && (
+                <Ionicons name="warning-outline" color={colors.red} size={16} />
+              )}
+            </View>
+          )}
           <AppButton
             title="Yükle"
             onPress={handleUpload}
             loading={uploading}
-            disabled={!asset}
+            disabled={!asset || (!user?.is_premium && thisMonthCount >= FREE_MONTHLY_LIMIT)}
             icon={<Ionicons name="arrow-up-outline" color={colors.white} size={18} />}
           />
         </GlassCard>
@@ -191,7 +258,18 @@ export default function DocumentsScreen() {
               <Text style={styles.cardTitle} numberOfLines={1}>{selected.original_filename}</Text>
             </View>
             {selected.file_type.startsWith('image/') ? (
-              <Image source={{ uri: fileUrl(selected.id), headers }} style={styles.previewImage} />
+              imageLoading ? (
+                <View style={[styles.previewImage, { alignItems: 'center', justifyContent: 'center' }]}>
+                  <Muted>Görsel yükleniyor...</Muted>
+                </View>
+              ) : imageUri ? (
+                <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="contain" />
+              ) : (
+                <View style={[styles.previewImage, { alignItems: 'center', justifyContent: 'center' }]}>
+                  <Ionicons name="image-outline" color={colors.navy400} size={40} />
+                  <Muted>Görsel yüklenemedi.</Muted>
+                </View>
+              )
             ) : (
               <View style={styles.pdfNotice}>
                 <View style={styles.pdfIcon}>
@@ -233,7 +311,7 @@ export default function DocumentsScreen() {
             <AppButton
               title="Kapat"
               variant="ghost"
-              onPress={() => { setSelected(null); setAnalysis(null); }}
+              onPress={() => { setSelected(null); setAnalysis(null); setImageUri(null); }}
             />
           </GlassCard>
         </FadeIn>
@@ -256,7 +334,7 @@ export default function DocumentsScreen() {
             />
           ) : documents.map((item, i) => (
             <View key={item.id} style={[styles.docRow, i > 0 && styles.docDivider]}>
-              <Pressable onPress={() => setSelected(item)} style={styles.docMain}>
+              <Pressable onPress={() => selectDocument(item)} style={styles.docMain}>
                 <View style={styles.docIcon}>
                   <Ionicons
                     name={item.file_type.startsWith('image/') ? 'image-outline' : 'document-text-outline'}
@@ -299,8 +377,19 @@ export default function DocumentsScreen() {
         onClose={() => setRenaming(null)}
         onSubmit={async (newName) => {
           if (!renaming) return;
+          // Preserve original extension
+          const origExt = renaming.original_filename.includes('.')
+            ? renaming.original_filename.substring(renaming.original_filename.lastIndexOf('.'))
+            : '';
+          let finalName = newName.trim();
+          if (origExt && !finalName.toLowerCase().endsWith(origExt.toLowerCase())) {
+            // Strip any extension user typed and add original
+            const dotIdx = finalName.lastIndexOf('.');
+            if (dotIdx > 0) finalName = finalName.substring(0, dotIdx);
+            finalName = finalName + origExt;
+          }
           try {
-            await renameDocument(renaming.id, newName);
+            await renameDocument(renaming.id, finalName);
             setRenaming(null);
           } catch (e: any) {
             Alert.alert('Yeniden adlandırma başarısız', e.response?.data?.detail || e.message);
@@ -456,4 +545,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   docTitle: { color: colors.white, fontFamily: 'Poppins_700Bold', fontSize: 13 },
+  limitBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(15,184,165,0.06)',
+    borderColor: 'rgba(15,184,165,0.2)',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 10,
+  },
+  limitRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  limitLabel: {
+    color: colors.navy300,
+    fontSize: 11,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  limitCount: {
+    color: colors.teal300,
+    fontSize: 11,
+    fontFamily: 'Poppins_700Bold',
+  },
+  limitTrack: {
+    height: 4,
+    backgroundColor: 'rgba(159,179,200,0.15)',
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginTop: 4,
+  },
+  limitFill: {
+    height: 4,
+    borderRadius: 2,
+  },
 });

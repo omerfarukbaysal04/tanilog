@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -7,6 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { AppButton, FadeIn, Field, GlassCard, Muted, Screen, ToggleRow } from '../../src/components/ui';
 import useHealthStore, { MedicationCandidate, MedicationScanResult } from '../../src/stores/healthStore';
 import { scheduleMedicationReminder, scheduleMedicationReminderMultiple } from '../../src/lib/notifications';
+import api from '../../src/lib/api';
 import { colors } from '../../src/theme';
 
 type Kind = 'symptom' | 'medication' | 'sleep' | 'nutrition';
@@ -52,7 +53,18 @@ const KIND_META: Record<Kind, { label: string; icon: keyof typeof Ionicons.glyph
 };
 
 const qualityLabels: Record<string, string> = { bad: 'Kötü', fair: 'Orta', good: 'İyi', excellent: 'Mükemmel' };
-const mealLabels: Record<string, string> = { breakfast: 'Kahvaltı', lunch: 'Öğle', dinner: 'Akşam', snack: 'Atıştırmalık' };
+const mealLabels: Record<string, string> = { breakfast: 'Kahvaltı', lunch: 'Öğle', dinner: 'Akşam Yemeği', snack: 'Atıştırmalık' };
+
+const QUALITY_OPTIONS = ['bad', 'fair', 'good', 'excellent'];
+const MEAL_OPTIONS = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+function normalizeDosage(raw: string): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  // If it's purely numeric (e.g. "100"), append " mg"
+  if (/^\d+(\.\d+)?$/.test(trimmed)) return `${trimmed} mg`;
+  return trimmed;
+}
 
 export default function HealthScreen() {
   const {
@@ -77,6 +89,13 @@ export default function HealthScreen() {
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<MedicationScanResult | null>(null);
   const [scanSummary, setScanSummary] = useState<string | null>(null);
+  // Detail modal
+  const [detailItem, setDetailItem] = useState<{ kind: Kind; item: any } | null>(null);
+  const [editForm, setEditForm] = useState<Record<string, string>>({});
+  const [editSaving, setEditSaving] = useState(false);
+  // Interaction check
+  const [interactionResult, setInteractionResult] = useState<string | null>(null);
+  const [checkingInteractions, setCheckingInteractions] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -152,6 +171,20 @@ export default function HealthScreen() {
   const setValue = (field: string, value: string) => setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleSave = async () => {
+    // Validation
+    if (kind === 'symptom' && !form.symptom_name?.trim()) {
+      Alert.alert('Eksik bilgi', 'Semptom adı boş olamaz.'); return;
+    }
+    if (kind === 'medication' && !form.name?.trim()) {
+      Alert.alert('Eksik bilgi', 'İlaç adı boş olamaz.'); return;
+    }
+    if (kind === 'medication' && !form.dosage?.trim()) {
+      Alert.alert('Eksik bilgi', 'Doz bilgisi boş olamaz. Örn: 500mg veya 500'); return;
+    }
+    if (kind === 'sleep' && !form.hours_slept) {
+      Alert.alert('Eksik bilgi', 'Uyku süresi girilmedi.'); return;
+    }
+
     setSaving(true);
     try {
       if (kind === 'symptom') {
@@ -160,11 +193,12 @@ export default function HealthScreen() {
       if (kind === 'medication') {
         const freq = form.frequency || 'once';
         const freqLbl = frequencyLabel(freq);
-        // dosage'ı sıklıkla zenginleştir: "500mg • Günde 3"
-        const dosagePayload = form.dosage
+        const normalizedDosage = normalizeDosage(form.dosage || '');
+        // dosage'ı sıklıkla zenginleştir: "500 mg • Günde 3"
+        const dosagePayload = normalizedDosage
           ? freq && freq !== 'as_needed'
-            ? `${form.dosage} • ${freqLbl}`
-            : form.dosage
+            ? `${normalizedDosage} • ${freqLbl}`
+            : normalizedDosage
           : 'Belirtilmedi';
 
         await addMedication({
@@ -184,14 +218,14 @@ export default function HealthScreen() {
           if (count > 1) {
             await scheduleMedicationReminderMultiple({
               medicationName: form.name,
-              dosage: form.dosage || '',
+              dosage: normalizedDosage,
               firstTime: form.time_taken,
               timesPerDay: count,
             }).catch(() => {});
           } else {
             await scheduleMedicationReminder({
               medicationName: form.name,
-              dosage: form.dosage || '',
+              dosage: normalizedDosage,
               reminderTime: form.time_taken,
             }).catch(() => {});
           }
@@ -210,6 +244,39 @@ export default function HealthScreen() {
       Alert.alert('Kayıt eklenemedi', error.response?.data?.detail || 'Bilgileri kontrol edin.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const checkInteractions = async () => {
+    if (!dailyData?.medications?.length) {
+      Alert.alert('İlaç yok', 'Etkileşim kontrolü için önce ilaç kaydı ekleyin.');
+      return;
+    }
+    setCheckingInteractions(true);
+    setInteractionResult(null);
+    try {
+      const { data } = await api.post('/ai/medication-interactions', { days: 7 });
+      const summary = data.summary || data.interactions_summary || 'Analiz tamamlandı.';
+      const warnings = data.warnings || data.critical_findings || '';
+      setInteractionResult(warnings ? `${summary}\n\n⚠️ ${warnings}` : summary);
+    } catch (e: any) {
+      Alert.alert('Etkileşim kontrol hatası', e.response?.data?.detail || e.message);
+    } finally {
+      setCheckingInteractions(false);
+    }
+  };
+
+  const openDetail = (itemKind: Kind, item: any) => {
+    setDetailItem({ kind: itemKind, item });
+    // Pre-fill edit form
+    if (itemKind === 'symptom') {
+      setEditForm({ symptom_name: item.symptom_name || '', severity: String(item.severity || 5), notes: item.notes || '' });
+    } else if (itemKind === 'medication') {
+      setEditForm({ name: item.name || '', dosage: item.dosage || '', time_taken: item.time_taken || '', notes: item.notes || '' });
+    } else if (itemKind === 'sleep') {
+      setEditForm({ hours_slept: String(item.hours_slept || ''), quality: item.quality || 'good', notes: item.notes || '' });
+    } else if (itemKind === 'nutrition') {
+      setEditForm({ meal_type: item.meal_type || 'snack', water_ml: String(item.water_ml || ''), notes: item.notes || '' });
     }
   };
 
@@ -355,8 +422,31 @@ export default function HealthScreen() {
                 )}
               </View>
 
+              {/* Etkileşim Kontrolü */}
+              {dailyData?.medications && dailyData.medications.length > 0 && (
+                <View style={styles.interactionBox}>
+                  <View style={styles.interactionHeader}>
+                    <Ionicons name="warning-outline" color={colors.yellow} size={14} />
+                    <Text style={styles.interactionTitle}>İlaç Etkileşim Kontrolü</Text>
+                  </View>
+                  <AppButton
+                    title={checkingInteractions ? 'Kontrol ediliyor...' : 'Son 7 günü kontrol et'}
+                    variant="secondary"
+                    size="sm"
+                    loading={checkingInteractions}
+                    onPress={checkInteractions}
+                    icon={<Ionicons name="shield-checkmark-outline" color={colors.yellow} size={14} />}
+                  />
+                  {interactionResult && (
+                    <View style={styles.interactionResult}>
+                      <Text style={styles.interactionResultText}>{interactionResult}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+
               <Field label="İlaç adı" value={form.name || ''} onChangeText={(v) => setValue('name', v)} placeholder="Örn: Parol" />
-              <Field label="Doz" value={form.dosage || ''} onChangeText={(v) => setValue('dosage', v)} placeholder="500mg" />
+              <Field label="Doz *" value={form.dosage || ''} onChangeText={(v) => setValue('dosage', v)} placeholder="500mg veya 500" />
 
               {/* Sıklık seçici */}
               <View style={{ gap: 6 }}>
@@ -405,9 +495,17 @@ export default function HealthScreen() {
               <ToggleRow
                 label="Hatırlatıcı kur"
                 value={reminderEnabled}
-                onValueChange={setReminderEnabled}
+                onValueChange={(v) => {
+                  if (v && !form.time_taken) {
+                    Alert.alert('Saat gerekli', 'Hatırlatıcı için "İlk doz saati" alanını doldurun.');
+                    setValue('time_taken', currentHHMM());
+                  }
+                  setReminderEnabled(v);
+                }}
                 description={
-                  form.frequency && form.frequency !== 'as_needed'
+                  reminderEnabled && !form.time_taken
+                    ? '⚠️ Saat girilmeden hatırlatıcı kurulamaz'
+                    : form.frequency && form.frequency !== 'as_needed'
                     ? `Günde ${frequencyCount(form.frequency)} kez bildirim gelir`
                     : 'İlk doz saatinde bildirim gelir'
                 }
@@ -423,12 +521,44 @@ export default function HealthScreen() {
           {kind === 'sleep' && (
             <>
               <Field label="Uyku süresi (saat)" value={form.hours_slept || ''} onChangeText={(v) => setValue('hours_slept', v)} keyboardType="decimal-pad" placeholder="7.5" />
-              <Field label="Kalite (bad/fair/good/excellent)" value={form.quality || 'good'} onChangeText={(v) => setValue('quality', v)} />
+              <View style={{ gap: 6 }}>
+                <Text style={styles.miniLabel}>Kalite</Text>
+                <View style={styles.freqRow}>
+                  {QUALITY_OPTIONS.map((q) => {
+                    const isActive = (form.quality || 'good') === q;
+                    return (
+                      <Pressable
+                        key={q}
+                        onPress={() => setValue('quality', q)}
+                        style={({ pressed }) => [styles.freqPill, isActive && styles.freqPillActive, pressed && { opacity: 0.85 }]}
+                      >
+                        <Text style={[styles.freqText, isActive && styles.freqTextActive]}>{qualityLabels[q]}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
             </>
           )}
           {kind === 'nutrition' && (
             <>
-              <Field label="Öğün (breakfast/lunch/dinner/snack)" value={form.meal_type || 'snack'} onChangeText={(v) => setValue('meal_type', v)} />
+              <View style={{ gap: 6 }}>
+                <Text style={styles.miniLabel}>Öğün</Text>
+                <View style={styles.freqRow}>
+                  {MEAL_OPTIONS.map((m) => {
+                    const isActive = (form.meal_type || 'snack') === m;
+                    return (
+                      <Pressable
+                        key={m}
+                        onPress={() => setValue('meal_type', m)}
+                        style={({ pressed }) => [styles.freqPill, isActive && styles.freqPillActive, pressed && { opacity: 0.85 }]}
+                      >
+                        <Text style={[styles.freqText, isActive && styles.freqTextActive]}>{mealLabels[m]}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
               <Field label="Su (ml)" value={form.water_ml || ''} onChangeText={(v) => setValue('water_ml', v)} keyboardType="number-pad" placeholder="500" />
             </>
           )}
@@ -458,6 +588,7 @@ export default function HealthScreen() {
             items={dailyData?.symptoms || []}
             render={(item: any) => `${item.symptom_name} • ${item.severity}/10`}
             onDelete={(id) => deleteItem('symptoms', id)}
+            onTap={(item) => openDetail('symptom', item)}
           />
           <RecordList
             title="İlaçlar"
@@ -467,6 +598,7 @@ export default function HealthScreen() {
             onDelete={(id) => deleteItem('medications', id)}
             onAction={(id) => markMedicationTaken(id)}
             actionLabel="Alındı"
+            onTap={(item) => openDetail('medication', item)}
           />
           <RecordList
             title="Uyku"
@@ -474,6 +606,7 @@ export default function HealthScreen() {
             items={dailyData?.sleep || []}
             render={(item: any) => `${item.hours_slept} saat • ${qualityLabels[item.quality] || item.quality}`}
             onDelete={(id) => deleteItem('sleep', id)}
+            onTap={(item) => openDetail('sleep', item)}
           />
           <RecordList
             title="Beslenme"
@@ -481,9 +614,105 @@ export default function HealthScreen() {
             items={dailyData?.nutrition || []}
             render={(item: any) => `${mealLabels[item.meal_type] || item.meal_type} • ${item.water_ml} ml`}
             onDelete={(id) => deleteItem('nutrition', id)}
+            onTap={(item) => openDetail('nutrition', item)}
           />
         </GlassCard>
       </FadeIn>
+
+      {/* Detail / Edit Modal */}
+      <Modal
+        visible={!!detailItem}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setDetailItem(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {detailItem ? KIND_META[detailItem.kind].label + ' Detayı' : ''}
+              </Text>
+              <Pressable onPress={() => setDetailItem(null)} hitSlop={10}>
+                <Ionicons name="close" color={colors.navy400} size={22} />
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 440 }}>
+              {detailItem?.kind === 'symptom' && (
+                <View style={{ gap: 10, paddingBottom: 16 }}>
+                  <Field label="Semptom adı" value={editForm.symptom_name || ''} onChangeText={(v) => setEditForm((p) => ({ ...p, symptom_name: v }))} />
+                  <Field label="Şiddet (1-10)" value={editForm.severity || ''} onChangeText={(v) => setEditForm((p) => ({ ...p, severity: v }))} keyboardType="number-pad" />
+                  <Field label="Not" value={editForm.notes || ''} onChangeText={(v) => setEditForm((p) => ({ ...p, notes: v }))} multiline />
+                </View>
+              )}
+              {detailItem?.kind === 'medication' && (
+                <View style={{ gap: 10, paddingBottom: 16 }}>
+                  <View style={styles.detailRow}><Text style={styles.detailLabel}>İlaç:</Text><Text style={styles.detailVal}>{detailItem.item.name}</Text></View>
+                  <View style={styles.detailRow}><Text style={styles.detailLabel}>Doz:</Text><Text style={styles.detailVal}>{detailItem.item.dosage}</Text></View>
+                  {detailItem.item.time_taken && <View style={styles.detailRow}><Text style={styles.detailLabel}>Saat:</Text><Text style={styles.detailVal}>{detailItem.item.time_taken}</Text></View>}
+                  {detailItem.item.notes ? <View style={styles.detailRow}><Text style={styles.detailLabel}>Not:</Text><Text style={styles.detailVal}>{detailItem.item.notes}</Text></View> : null}
+                  {detailItem.item.is_taken && (
+                    <View style={[styles.takenBadge]}>
+                      <Ionicons name="checkmark-circle" color={colors.teal300} size={14} />
+                      <Text style={styles.takenText}>Alındı olarak işaretlendi</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+              {detailItem?.kind === 'sleep' && (
+                <View style={{ gap: 10, paddingBottom: 16 }}>
+                  <View style={styles.detailRow}><Text style={styles.detailLabel}>Süre:</Text><Text style={styles.detailVal}>{detailItem.item.hours_slept} saat</Text></View>
+                  <View style={styles.detailRow}><Text style={styles.detailLabel}>Kalite:</Text><Text style={styles.detailVal}>{qualityLabels[detailItem.item.quality] || detailItem.item.quality}</Text></View>
+                  {detailItem.item.notes ? <View style={styles.detailRow}><Text style={styles.detailLabel}>Not:</Text><Text style={styles.detailVal}>{detailItem.item.notes}</Text></View> : null}
+                </View>
+              )}
+              {detailItem?.kind === 'nutrition' && (
+                <View style={{ gap: 10, paddingBottom: 16 }}>
+                  <View style={styles.detailRow}><Text style={styles.detailLabel}>Öğün:</Text><Text style={styles.detailVal}>{mealLabels[detailItem.item.meal_type] || detailItem.item.meal_type}</Text></View>
+                  <View style={styles.detailRow}><Text style={styles.detailLabel}>Su:</Text><Text style={styles.detailVal}>{detailItem.item.water_ml} ml</Text></View>
+                  {detailItem.item.notes ? <View style={styles.detailRow}><Text style={styles.detailLabel}>Not:</Text><Text style={styles.detailVal}>{detailItem.item.notes}</Text></View> : null}
+                </View>
+              )}
+            </ScrollView>
+
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
+              <View style={{ flex: 1 }}>
+                <AppButton
+                  title="Sil"
+                  variant="secondary"
+                  icon={<Ionicons name="trash-outline" color={colors.red} size={16} />}
+                  onPress={() => {
+                    if (!detailItem) return;
+                    const kindKey = detailItem.kind === 'symptom' ? 'symptoms'
+                      : detailItem.kind === 'medication' ? 'medications'
+                      : detailItem.kind === 'sleep' ? 'sleep'
+                      : 'nutrition';
+                    Alert.alert('Kaydı Sil', 'Bu kayıt silinsin mi?', [
+                      { text: 'İptal', style: 'cancel' },
+                      {
+                        text: 'Sil',
+                        style: 'destructive',
+                        onPress: async () => {
+                          try {
+                            await deleteItem(kindKey as any, detailItem.item.id);
+                            setDetailItem(null);
+                          } catch (e: any) {
+                            Alert.alert('Hata', e.message);
+                          }
+                        },
+                      },
+                    ]);
+                  }}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <AppButton title="Kapat" onPress={() => setDetailItem(null)} />
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }
@@ -496,6 +725,7 @@ function RecordList({
   onDelete,
   onAction,
   actionLabel,
+  onTap,
 }: {
   title: string;
   accent: 'teal' | 'blue' | 'purple' | 'pink';
@@ -504,6 +734,7 @@ function RecordList({
   onDelete: (id: number) => Promise<void>;
   onAction?: (id: number) => Promise<void>;
   actionLabel?: string;
+  onTap?: (item: any) => void;
 }) {
   const accentColor = {
     teal: colors.teal300,
@@ -517,7 +748,11 @@ function RecordList({
       <Text style={[styles.listTitle, { color: accentColor }]}>{title}</Text>
       {items.length ? (
         items.map((item: any) => (
-          <View key={item.id} style={styles.recordRow}>
+          <Pressable
+            key={item.id}
+            onPress={() => onTap?.(item)}
+            style={({ pressed }) => [styles.recordRow, pressed && { opacity: 0.8 }]}
+          >
             <View style={[styles.recordDot, { backgroundColor: accentColor }]} />
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={styles.recordText}>{render(item)}</Text>
@@ -528,10 +763,10 @@ function RecordList({
                 <Text style={styles.actionBtnText}>{actionLabel}</Text>
               </Pressable>
             )}
-            <Pressable onPress={() => onDelete(item.id)} style={styles.deleteBtn}>
+            <Pressable onPress={() => onDelete(item.id)} style={styles.deleteBtn} hitSlop={8}>
               <Ionicons name="trash-outline" color={colors.red} size={16} />
             </Pressable>
-          </View>
+          </Pressable>
         ))
       ) : (
         <Muted>Kayıt yok.</Muted>
@@ -802,5 +1037,105 @@ const styles = StyleSheet.create({
     color: colors.teal300,
     fontSize: 12,
     fontFamily: 'Poppins_700Bold',
+  },
+  // Interaction check
+  interactionBox: {
+    backgroundColor: 'rgba(251,191,36,0.06)',
+    borderColor: 'rgba(251,191,36,0.25)',
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    gap: 8,
+  },
+  interactionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  interactionTitle: {
+    color: colors.yellow,
+    fontSize: 12,
+    fontFamily: 'Poppins_700Bold',
+  },
+  interactionResult: {
+    backgroundColor: 'rgba(251,191,36,0.08)',
+    borderRadius: 10,
+    padding: 10,
+  },
+  interactionResultText: {
+    color: colors.navy200,
+    fontSize: 12,
+    fontFamily: 'Poppins_400Regular',
+    lineHeight: 18,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(6,18,32,0.75)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: '#0d2035',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: 34,
+    borderTopWidth: 1,
+    borderColor: 'rgba(15,184,165,0.18)',
+    gap: 12,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(159,179,200,0.3)',
+    alignSelf: 'center',
+    marginBottom: 4,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  modalTitle: {
+    color: colors.white,
+    fontSize: 17,
+    fontFamily: 'Poppins_700Bold',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(159,179,200,0.06)',
+  },
+  detailLabel: {
+    color: colors.navy400,
+    fontSize: 12,
+    fontFamily: 'Poppins_700Bold',
+    width: 52,
+  },
+  detailVal: {
+    color: colors.white,
+    fontSize: 13,
+    fontFamily: 'Poppins_500Medium',
+    flex: 1,
+  },
+  takenBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(15,184,165,0.1)',
+    borderColor: 'rgba(15,184,165,0.3)',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  takenText: {
+    color: colors.teal300,
+    fontSize: 12,
+    fontFamily: 'Poppins_600SemiBold',
   },
 });

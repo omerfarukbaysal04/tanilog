@@ -92,9 +92,9 @@ export default function TabsLayout() {
       />
 
       {/* Stack screens: tab bar'da gizli, header'lı */}
-      <Tabs.Screen name="profile" options={{ href: null, headerShown: true, title: 'Profilim' }} />
-      <Tabs.Screen name="settings" options={{ href: null, headerShown: true, title: 'Ayarlar' }} />
-      <Tabs.Screen name="notifications" options={{ href: null, headerShown: true, title: 'Bildirimler' }} />
+      <Tabs.Screen name="profile" options={{ href: null, headerShown: false }} />
+      <Tabs.Screen name="settings" options={{ href: null, headerShown: false }} />
+      <Tabs.Screen name="notifications" options={{ href: null, headerShown: false }} />
       <Tabs.Screen name="billing" options={{ href: null, headerShown: true, title: 'Abonelik' }} />
       <Tabs.Screen name="family" options={{ href: null }} />
     </Tabs>

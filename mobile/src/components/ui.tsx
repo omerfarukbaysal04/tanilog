@@ -3,6 +3,7 @@ import {
   Animated,
   ActivityIndicator,
   Easing,
+  Image,
   Modal,
   Pressable,
   RefreshControl,
@@ -77,36 +78,18 @@ export function Screen({
 /* ============================================================================
    APP LOGO — Consistent brand mark used across auth & landing screens
    ============================================================================ */
+const LOGO_IMG = require('../../assets/logo-white-text.png');
+
 export function AppLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
-  const dim = size === 'sm' ? 48 : size === 'lg' ? 96 : 72;
-  const iconSz = size === 'sm' ? 24 : size === 'lg' ? 46 : 34;
-  const br = size === 'sm' ? 15 : size === 'lg' ? 28 : 22;
+  const width = size === 'sm' ? 110 : size === 'lg' ? 200 : 150;
+  const height = size === 'sm' ? 36 : size === 'lg' ? 66 : 50;
   return (
-    <View style={[
-      logoStyles.box,
-      {
-        width: dim, height: dim, borderRadius: br,
-        shadowColor: colors.teal500,
-        shadowOffset: { width: 0, height: size === 'lg' ? 14 : 8 },
-        shadowOpacity: 0.55,
-        shadowRadius: size === 'lg' ? 22 : 14,
-        elevation: size === 'lg' ? 14 : 8,
-      },
-    ]}>
-      <Ionicons name="medical" color={colors.white} size={iconSz} />
-    </View>
+    <Image
+      source={LOGO_IMG}
+      style={{ width, height, resizeMode: 'contain' }}
+    />
   );
 }
-
-const logoStyles = StyleSheet.create({
-  box: {
-    backgroundColor: colors.teal500,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.18)',
-  },
-});
 
 /* ============================================================================
    PREMIUM GATE — Standard "premium required" card with bullets + upgrade CTA

@@ -10,6 +10,7 @@ type ChatState = {
   isSending: boolean;
   fetchSessions: () => Promise<void>;
   openSession: (session: ChatSession) => Promise<void>;
+  closeSession: () => void;
   sendMessage: (message: string) => Promise<void>;
   sendAttachment: (asset: { uri: string; name: string; mimeType: string }, message: string) => Promise<void>;
 };
@@ -29,6 +30,10 @@ const useChatStore = create<ChatState>((set, get) => ({
     } finally {
       set({ isLoading: false });
     }
+  },
+
+  closeSession: () => {
+    set({ activeSession: null, messages: [] });
   },
 
   openSession: async (session) => {

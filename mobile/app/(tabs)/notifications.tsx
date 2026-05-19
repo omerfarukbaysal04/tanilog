@@ -63,6 +63,10 @@ export default function NotificationsScreen() {
     <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
       <FadeIn delay={0}>
         <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" color={colors.teal300} size={20} />
+            <Text style={styles.backText}>Geri</Text>
+          </Pressable>
           <Text style={styles.eyebrow}>Merkez</Text>
           <Text style={styles.title}>Bildirimler</Text>
           <Muted>{unread > 0 ? `${unread} okunmamış bildirim` : 'Tüm bildirimler okundu'}</Muted>
@@ -163,6 +167,18 @@ function NotifCard({ item, onPress }: { item: any; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   header: { paddingTop: 12, paddingBottom: 4, gap: 4 },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+  },
+  backText: {
+    color: colors.teal300,
+    fontSize: 13,
+    fontFamily: 'Poppins_600SemiBold',
+  },
   eyebrow: {
     color: colors.teal300,
     fontSize: 11,

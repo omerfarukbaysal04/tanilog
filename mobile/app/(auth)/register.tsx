@@ -94,7 +94,13 @@ export default function RegisterScreen() {
             )}
           </View>
 
-          <Muted>Kayıt olarak KVKK, gizlilik ve kullanım şartlarını kabul etmiş olursun.</Muted>
+          <View style={styles.legalRow}>
+            <Text style={styles.legalText}>Kayıt olarak </Text>
+            <Pressable onPress={() => router.push('/legal')}>
+              <Text style={styles.legalLink}>KVKK, Gizlilik Politikası ve Kullanım Şartları</Text>
+            </Pressable>
+            <Text style={styles.legalText}>'nı kabul etmiş olursun.</Text>
+          </View>
 
           <AppButton
             title="Hesap Oluştur"
@@ -196,5 +202,24 @@ const styles = StyleSheet.create({
   signupLink: {
     color: colors.teal300,
     fontFamily: 'Poppins_700Bold',
+  },
+  legalRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 2,
+  },
+  legalText: {
+    color: colors.navy400,
+    fontSize: 11,
+    fontFamily: 'Poppins_400Regular',
+    lineHeight: 16,
+  },
+  legalLink: {
+    color: colors.teal300,
+    fontSize: 11,
+    fontFamily: 'Poppins_600SemiBold',
+    textDecorationLine: 'underline',
+    lineHeight: 16,
   },
 });
