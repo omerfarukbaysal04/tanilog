@@ -16,6 +16,13 @@ type Tool = {
 
 const TOOLS: Tool[] = [
   {
+    title: 'Sesli Asistan',
+    description: 'Sesli konuşarak hızlıca sağlık kaydı oluştur',
+    icon: 'mic-outline',
+    route: '/voice',
+    accent: 'teal',
+  },
+  {
     title: 'Zaman Çizelgesi',
     description: 'Sağlık olaylarını kronolojik görüntüle',
     icon: 'time-outline',
@@ -43,6 +50,21 @@ const TOOLS: Tool[] = [
     route: '/tools/doctor-prep',
     accent: 'pink',
     premium: true,
+  },
+  {
+    title: 'İlaç Etkileşimi',
+    description: 'Son 30 gün ilaç ve reçete etkileşim analizi',
+    icon: 'shield-checkmark-outline',
+    route: '/tools/medication-interactions',
+    accent: 'pink',
+    premium: true,
+  },
+  {
+    title: 'Aile Takibi',
+    description: 'Aile üyelerinin sağlık verilerini izle',
+    icon: 'people-outline',
+    route: '/family',
+    accent: 'blue',
   },
 ];
 

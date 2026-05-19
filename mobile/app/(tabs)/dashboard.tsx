@@ -20,7 +20,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   { label: 'Sağlık', icon: 'heart', route: '/health', accent: 'pink' },
   { label: 'Belge', icon: 'document-text', route: '/documents', accent: 'blue' },
   { label: 'Sesli', icon: 'mic', route: '/voice', accent: 'purple' },
-  { label: 'AI Chat', icon: 'chatbubble-ellipses', route: '/chat', accent: 'teal' },
+  { label: 'Araçlar', icon: 'apps', route: '/tools', accent: 'teal' },
 ];
 
 export default function DashboardScreen() {

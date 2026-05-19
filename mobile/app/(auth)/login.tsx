@@ -32,14 +32,17 @@ export default function LoginScreen() {
 
   return (
     <Screen withOrbs>
-      <View style={{ height: 30 }} />
+      <View style={{ height: 20 }} />
 
-      <FadeIn delay={0} style={styles.brandRow}>
-        <AppLogo size="sm" />
-        <View>
-          <Text style={styles.brand}>TanıLog</Text>
-          <Text style={styles.tagline}>Sağlığını anla, hayatını yönet</Text>
-        </View>
+      <Pressable onPress={() => router.push('/landing')} style={styles.backBtn}>
+        <Ionicons name="arrow-back" color={colors.white} size={20} />
+        <Text style={styles.backText}>Ana Sayfa</Text>
+      </Pressable>
+
+      <FadeIn delay={0} style={styles.brandSection}>
+        <AppLogo size="md" />
+        <Text style={styles.brand}>TanıLog</Text>
+        <Text style={styles.tagline}>Sağlığını anla, hayatını yönet</Text>
       </FadeIn>
 
       <FadeIn delay={150}>
@@ -116,24 +119,41 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  brandRow: {
+  brandSection: {
+    alignItems: 'center',
+    gap: 6,
+    paddingTop: 12,
+    paddingBottom: 14,
+  },
+  backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    paddingTop: 30,
-    paddingBottom: 10,
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(29,59,79,0.5)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(159,179,200,0.12)',
+  },
+  backText: {
+    color: colors.white,
+    fontSize: 13,
+    fontFamily: 'Poppins_600SemiBold',
   },
   brand: {
     color: colors.white,
-    fontSize: 26,
+    fontSize: 30,
     fontFamily: 'Poppins_800ExtraBold',
     letterSpacing: -0.6,
+    marginTop: 4,
   },
   tagline: {
     color: colors.teal300,
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'Poppins_500Medium',
-    marginTop: -2,
+    marginTop: -4,
   },
   cardTopBorder: {
     position: 'absolute',

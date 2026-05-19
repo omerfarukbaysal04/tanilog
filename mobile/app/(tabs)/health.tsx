@@ -1,9 +1,11 @@
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { AppButton, FadeIn, Field, GlassCard, Muted, Screen, ToggleRow } from '../../src/components/ui';
-import useHealthStore from '../../src/stores/healthStore';
+import useHealthStore, { MedicationCandidate, MedicationScanResult } from '../../src/stores/healthStore';
 import { scheduleMedicationReminder } from '../../src/lib/notifications';
 import { colors } from '../../src/theme';
 
@@ -31,6 +33,7 @@ export default function HealthScreen() {
     addNutrition,
     deleteItem,
     markMedicationTaken,
+    scanMedication,
   } = useHealthStore();
 
   const [kind, setKind] = useState<Kind>('symptom');
@@ -38,6 +41,9 @@ export default function HealthScreen() {
   const [saving, setSaving] = useState(false);
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<MedicationScanResult | null>(null);
+  const [scanSummary, setScanSummary] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -54,6 +60,62 @@ export default function HealthScreen() {
     }
   };
 
+  const handleScanFile = async (asset: { uri: string; name: string; mimeType: string }) => {
+    setScanning(true);
+    setScanResult(null);
+    try {
+      const result = await scanMedication(asset);
+      setScanResult(result);
+      if (!result.medications?.length) {
+        Alert.alert('Bulunamadı', 'Görselde ilaç adayı bulunamadı. Daha net bir fotoğraf dene.');
+      }
+    } catch (e: any) {
+      Alert.alert('Tarama başarısız', e.response?.data?.detail || 'AI tarama yapılamadı.');
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleScanFromCamera = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Kamera izni gerekli', 'Reçete/kutu fotoğrafı için kamera izni vermelisin.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+    if (!result.canceled && result.assets[0]) {
+      const item = result.assets[0];
+      handleScanFromAsset({ uri: item.uri, name: item.fileName || `med-${Date.now()}.jpg`, mimeType: item.mimeType || 'image/jpeg' });
+    }
+  };
+
+  const handleScanFromGallery = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['image/*', 'application/pdf'],
+      copyToCacheDirectory: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const item = result.assets[0];
+      handleScanFromAsset({ uri: item.uri, name: item.name, mimeType: item.mimeType || 'application/octet-stream' });
+    }
+  };
+
+  const handleScanFromAsset = (asset: { uri: string; name: string; mimeType: string }) => {
+    handleScanFile(asset);
+  };
+
+  const applyCandidate = (c: MedicationCandidate) => {
+    setForm({
+      name: c.name || '',
+      dosage: c.dosage || '',
+      time_taken: c.suggested_time || '',
+      notes: [c.usage, c.notes, c.barcode ? `Barkod: ${c.barcode}` : null].filter(Boolean).join(' | '),
+    });
+    setReminderEnabled(!!c.suggested_time);
+    setScanSummary(scanResult?.summary || null);
+    setScanResult(null);
+  };
+
   const setValue = (field: string, value: string) => setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleSave = async () => {
@@ -63,7 +125,16 @@ export default function HealthScreen() {
         await addSymptom({ date: selectedDate, symptom_name: form.symptom_name, severity: Number(form.severity || 5), notes: form.notes || '' });
       }
       if (kind === 'medication') {
-        await addMedication({ date: selectedDate, name: form.name, dosage: form.dosage || 'Belirtilmedi', time_taken: form.time_taken || null, notes: form.notes || '' });
+        await addMedication({
+          date: selectedDate,
+          name: form.name,
+          dosage: form.dosage || 'Belirtilmedi',
+          time_taken: form.time_taken || null,
+          notes: form.notes || '',
+          reminder_enabled: reminderEnabled,
+          reminder_time: reminderEnabled ? (form.time_taken || null) : null,
+          ai_scan_summary: scanSummary || null,
+        });
         if (reminderEnabled && form.time_taken) {
           scheduleMedicationReminder({
             medicationName: form.name,
@@ -71,6 +142,7 @@ export default function HealthScreen() {
             reminderTime: form.time_taken,
           }).catch(() => {});
         }
+        setScanSummary(null);
       }
       if (kind === 'sleep') {
         await addSleep({ date: selectedDate, hours_slept: Number(form.hours_slept || 0), quality: form.quality || 'good', notes: form.notes || '' });
@@ -155,6 +227,80 @@ export default function HealthScreen() {
           )}
           {kind === 'medication' && (
             <>
+              {/* AI Tarama bölümü */}
+              <View style={styles.scanBox}>
+                <View style={styles.scanHeader}>
+                  <View style={styles.scanIconBg}>
+                    <Ionicons name="scan-outline" color={colors.teal300} size={16} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.scanTitle}>AI ile reçete/kutu tara</Text>
+                    <Text style={styles.scanDesc}>Fotoğraf çek veya yükle, ilaç bilgisi otomatik dolsun.</Text>
+                  </View>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <View style={{ flex: 1 }}>
+                    <AppButton
+                      title="Kamera"
+                      variant="secondary"
+                      size="sm"
+                      onPress={handleScanFromCamera}
+                      disabled={scanning}
+                      icon={<Ionicons name="camera-outline" color={colors.white} size={16} />}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <AppButton
+                      title="Dosya"
+                      variant="secondary"
+                      size="sm"
+                      onPress={handleScanFromGallery}
+                      disabled={scanning}
+                      icon={<Ionicons name="folder-outline" color={colors.white} size={16} />}
+                    />
+                  </View>
+                </View>
+
+                {scanning && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                    <ActivityIndicator color={colors.teal300} size="small" />
+                    <Text style={styles.scanLoading}>AI taranıyor...</Text>
+                  </View>
+                )}
+
+                {scanResult && scanResult.medications.length > 0 && (
+                  <View style={{ gap: 8, marginTop: 4 }}>
+                    {scanResult.summary && <Muted>{scanResult.summary}</Muted>}
+                    {scanResult.medications.map((c, i) => (
+                      <Pressable
+                        key={`${c.name}-${i}`}
+                        onPress={() => applyCandidate(c)}
+                        style={({ pressed }) => [styles.candidateCard, pressed && { opacity: 0.85 }]}
+                      >
+                        <View style={{ flex: 1, gap: 2 }}>
+                          <Text style={styles.candidateName}>{c.name || 'İlaç adı okunamadı'}</Text>
+                          <Text style={styles.candidateDosage}>{c.dosage || 'Doz bilgisi yok'}</Text>
+                          {(c.usage || c.notes) && (
+                            <Text style={styles.candidateMeta}>{[c.usage, c.notes].filter(Boolean).join(' | ')}</Text>
+                          )}
+                        </View>
+                        <View style={styles.confidenceBadge}>
+                          <Text style={styles.confidenceText}>%{Math.round((c.confidence || 0) * 100)}</Text>
+                        </View>
+                      </Pressable>
+                    ))}
+                    {scanResult.warnings?.length > 0 && (
+                      <View style={styles.warningBox}>
+                        {scanResult.warnings.map((w, i) => (
+                          <Text key={i} style={styles.warningText}>• {w}</Text>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                )}
+              </View>
+
               <Field label="İlaç adı" value={form.name || ''} onChangeText={(v) => setValue('name', v)} placeholder="Örn: Parol" />
               <Field label="Doz" value={form.dosage || ''} onChangeText={(v) => setValue('dosage', v)} placeholder="500mg" />
               <Field label="Saat (HH:MM)" value={form.time_taken || ''} onChangeText={(v) => setValue('time_taken', v)} placeholder="08:00" />
@@ -164,6 +310,12 @@ export default function HealthScreen() {
                 onValueChange={setReminderEnabled}
                 description="Her gün bu saatte bildirim al"
               />
+              {scanSummary && (
+                <View style={styles.scanSummaryBox}>
+                  <Ionicons name="sparkles" color={colors.teal300} size={12} />
+                  <Text style={styles.scanSummaryText}>{scanSummary}</Text>
+                </View>
+              )}
             </>
           )}
           {kind === 'sleep' && (
@@ -386,5 +538,113 @@ const styles = StyleSheet.create({
   },
   deleteBtn: {
     padding: 6,
+  },
+  scanBox: {
+    backgroundColor: 'rgba(15,184,165,0.06)',
+    borderColor: 'rgba(15,184,165,0.25)',
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    gap: 10,
+  },
+  scanHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  scanIconBg: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: 'rgba(15,184,165,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(15,184,165,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scanTitle: {
+    color: colors.white,
+    fontSize: 13,
+    fontFamily: 'Poppins_700Bold',
+  },
+  scanDesc: {
+    color: colors.navy400,
+    fontSize: 11,
+    fontFamily: 'Poppins_400Regular',
+    lineHeight: 15,
+  },
+  scanLoading: {
+    color: colors.teal300,
+    fontSize: 12,
+    fontFamily: 'Poppins_500Medium',
+  },
+  candidateCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(20,40,58,0.65)',
+    borderColor: 'rgba(159,179,200,0.15)',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+  },
+  candidateName: {
+    color: colors.white,
+    fontSize: 13,
+    fontFamily: 'Poppins_700Bold',
+  },
+  candidateDosage: {
+    color: colors.navy300,
+    fontSize: 12,
+    fontFamily: 'Poppins_500Medium',
+  },
+  candidateMeta: {
+    color: colors.navy400,
+    fontSize: 11,
+    fontFamily: 'Poppins_400Regular',
+  },
+  confidenceBadge: {
+    backgroundColor: 'rgba(15,184,165,0.18)',
+    borderColor: 'rgba(15,184,165,0.4)',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  confidenceText: {
+    color: colors.teal300,
+    fontSize: 10,
+    fontFamily: 'Poppins_700Bold',
+  },
+  warningBox: {
+    backgroundColor: 'rgba(251,191,36,0.08)',
+    borderColor: 'rgba(251,191,36,0.3)',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+    gap: 4,
+  },
+  warningText: {
+    color: '#fde68a',
+    fontSize: 11,
+    fontFamily: 'Poppins_500Medium',
+    lineHeight: 16,
+  },
+  scanSummaryBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    backgroundColor: 'rgba(15,184,165,0.06)',
+    borderColor: 'rgba(15,184,165,0.2)',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+  },
+  scanSummaryText: {
+    color: colors.teal300,
+    fontSize: 11,
+    fontFamily: 'Poppins_500Medium',
+    flex: 1,
+    lineHeight: 15,
   },
 });

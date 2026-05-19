@@ -62,20 +62,22 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="tools"
+        options={{
+          title: 'Araçlar',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={styles.centerTabIcon}>
+              <Ionicons name={focused ? 'apps' : 'apps-outline'} color={focused ? colors.white : color} size={26} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="documents"
         options={{
           title: 'Belgeler',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'document-text' : 'document-text-outline'} color={color} size={22} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="voice"
-        options={{
-          title: 'Sesli',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'mic' : 'mic-outline'} color={color} size={22} />
           ),
         }}
       />
@@ -88,17 +90,9 @@ export default function TabsLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="tools"
-        options={{
-          title: 'Araçlar',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'apps' : 'apps-outline'} color={color} size={22} />
-          ),
-        }}
-      />
 
       {/* Stack screens: tab bar'da gizli, header'lı */}
+      <Tabs.Screen name="voice" options={{ href: null, headerShown: true, title: 'Sesli Asistan' }} />
       <Tabs.Screen name="profile" options={{ href: null, headerShown: true, title: 'Profilim' }} />
       <Tabs.Screen name="settings" options={{ href: null, headerShown: true, title: 'Ayarlar' }} />
       <Tabs.Screen name="notifications" options={{ href: null, headerShown: true, title: 'Bildirimler' }} />
@@ -113,5 +107,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(11,23,34,0.95)',
     borderTopColor: 'rgba(159,179,200,0.08)',
     borderTopWidth: 1,
+  },
+  centerTabIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(15,184,165,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(15,184,165,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -8,
   },
 });

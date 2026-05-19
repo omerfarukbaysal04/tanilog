@@ -4,6 +4,22 @@ import { DailySummary } from '../types';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+export type MedicationCandidate = {
+  name: string;
+  dosage: string;
+  usage?: string;
+  notes?: string;
+  suggested_time?: string;
+  barcode?: string;
+  confidence: number;
+};
+
+export type MedicationScanResult = {
+  summary: string;
+  medications: MedicationCandidate[];
+  warnings: string[];
+};
+
 type HealthState = {
   selectedDate: string;
   dailyData: DailySummary | null;
@@ -16,6 +32,7 @@ type HealthState = {
   addNutrition: (payload: Record<string, any>) => Promise<void>;
   deleteItem: (kind: 'symptoms' | 'medications' | 'sleep' | 'nutrition', id: number) => Promise<void>;
   markMedicationTaken: (id: number) => Promise<void>;
+  scanMedication: (asset: { uri: string; name: string; mimeType: string }) => Promise<MedicationScanResult>;
 };
 
 const useHealthStore = create<HealthState>((set, get) => ({
@@ -66,6 +83,19 @@ const useHealthStore = create<HealthState>((set, get) => ({
   markMedicationTaken: async (id) => {
     await api.patch(`/health/medications/${id}/taken`);
     await get().fetchDailySummary();
+  },
+
+  scanMedication: async (asset) => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: asset.uri,
+      name: asset.name,
+      type: asset.mimeType,
+    } as any);
+    const { data } = await api.post<MedicationScanResult>('/ai/medication-scan', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
   },
 }));
 
