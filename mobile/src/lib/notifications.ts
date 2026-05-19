@@ -50,7 +50,7 @@ async function setupAndroidChannel() {
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#0fb8a5',
-      sound: 'default',
+      sound: true,
     });
   } catch {}
 }
