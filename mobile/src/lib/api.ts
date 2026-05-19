@@ -1,7 +1,12 @@
 import axios from 'axios';
 import { clearToken, getToken } from './token';
 
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:8000/api/v1';
+const LOCAL_ANDROID_API_URL = 'http://10.0.2.2:8000/api/v1';
+const PRODUCTION_API_URL = 'https://tanilog.onrender.com/api/v1';
+
+export const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  (__DEV__ ? LOCAL_ANDROID_API_URL : PRODUCTION_API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
