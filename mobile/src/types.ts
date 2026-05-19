@@ -158,7 +158,16 @@ export type SearchResult = {
   created_at: string;
 };
 
+export type CrossAnalysisDocument = {
+  id: number;
+  original_filename: string;
+  category?: string | null;
+};
+
 export type CrossAnalysis = {
+  document?: CrossAnalysisDocument;
+  days?: number;
+  date_range?: { start: string; end: string };
   summary: string;
   linked_findings: string[];
   recommendations: string[];

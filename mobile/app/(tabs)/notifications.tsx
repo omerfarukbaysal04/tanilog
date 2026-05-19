@@ -6,6 +6,7 @@ import { AppButton, EmptyState, FadeIn, GlassCard, Muted, Screen } from '../../s
 import useNotificationStore from '../../src/stores/notificationStore';
 import { Notification } from '../../src/types';
 import { fmtShortTR } from '../../src/lib/dateFmt';
+import { isTTSAvailable, speak } from '../../src/lib/tts';
 import { colors } from '../../src/theme';
 
 function formatNotifTime(item: any): string {
@@ -131,12 +132,27 @@ function NotifCard({ item, onPress }: { item: any; onPress: () => void }) {
                 <Ionicons name="time-outline" color={colors.navy500} size={11} />
                 <Text style={styles.time}>{formatNotifTime(item)}</Text>
               </View>
-              {hasRoute && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                  <Text style={styles.routeText}>Görüntüle</Text>
-                  <Ionicons name="chevron-forward" color={colors.teal300} size={12} />
-                </View>
-              )}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {isTTSAvailable() && (
+                  <Pressable
+                    hitSlop={8}
+                    onPress={(e) => {
+                      e.stopPropagation?.();
+                      speak(`${item.title}. ${item.body}`);
+                    }}
+                    style={styles.ttsBtn}
+                  >
+                    <Ionicons name="volume-high" color={colors.teal300} size={12} />
+                    <Text style={styles.ttsText}>Sesli Oku</Text>
+                  </Pressable>
+                )}
+                {hasRoute && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                    <Text style={styles.routeText}>Görüntüle</Text>
+                    <Ionicons name="chevron-forward" color={colors.teal300} size={12} />
+                  </View>
+                )}
+              </View>
             </View>
           </View>
         </View>
@@ -253,6 +269,22 @@ const styles = StyleSheet.create({
   routeText: {
     color: colors.teal300,
     fontSize: 11,
+    fontFamily: 'Poppins_700Bold',
+  },
+  ttsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(15,184,165,0.12)',
+    borderColor: 'rgba(15,184,165,0.3)',
+    borderWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 7,
+  },
+  ttsText: {
+    color: colors.teal300,
+    fontSize: 9,
     fontFamily: 'Poppins_700Bold',
   },
   unreadDot: {

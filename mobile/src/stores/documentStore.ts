@@ -16,6 +16,8 @@ type DocumentState = {
   fetchDocuments: () => Promise<void>;
   uploadDocument: (asset: UploadAsset, category: string, notes?: string) => Promise<void>;
   analyzeDocument: (id: number) => Promise<any>;
+  renameDocument: (id: number, name: string) => Promise<void>;
+  deleteDocument: (id: number) => Promise<void>;
   fileUrl: (id: number) => string;
   authHeaders: () => Promise<Record<string, string>>;
 };
@@ -59,6 +61,20 @@ const useDocumentStore = create<DocumentState>((set, get) => ({
   analyzeDocument: async (id) => {
     const { data } = await api.post(`/documents/${id}/analyze`);
     return data;
+  },
+
+  renameDocument: async (id, name) => {
+    await api.patch(`/documents/${id}`, { name });
+    set((state) => ({
+      documents: state.documents.map((d) =>
+        d.id === id ? { ...d, original_filename: name } : d,
+      ),
+    }));
+  },
+
+  deleteDocument: async (id) => {
+    await api.delete(`/documents/${id}`);
+    set((state) => ({ documents: state.documents.filter((d) => d.id !== id) }));
   },
 
   fileUrl: (id) => `${API_URL}/documents/${id}/file`,

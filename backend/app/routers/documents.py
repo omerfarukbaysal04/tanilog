@@ -124,6 +124,39 @@ async def get_document_file(
     return FileResponse(doc.file_path, media_type=doc.file_type, filename=doc.original_filename)
 
 
+from pydantic import BaseModel as _BaseModel
+
+class _RenamePayload(_BaseModel):
+    name: str
+
+@router.patch("/{doc_id}")
+async def rename_document(
+    doc_id: int,
+    payload: _RenamePayload,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    doc = db.query(Document).filter(
+        Document.id == doc_id,
+        Document.user_id == current_user.id,
+        Document.is_deleted == False,
+    ).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Belge bulunamadı")
+    name = (payload.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Ad boş olamaz")
+    if len(name) > 255:
+        raise HTTPException(status_code=400, detail="Ad 255 karakteri geçemez")
+    doc.original_filename = name
+    db.commit()
+    db.refresh(doc)
+    return {
+        "id": doc.id,
+        "original_filename": doc.original_filename,
+    }
+
+
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
     doc_id: int,

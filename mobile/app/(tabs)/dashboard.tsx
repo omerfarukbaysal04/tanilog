@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { FadeIn, GlassCard, LinearGradient, Muted, Screen, StatCard } from '../../src/components/ui';
+import { FadeIn, GlassCard, LinearGradient, Muted, PremiumPromo, Screen, StatCard } from '../../src/components/ui';
 import useAuthStore from '../../src/stores/authStore';
 import useDashboardStore from '../../src/stores/dashboardStore';
 import useRiskAlertStore from '../../src/stores/riskAlertStore';
@@ -156,6 +156,13 @@ export default function DashboardScreen() {
           />
         </View>
       </View>
+
+      {/* Premium promo (free için, onboarding'den ayrı) */}
+      {!user?.is_premium && (
+        <FadeIn delay={280}>
+          <PremiumPromo text="AI Analiz, Doktor Hazırlık ve Aile Takibi için sınırsız erişim." />
+        </FadeIn>
+      )}
 
       {/* Onboarding */}
       {onboarding && !onboarding.is_complete && (

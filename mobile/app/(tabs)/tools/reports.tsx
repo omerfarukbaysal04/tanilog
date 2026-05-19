@@ -4,6 +4,7 @@ import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton, EmptyState, FadeIn, GlassCard, Muted, Screen } from '../../../src/components/ui';
 import api from '../../../src/lib/api';
+import { isTTSAvailable, speak } from '../../../src/lib/tts';
 import { colors } from '../../../src/theme';
 import { DocumentItem, SavedDoctorReport } from '../../../src/types';
 
@@ -170,22 +171,24 @@ export default function ReportsScreen() {
       ) : (
         analyzedDocs.map((doc, idx) => (
           <FadeIn key={doc.id} delay={120 + idx * 60}>
-            <ReportCard
-              title={doc.original_filename}
-              subtitle={doc.category || doc.file_type}
-              summary={doc.ai_summary || doc.notes || 'AI analiz özeti mevcut.'}
-              createdAt={doc.ai_analyzed_at || doc.created_at}
-              accent="blue"
-              icon="document-text"
-              onShare={async () => {
-                try {
-                  await Share.share({
-                    title: doc.original_filename,
-                    message: `${doc.original_filename}\n\n${doc.ai_summary || ''}`,
-                  });
-                } catch {}
-              }}
-            />
+            <Pressable onPress={() => router.push('/documents')}>
+              <ReportCard
+                title={doc.original_filename}
+                subtitle={doc.category || doc.file_type}
+                summary={doc.ai_summary || doc.notes || 'AI analiz özeti mevcut.'}
+                createdAt={doc.ai_analyzed_at || doc.created_at}
+                accent="blue"
+                icon="document-text"
+                onShare={async () => {
+                  try {
+                    await Share.share({
+                      title: doc.original_filename,
+                      message: `${doc.original_filename}\n\n${doc.ai_summary || ''}`,
+                    });
+                  } catch {}
+                }}
+              />
+            </Pressable>
           </FadeIn>
         ))
       )}
@@ -245,10 +248,18 @@ function ReportCard({
             <Text style={styles.dateText}>{dateText}</Text>
           </View>
         )}
-        <Pressable onPress={onShare} style={styles.shareBtn}>
-          <Ionicons name="share-outline" color={colors.teal300} size={14} />
-          <Text style={styles.shareText}>Paylaş</Text>
-        </Pressable>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          {isTTSAvailable() && (
+            <Pressable onPress={() => speak(`${title}. ${summary}`)} style={styles.shareBtn}>
+              <Ionicons name="volume-high" color={colors.teal300} size={14} />
+              <Text style={styles.shareText}>Sesli Oku</Text>
+            </Pressable>
+          )}
+          <Pressable onPress={onShare} style={styles.shareBtn}>
+            <Ionicons name="share-outline" color={colors.teal300} size={14} />
+            <Text style={styles.shareText}>Paylaş</Text>
+          </Pressable>
+        </View>
       </View>
     </GlassCard>
   );

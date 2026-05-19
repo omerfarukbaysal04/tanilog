@@ -2,10 +2,34 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { AppButton, FadeIn, Field, GlassCard, LinearGradient, Muted, Screen } from '../../../src/components/ui';
+import { AppButton, FadeIn, Field, GlassCard, LinearGradient, Muted, Screen, UsageLimitBar } from '../../../src/components/ui';
 import useHealthStore from '../../../src/stores/healthStore';
 import useVoiceStore from '../../../src/stores/voiceStore';
+import useAuthStore from '../../../src/stores/authStore';
 import { colors } from '../../../src/theme';
+
+const FIELD_LABELS: Record<string, string> = {
+  symptom_name: 'Semptom',
+  severity: 'Şiddet',
+  name: 'İlaç adı',
+  dosage: 'Doz',
+  time_taken: 'Saat',
+  reminder_time: 'Hatırlatma saati',
+  reminder_enabled: 'Hatırlatıcı',
+  hours_slept: 'Uyku süresi',
+  quality: 'Kalite',
+  meal_type: 'Öğün',
+  water_ml: 'Su (ml)',
+  notes: 'Not',
+  date: 'Tarih',
+  frequency: 'Sıklık',
+};
+
+function trField(key: string): string {
+  if (FIELD_LABELS[key]) return FIELD_LABELS[key];
+  // Default: snake_case → Düzgün başlık
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 const INTENT_META: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; accent: string }> = {
   symptom: { label: 'Semptom', icon: 'pulse-outline', accent: '#f472b6' },
@@ -19,7 +43,8 @@ export default function VoiceScreen() {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(recorder);
   const { selectedDate, addSymptom, addMedication, addSleep, addNutrition } = useHealthStore();
-  const { transcribeAudio, parseTranscript, parseResult, clearResult, isLoading } = useVoiceStore();
+  const { transcribeAudio, parseTranscript, parseResult, clearResult, isLoading, usage, fetchUsage } = useVoiceStore();
+  const { user } = useAuthStore();
   const [transcript, setTranscript] = useState('');
 
   const pulse = useRef(new Animated.Value(0)).current;
@@ -29,6 +54,7 @@ export default function VoiceScreen() {
       await AudioModule.requestRecordingPermissionsAsync();
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
     })();
+    fetchUsage().catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -46,6 +72,9 @@ export default function VoiceScreen() {
   }, [recorderState.isRecording]);
 
   const startRecording = async () => {
+    // Yeni kayda başlarken eski sonucu temizle (ardışık konuşma için)
+    clearResult();
+    setTranscript('');
     try {
       await recorder.prepareToRecordAsync();
       recorder.record();
@@ -111,6 +140,23 @@ export default function VoiceScreen() {
           <Muted>Mikrofona basıp konuş, AI metnini sağlık kaydına dönüştürsün.</Muted>
         </View>
       </FadeIn>
+
+      {/* Kullanım sınırı (free için) */}
+      {usage && (
+        <FadeIn delay={60}>
+          <GlassCard>
+            <UsageLimitBar
+              label="Bugün Sesli Giriş"
+              used={usage.used_today}
+              total={usage.limit === -1 ? 0 : usage.limit}
+              isPremium={usage.is_premium}
+            />
+            {!usage.is_premium && usage.remaining === 0 && (
+              <Muted>Günlük limit doldu. Sınırsız kullanım için Premium'a geç.</Muted>
+            )}
+          </GlassCard>
+        </FadeIn>
+      )}
 
       {/* Mikrofon */}
       <FadeIn delay={100}>
@@ -191,7 +237,7 @@ export default function VoiceScreen() {
             <View style={styles.jsonBox}>
               {Object.entries(parseResult.extracted_data).map(([k, v]) => (
                 <View key={k} style={styles.jsonRow}>
-                  <Text style={styles.jsonKey}>{k}</Text>
+                  <Text style={styles.jsonKey}>{trField(k)}</Text>
                   <Text style={styles.jsonValue} numberOfLines={2}>{String(v ?? '-')}</Text>
                 </View>
               ))}

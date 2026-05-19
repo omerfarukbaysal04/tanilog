@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, Animated, Easing, Pressable, StyleSheet, Text
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
+import * as DocumentPicker from 'expo-document-picker';
 import { AppButton, FadeIn, Field, GlassCard, LinearGradient, Muted, PremiumGate, Screen } from '../../src/components/ui';
 import useChatStore from '../../src/stores/chatStore';
 import useVoiceStore from '../../src/stores/voiceStore';
@@ -18,7 +19,7 @@ const SUGGESTIONS = [
 
 export default function ChatScreen() {
   const { user } = useAuthStore();
-  const { sessions, activeSession, messages, fetchSessions, openSession, sendMessage, isSending } = useChatStore();
+  const { sessions, activeSession, messages, fetchSessions, openSession, sendMessage, sendAttachment, isSending } = useChatStore();
   const { transcribeAudio } = useVoiceStore();
   const [message, setMessage] = useState('');
   const [showHistory, setShowHistory] = useState(false);
@@ -58,6 +59,27 @@ export default function ChatScreen() {
     } catch {
       Alert.alert('Ses kaydı başlatılamadı', 'Mikrofon iznini kontrol et.');
     }
+  };
+
+  const pickAndSendFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'image/*', 'text/plain'],
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+      const item = result.assets[0];
+      const note = message.trim();
+      setMessage('');
+      try {
+        await sendAttachment(
+          { uri: item.uri, name: item.name, mimeType: item.mimeType || 'application/octet-stream' },
+          note,
+        );
+      } catch (error: any) {
+        Alert.alert('Dosya gönderilemedi', error.response?.data?.detail || error.message);
+      }
+    } catch {}
   };
 
   const stopVoiceInput = async () => {
@@ -254,6 +276,15 @@ export default function ChatScreen() {
           />
 
           <View style={styles.inputActions}>
+            {/* Dosya */}
+            <Pressable
+              onPress={pickAndSendFile}
+              disabled={isSending || recorderState.isRecording || transcribing}
+              style={styles.fileBtn}
+            >
+              <Ionicons name="attach" color={colors.teal300} size={22} />
+            </Pressable>
+
             {/* Mikrofon */}
             <Pressable
               onPress={recorderState.isRecording ? stopVoiceInput : startVoiceInput}
@@ -435,6 +466,16 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: 'rgba(239,68,68,0.4)',
+  },
+  fileBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(15,184,165,0.10)',
+    borderColor: 'rgba(15,184,165,0.3)',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   micBtn: {
     width: 50,

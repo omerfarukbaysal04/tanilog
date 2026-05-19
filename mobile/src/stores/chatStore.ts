@@ -11,6 +11,7 @@ type ChatState = {
   fetchSessions: () => Promise<void>;
   openSession: (session: ChatSession) => Promise<void>;
   sendMessage: (message: string) => Promise<void>;
+  sendAttachment: (asset: { uri: string; name: string; mimeType: string }, message: string) => Promise<void>;
 };
 
 const useChatStore = create<ChatState>((set, get) => ({
@@ -54,6 +55,37 @@ const useChatStore = create<ChatState>((set, get) => ({
         user_message: ChatMessage;
         assistant_message: ChatMessage;
       }>(`/chat/sessions/${session.id}/messages`, { message });
+      set((state) => ({
+        activeSession: data.session,
+        sessions: [data.session, ...state.sessions.filter((item) => item.id !== data.session.id)],
+        messages: [...state.messages, data.user_message, data.assistant_message],
+      }));
+    } finally {
+      set({ isSending: false });
+    }
+  },
+
+  sendAttachment: async (asset, message) => {
+    set({ isSending: true });
+    try {
+      let session = get().activeSession;
+      if (!session) {
+        const created = await api.post<ChatSession>('/chat/sessions', {
+          title: (message || asset.name).slice(0, 60),
+        });
+        session = created.data;
+        set({ activeSession: session, sessions: [session, ...get().sessions] });
+      }
+      const form = new FormData();
+      form.append('file', { uri: asset.uri, name: asset.name, type: asset.mimeType } as any);
+      form.append('message', message || '');
+      const { data } = await api.post<{
+        session: ChatSession;
+        user_message: ChatMessage;
+        assistant_message: ChatMessage;
+      }>(`/chat/sessions/${session.id}/attachments`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       set((state) => ({
         activeSession: data.session,
         sessions: [data.session, ...state.sessions.filter((item) => item.id !== data.session.id)],

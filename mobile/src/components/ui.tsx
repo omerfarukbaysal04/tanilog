@@ -1,8 +1,9 @@
-import React, { ReactNode, useEffect, useRef } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   ActivityIndicator,
   Easing,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -368,6 +369,102 @@ const usageStyles = StyleSheet.create({
     height: '100%',
     backgroundColor: colors.yellow,
     borderRadius: 3,
+  },
+});
+
+/* ============================================================================
+   RENAME PROMPT — Modal dialog for renaming items
+   ============================================================================ */
+export function RenamePrompt({
+  visible,
+  currentName,
+  onClose,
+  onSubmit,
+  title = 'Yeniden Adlandır',
+  placeholder = 'Yeni ad',
+}: {
+  visible: boolean;
+  currentName: string;
+  onClose: () => void;
+  onSubmit: (name: string) => Promise<void> | void;
+  title?: string;
+  placeholder?: string;
+}) {
+  const [value, setValueLocal] = useState(currentName);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { setValueLocal(currentName); }, [currentName, visible]);
+
+  const handleSubmit = async () => {
+    if (!value.trim()) return;
+    setBusy(true);
+    try {
+      await onSubmit(value.trim());
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
+      <View style={renameStyles.overlay}>
+        <View style={renameStyles.box}>
+          <Text style={renameStyles.title}>{title}</Text>
+          <TextInput
+            value={value}
+            onChangeText={setValueLocal}
+            placeholder={placeholder}
+            placeholderTextColor={colors.navy500}
+            style={renameStyles.input}
+            autoFocus
+            selectTextOnFocus
+          />
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <AppButton title="İptal" variant="secondary" onPress={onClose} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <AppButton title="Kaydet" onPress={handleSubmit} loading={busy} />
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const renameStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  box: {
+    width: '100%',
+    backgroundColor: colors.navy900,
+    borderColor: 'rgba(159,179,200,0.15)',
+    borderWidth: 1,
+    borderRadius: 20,
+    padding: 18,
+    gap: 12,
+  },
+  title: {
+    color: colors.white,
+    fontSize: 16,
+    fontFamily: 'Poppins_700Bold',
+  },
+  input: {
+    backgroundColor: 'rgba(10,22,34,0.7)',
+    borderColor: 'rgba(159,179,200,0.15)',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: colors.white,
+    fontSize: 14,
+    fontFamily: 'Poppins_500Medium',
+    minHeight: 48,
   },
 });
 

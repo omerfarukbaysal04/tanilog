@@ -1,11 +1,10 @@
 import { useCallback, useState } from 'react';
-import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
-import { WebView } from 'react-native-webview';
-import { AppButton, EmptyState, FadeIn, Field, GlassCard, Muted, Screen } from '../../src/components/ui';
+import { AppButton, EmptyState, FadeIn, Field, GlassCard, Muted, RenamePrompt, Screen } from '../../src/components/ui';
 import useDocumentStore, { UploadAsset } from '../../src/stores/documentStore';
 import { DocumentItem } from '../../src/types';
 import { colors } from '../../src/theme';
@@ -18,7 +17,7 @@ const CATEGORIES: { key: string; label: string; icon: keyof typeof Ionicons.glyp
 ];
 
 export default function DocumentsScreen() {
-  const { documents, fetchDocuments, uploadDocument, analyzeDocument, fileUrl, authHeaders, uploading } = useDocumentStore();
+  const { documents, fetchDocuments, uploadDocument, analyzeDocument, renameDocument, deleteDocument, fileUrl, authHeaders, uploading } = useDocumentStore();
   const [asset, setAsset] = useState<UploadAsset | null>(null);
   const [category, setCategory] = useState('lab');
   const [notes, setNotes] = useState('');
@@ -27,6 +26,7 @@ export default function DocumentsScreen() {
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [renaming, setRenaming] = useState<DocumentItem | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -192,8 +192,12 @@ export default function DocumentsScreen() {
             {selected.file_type.startsWith('image/') ? (
               <Image source={{ uri: fileUrl(selected.id), headers }} style={styles.previewImage} />
             ) : (
-              <View style={styles.pdfBox}>
-                <WebView source={{ uri: fileUrl(selected.id), headers }} style={{ flex: 1 }} />
+              <View style={styles.pdfNotice}>
+                <View style={styles.pdfIcon}>
+                  <Ionicons name="document-attach" color={colors.blueLight} size={28} />
+                </View>
+                <Text style={styles.pdfTitle}>PDF Belgesi</Text>
+                <Muted>Bu dosya formatı için önizleme desteklenmiyor. Cihazının PDF okuyucusunda açabilirsin.</Muted>
               </View>
             )}
             {analysis ? (
@@ -214,14 +218,22 @@ export default function DocumentsScreen() {
                   icon={<Ionicons name="sparkles-outline" color={colors.white} size={16} />}
                 />
               </View>
-              <View style={{ flex: 1 }}>
-                <AppButton
-                  title="Kapat"
-                  variant="secondary"
-                  onPress={() => { setSelected(null); setAnalysis(null); }}
-                />
-              </View>
+              {!selected.file_type.startsWith('image/') && (
+                <View style={{ flex: 1 }}>
+                  <AppButton
+                    title="Sistem'de Aç"
+                    variant="secondary"
+                    onPress={() => Linking.openURL(fileUrl(selected.id))}
+                    icon={<Ionicons name="open-outline" color={colors.white} size={16} />}
+                  />
+                </View>
+              )}
             </View>
+            <AppButton
+              title="Kapat"
+              variant="ghost"
+              onPress={() => { setSelected(null); setAnalysis(null); }}
+            />
           </GlassCard>
         </FadeIn>
       )}
@@ -242,37 +254,111 @@ export default function DocumentsScreen() {
               description="Lab sonuçları, reçeteler ve görüntülemelerini buraya ekle."
             />
           ) : documents.map((item, i) => (
-            <Pressable
-              key={item.id}
-              onPress={() => setSelected(item)}
-              style={({ pressed }) => [
-                styles.docRow,
-                i > 0 && styles.docDivider,
-                pressed && { opacity: 0.6 },
-              ]}
-            >
-              <View style={styles.docIcon}>
-                <Ionicons
-                  name={item.file_type.startsWith('image/') ? 'image-outline' : 'document-text-outline'}
-                  color={colors.teal300}
-                  size={18}
-                />
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={styles.docTitle} numberOfLines={1}>{item.original_filename}</Text>
-                <Muted>{item.category} · {(item.file_size / (1024 * 1024)).toFixed(2)} MB</Muted>
-              </View>
-              <Ionicons name="chevron-forward" color={colors.navy400} size={18} />
-            </Pressable>
+            <View key={item.id} style={[styles.docRow, i > 0 && styles.docDivider]}>
+              <Pressable onPress={() => setSelected(item)} style={styles.docMain}>
+                <View style={styles.docIcon}>
+                  <Ionicons
+                    name={item.file_type.startsWith('image/') ? 'image-outline' : 'document-text-outline'}
+                    color={colors.teal300}
+                    size={18}
+                  />
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={styles.docTitle} numberOfLines={1}>{item.original_filename}</Text>
+                  <Muted>{item.category} · {(item.file_size / (1024 * 1024)).toFixed(2)} MB</Muted>
+                </View>
+              </Pressable>
+              <Pressable hitSlop={8} onPress={() => setRenaming(item)} style={styles.iconBtn}>
+                <Ionicons name="create-outline" color={colors.teal300} size={16} />
+              </Pressable>
+              <Pressable
+                hitSlop={8}
+                onPress={() =>
+                  Alert.alert('Belgeyi sil', `"${item.original_filename}" silinsin mi?`, [
+                    { text: 'İptal', style: 'cancel' },
+                    {
+                      text: 'Sil',
+                      style: 'destructive',
+                      onPress: () => deleteDocument(item.id).catch((e) => Alert.alert('Silinemedi', e.message)),
+                    },
+                  ])
+                }
+                style={[styles.iconBtn, styles.iconBtnRed]}
+              >
+                <Ionicons name="trash-outline" color={colors.redLight} size={16} />
+              </Pressable>
+            </View>
           ))}
         </GlassCard>
       </FadeIn>
+
+      <RenamePrompt
+        visible={!!renaming}
+        currentName={renaming?.original_filename || ''}
+        onClose={() => setRenaming(null)}
+        onSubmit={async (newName) => {
+          if (!renaming) return;
+          try {
+            await renameDocument(renaming.id, newName);
+            setRenaming(null);
+          } catch (e: any) {
+            Alert.alert('Yeniden adlandırma başarısız', e.response?.data?.detail || e.message);
+          }
+        }}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   header: { paddingTop: 50, paddingBottom: 4, gap: 4 },
+  pdfNotice: {
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 24,
+    paddingHorizontal: 14,
+    backgroundColor: 'rgba(59,130,246,0.06)',
+    borderColor: 'rgba(59,130,246,0.2)',
+    borderWidth: 1,
+    borderRadius: 14,
+  },
+  pdfIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: 'rgba(59,130,246,0.12)',
+    borderColor: 'rgba(59,130,246,0.3)',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pdfTitle: {
+    color: colors.white,
+    fontSize: 15,
+    fontFamily: 'Poppins_700Bold',
+    marginTop: 4,
+  },
+  docMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: 'rgba(15,184,165,0.10)',
+    borderColor: 'rgba(15,184,165,0.25)',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+  },
+  iconBtnRed: {
+    backgroundColor: 'rgba(239,68,68,0.10)',
+    borderColor: 'rgba(239,68,68,0.25)',
+  },
   headerEyebrow: {
     color: colors.teal300,
     fontSize: 11,
