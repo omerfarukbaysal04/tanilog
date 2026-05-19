@@ -91,12 +91,20 @@ const useDoctorPrepStore = create<DoctorPrepState>((set, get) => ({
   },
 
   shareReport: async (reportId) => {
-    const { data } = await api.post<{ share_url: string }>(`/ai/doctor-prep/saved/${reportId}/share`, {
-      password: 'tanilog',
-      hours: 24,
-    });
+    const { data } = await api.get<DoctorPrepReport>(`/ai/doctor-prep/saved/${reportId}`);
+    const sections = [
+      'DOKTOR HAZIRLIK RAPORU',
+      data.saved_title ? `\n${data.saved_title}` : '',
+      data.date_range ? `\nDonem: ${data.date_range.start} - ${data.date_range.end}` : '',
+      `\nOzet:\n${data.summary}`,
+      data.key_findings?.length ? `\nKilit Bulgular:\n${data.key_findings.map((item) => `- ${item}`).join('\n')}` : '',
+      data.risk_flags?.length ? `\nRisk Uyarilari:\n${data.risk_flags.map((item) => `- ${item}`).join('\n')}` : '',
+      data.doctor_questions?.length ? `\nDoktora Sorular:\n${data.doctor_questions.map((item) => `- ${item}`).join('\n')}` : '',
+      data.preparation_checklist?.length ? `\nHazirlik Listesi:\n${data.preparation_checklist.map((item) => `- ${item}`).join('\n')}` : '',
+      '\n\nTaniLog ile olusturuldu.',
+    ].filter(Boolean).join('');
     await Share.share({
-      message: `TanıLog doktor raporum: ${data.share_url}\nŞifre: tanilog`,
+      message: sections,
       title: 'Doktor Hazırlık Raporumu Paylaş',
     });
   },

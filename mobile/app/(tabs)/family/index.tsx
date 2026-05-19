@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppButton, EmptyState, FadeIn, GlassCard, LinearGradient, Muted, PremiumGate, Screen } from '../../../src/components/ui';
 import useFamilyStore from '../../../src/stores/familyStore';
 import useAuthStore from '../../../src/stores/authStore';
+import { goToToolsIndex } from '../../../src/lib/navigation';
 import { colors } from '../../../src/theme';
 
 export default function FamilyIndexScreen() {
@@ -76,7 +77,7 @@ export default function FamilyIndexScreen() {
     return (
       <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
         <FadeIn delay={0}>
-          <Pressable onPress={() => router.replace('/(tabs)/tools/index' as any)} style={styles.backBtn}>
+          <Pressable onPress={goToToolsIndex} style={styles.backBtn}>
             <Ionicons name="arrow-back" color={colors.teal300} size={20} />
             <Text style={styles.backText}>Araçlar</Text>
           </Pressable>
@@ -123,7 +124,7 @@ export default function FamilyIndexScreen() {
   return (
     <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
       <FadeIn delay={0}>
-        <Pressable onPress={() => router.replace('/(tabs)/tools/index' as any)} style={styles.backBtn}>
+        <Pressable onPress={goToToolsIndex} style={styles.backBtn}>
           <Ionicons name="arrow-back" color={colors.teal300} size={20} />
           <Text style={styles.backText}>Araçlar</Text>
         </Pressable>

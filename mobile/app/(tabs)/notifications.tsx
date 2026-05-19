@@ -23,9 +23,9 @@ function notifIcon(type: string): { name: keyof typeof Ionicons.glyphMap; color:
 }
 
 function normalizeRoute(route: string): string {
-  if (route === '/tools') return '/(tabs)/tools/index';
+  if (route === '/tools') return '/(tabs)/tools';
   if (route.startsWith('/tools')) return `/(tabs)${route}`;
-  if (route === '/family' || route.startsWith('/family/invitations')) return '/(tabs)/family/index';
+  if (route === '/family' || route.startsWith('/family/invitations')) return '/(tabs)/family';
   if (route.startsWith('/family')) return `/(tabs)${route}`;
   if (route === '/health' || route.startsWith('/health?')) return `/(tabs)${route}`;
   if (route === '/documents' || route.startsWith('/documents?')) return `/(tabs)${route}`;

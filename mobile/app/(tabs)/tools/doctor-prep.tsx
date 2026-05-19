@@ -6,6 +6,7 @@ import { AppButton, FadeIn, Field, GlassCard, Muted, PremiumGate, Screen } from 
 import useDoctorPrepStore from '../../../src/stores/doctorPrepStore';
 import useAuthStore from '../../../src/stores/authStore';
 import { isTTSAvailable, speak } from '../../../src/lib/tts';
+import { goToToolsIndex } from '../../../src/lib/navigation';
 import { colors } from '../../../src/theme';
 
 const SPECIALTIES: { label: string; value: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -112,7 +113,7 @@ export default function DoctorPrepScreen() {
   return (
     <Screen withOrbs>
       <FadeIn delay={0}>
-        <Pressable onPress={() => router.replace('/(tabs)/tools/index' as any)} style={styles.backBtn}>
+        <Pressable onPress={goToToolsIndex} style={styles.backBtn}>
           <Ionicons name="arrow-back" color={colors.teal300} size={20} />
           <Text style={styles.backText}>Araçlar</Text>
         </Pressable>
