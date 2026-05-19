@@ -1,15 +1,21 @@
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
-import { AppButton, Card, Field, Muted, Screen, Title } from '../../../src/components/ui';
+import { router, useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { AppButton, FadeIn, Field, GlassCard, Muted, Screen } from '../../../src/components/ui';
 import useDoctorPrepStore from '../../../src/stores/doctorPrepStore';
 import useAuthStore from '../../../src/stores/authStore';
 import { colors } from '../../../src/theme';
 
-const SPECIALTIES = ['Aile Hekimi', 'Dahiliye', 'Nöroloji', 'Kardiyoloji'];
+const SPECIALTIES: { label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { label: 'Aile Hekimi', icon: 'people-outline' },
+  { label: 'Dahiliye', icon: 'medkit-outline' },
+  { label: 'Nöroloji', icon: 'pulse-outline' },
+  { label: 'Kardiyoloji', icon: 'heart-outline' },
+];
 
 export default function DoctorPrepScreen() {
-  const [selectedSpecialty, setSelectedSpecialty] = useState(SPECIALTIES[0]);
+  const [selectedSpecialty, setSelectedSpecialty] = useState(SPECIALTIES[0].label);
   const [saveTitle, setSaveTitle] = useState('');
   const [showSaveForm, setShowSaveForm] = useState(false);
 
@@ -47,10 +53,7 @@ export default function DoctorPrepScreen() {
   };
 
   const handleSave = async () => {
-    if (!saveTitle.trim()) {
-      Alert.alert('Hata', 'Rapor başlığı girin.');
-      return;
-    }
+    if (!saveTitle.trim()) return;
     try {
       await saveReport(saveTitle.trim());
       setSaveTitle('');
@@ -70,133 +73,197 @@ export default function DoctorPrepScreen() {
   };
 
   return (
-    <Screen>
-      <Title>Doktora Hazırlan</Title>
-      <Muted>Randevunuz için AI destekli hazırlık raporu oluşturun</Muted>
+    <Screen withOrbs>
+      <FadeIn delay={0}>
+        <View style={styles.header}>
+          <Text style={styles.headerEyebrow}>Hazırlık</Text>
+          <Text style={styles.headerTitle}>Doktora Hazırlan</Text>
+        </View>
+      </FadeIn>
 
       {!user?.is_premium && (
-        <View style={styles.premiumGate}>
-          <Text style={styles.premiumGateTitle}>Premium Özellik</Text>
-          <Muted>Doktor hazırlık raporları Premium üyelere özeldir. Sınırsız rapor oluşturmak için Premium'a geçin.</Muted>
-        </View>
+        <FadeIn delay={60}>
+          <GlassCard accent="yellow">
+            <View style={styles.cardHeader}>
+              <View style={[styles.cardHeaderIcon, { backgroundColor: 'rgba(251,191,36,0.12)', borderColor: 'rgba(251,191,36,0.35)' }]}>
+                <Ionicons name="lock-closed-outline" color={colors.yellow} size={16} />
+              </View>
+              <Text style={styles.cardTitle}>Premium Özellik</Text>
+            </View>
+            <Muted>
+              Doktor hazırlık raporları Premium üyelere özeldir. Sınırsız rapor oluşturmak için Premium'a geç.
+            </Muted>
+            <AppButton
+              title="Premium'a Geç"
+              onPress={() => router.push('/billing')}
+              icon={<Ionicons name="sparkles-outline" color={colors.white} size={18} />}
+            />
+          </GlassCard>
+        </FadeIn>
       )}
 
       {error && (
-        <View style={styles.errorCard}>
-          <Text style={styles.errorText}>{error}</Text>
-          <AppButton title="Kapat" variant="secondary" onPress={clearError} />
-        </View>
+        <FadeIn delay={0}>
+          <GlassCard accent="red">
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="alert-circle" color={colors.red} size={18} />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+            <AppButton title="Kapat" variant="secondary" onPress={clearError} />
+          </GlassCard>
+        </FadeIn>
       )}
 
-      <Card>
-        <Text style={styles.sectionTitle}>Uzmanlık Alanı</Text>
-        <View style={styles.pillGrid}>
-          {SPECIALTIES.map((spec) => (
-            <Pressable
-              key={spec}
-              style={[styles.pill, selectedSpecialty === spec && styles.pillActive]}
-              onPress={() => setSelectedSpecialty(spec)}
-            >
-              <Text style={[styles.pillText, selectedSpecialty === spec && styles.pillTextActive]}>{spec}</Text>
-            </Pressable>
-          ))}
-        </View>
-        <AppButton
-          title="Rapor Oluştur"
-          onPress={handleGenerate}
-          loading={isGenerating}
-          disabled={!user?.is_premium}
-        />
-      </Card>
+      <FadeIn delay={120}>
+        <GlassCard>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardHeaderIcon}>
+              <Ionicons name="medical-outline" color={colors.teal300} size={16} />
+            </View>
+            <Text style={styles.cardTitle}>Uzmanlık Alanı</Text>
+          </View>
+          <View style={styles.pillGrid}>
+            {SPECIALTIES.map((spec) => {
+              const active = selectedSpecialty === spec.label;
+              return (
+                <Pressable
+                  key={spec.label}
+                  style={[styles.pill, active && styles.pillActive]}
+                  onPress={() => setSelectedSpecialty(spec.label)}
+                >
+                  <Ionicons name={spec.icon} color={active ? colors.teal300 : colors.navy400} size={14} />
+                  <Text style={[styles.pillText, active && styles.pillTextActive]}>{spec.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <AppButton
+            title="Rapor Oluştur"
+            onPress={handleGenerate}
+            loading={isGenerating}
+            disabled={!user?.is_premium}
+            icon={<Ionicons name="sparkles-outline" color={colors.white} size={18} />}
+          />
+        </GlassCard>
+      </FadeIn>
 
       {report && (
         <>
-          <Card>
-            <Text style={styles.sectionTitle}>Özet</Text>
-            <Text style={styles.summary}>{report.summary}</Text>
-          </Card>
+          <FadeIn delay={0}>
+            <GlassCard accent="teal">
+              <View style={styles.cardHeader}>
+                <View style={styles.cardHeaderIcon}>
+                  <Ionicons name="document-text-outline" color={colors.teal300} size={16} />
+                </View>
+                <Text style={styles.cardTitle}>Rapor Özeti</Text>
+              </View>
+              <Text style={styles.summary}>{report.summary}</Text>
+            </GlassCard>
+          </FadeIn>
 
           {report.key_findings?.length > 0 && (
-            <Card>
-              <BulletList title="Kilit Bulgular" items={report.key_findings} color={colors.teal300} />
-            </Card>
+            <FadeIn delay={60}>
+              <GlassCard>
+                <BulletList title="Kilit Bulgular" items={report.key_findings} icon="key-outline" color={colors.teal300} />
+              </GlassCard>
+            </FadeIn>
           )}
 
           {report.risk_flags?.length > 0 && (
-            <Card>
-              <BulletList title="Risk Uyarıları" items={report.risk_flags} color={colors.red} />
-            </Card>
+            <FadeIn delay={120}>
+              <GlassCard accent="red">
+                <BulletList title="Risk Uyarıları" items={report.risk_flags} icon="warning-outline" color={colors.red} />
+              </GlassCard>
+            </FadeIn>
           )}
 
           {report.doctor_questions?.length > 0 && (
-            <Card>
-              <BulletList title="Doktora Soracağınız Sorular" items={report.doctor_questions} color={colors.yellow} />
-            </Card>
+            <FadeIn delay={180}>
+              <GlassCard accent="yellow">
+                <BulletList title="Doktora Soracağın Sorular" items={report.doctor_questions} icon="help-circle-outline" color={colors.yellow} />
+              </GlassCard>
+            </FadeIn>
           )}
 
           {report.preparation_checklist?.length > 0 && (
-            <Card>
-              <BulletList title="Hazırlık Listesi" items={report.preparation_checklist} color={colors.navy300} />
-            </Card>
+            <FadeIn delay={240}>
+              <GlassCard>
+                <BulletList title="Hazırlık Listesi" items={report.preparation_checklist} icon="checkbox-outline" color={colors.blueLight} />
+              </GlassCard>
+            </FadeIn>
           )}
 
-          {showSaveForm ? (
-            <Card>
-              <Field
-                label="Rapor Başlığı"
-                value={saveTitle}
-                onChangeText={setSaveTitle}
-                placeholder="Örn: Kardiyoloji Kontrolü Ocak 2025"
+          <FadeIn delay={300}>
+            {showSaveForm ? (
+              <GlassCard>
+                <Field
+                  label="Rapor Başlığı"
+                  value={saveTitle}
+                  onChangeText={setSaveTitle}
+                  placeholder="Örn: Kardiyoloji Kontrolü Ocak 2026"
+                />
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <View style={{ flex: 1 }}>
+                    <AppButton title="İptal" variant="secondary" onPress={() => setShowSaveForm(false)} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <AppButton title="Kaydet" onPress={handleSave} loading={isSaving} />
+                  </View>
+                </View>
+              </GlassCard>
+            ) : (
+              <AppButton
+                title="Raporu Kaydet"
+                variant="secondary"
+                onPress={() => setShowSaveForm(true)}
+                icon={<Ionicons name="bookmark-outline" color={colors.white} size={18} />}
               />
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={{ flex: 1 }}>
-                  <AppButton title="İptal" variant="secondary" onPress={() => setShowSaveForm(false)} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <AppButton title="Kaydet" onPress={handleSave} loading={isSaving} />
-                </View>
-              </View>
-            </Card>
-          ) : (
-            <AppButton title="Raporu Kaydet" variant="secondary" onPress={() => setShowSaveForm(true)} />
-          )}
+            )}
+          </FadeIn>
         </>
       )}
 
       {savedReports.length > 0 && (
-        <View style={{ gap: 8 }}>
-          <Text style={styles.sectionTitle}>Kaydedilen Raporlar</Text>
-          {isLoadingSaved ? (
-            <Muted>Yükleniyor...</Muted>
-          ) : (
-            savedReports.map((saved) => (
-              <View key={saved.id} style={styles.savedCard}>
-                <View style={{ flex: 1, gap: 4 }}>
-                  <Text style={styles.savedTitle}>{saved.title}</Text>
-                  <Muted>{saved.summary?.slice(0, 80)}...</Muted>
-                  <Muted>{new Date(saved.created_at).toLocaleDateString('tr-TR')}</Muted>
-                </View>
-                <AppButton
-                  title="Paylaş"
-                  variant="secondary"
-                  onPress={() => handleShare(saved.id)}
-                />
+        <FadeIn delay={360}>
+          <GlassCard>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardHeaderIcon}>
+                <Ionicons name="bookmarks-outline" color={colors.teal300} size={16} />
               </View>
-            ))
-          )}
-        </View>
+              <Text style={styles.cardTitle}>Kaydedilen Raporlar</Text>
+            </View>
+            {isLoadingSaved ? (
+              <Muted>Yükleniyor...</Muted>
+            ) : (
+              savedReports.map((saved, i) => (
+                <View key={saved.id} style={[styles.savedRow, i > 0 && styles.savedDivider]}>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={styles.savedTitle} numberOfLines={1}>{saved.title}</Text>
+                    <Muted>{new Date(saved.created_at).toLocaleDateString('tr-TR')}</Muted>
+                  </View>
+                  <Pressable onPress={() => handleShare(saved.id)} style={styles.shareBtn}>
+                    <Ionicons name="share-outline" color={colors.teal300} size={18} />
+                  </Pressable>
+                </View>
+              ))
+            )}
+          </GlassCard>
+        </FadeIn>
       )}
     </Screen>
   );
 }
 
-function BulletList({ title, items, color }: { title: string; items: string[]; color: string }) {
+function BulletList({ title, items, icon, color }: { title: string; items: string[]; icon: keyof typeof Ionicons.glyphMap; color: string }) {
   return (
     <View style={{ gap: 8 }}>
-      <Text style={[styles.listTitle, { color }]}>{title}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <Ionicons name={icon} color={color} size={14} />
+        <Text style={[styles.listTitle, { color }]}>{title}</Text>
+      </View>
       {items.map((item, idx) => (
         <View key={idx} style={styles.bulletRow}>
-          <Text style={[styles.bullet, { color }]}>•</Text>
+          <View style={[styles.bulletDot, { backgroundColor: color }]} />
           <Text style={styles.bulletText}>{item}</Text>
         </View>
       ))}
@@ -205,98 +272,67 @@ function BulletList({ title, items, color }: { title: string; items: string[]; c
 }
 
 const styles = StyleSheet.create({
-  sectionTitle: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  premiumGate: {
-    backgroundColor: colors.teal500 + '15',
-    borderColor: colors.teal500,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-    gap: 8,
-  },
-  premiumGateTitle: {
+  header: { paddingTop: 50, paddingBottom: 4, gap: 4 },
+  headerEyebrow: {
     color: colors.teal300,
-    fontWeight: '800',
-    fontSize: 15,
+    fontSize: 11,
+    fontFamily: 'Poppins_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  errorCard: {
-    backgroundColor: colors.red + '22',
-    borderColor: colors.red,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    gap: 10,
-  },
-  errorText: {
-    color: colors.red,
-    fontSize: 14,
-  },
-  pillGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.navy700,
-    backgroundColor: colors.navy800,
-  },
-  pillActive: {
-    backgroundColor: colors.teal500,
-    borderColor: colors.teal500,
-  },
-  pillText: {
-    color: colors.navy400,
-    fontWeight: '600',
-    fontSize: 13,
-  },
-  pillTextActive: {
+  headerTitle: {
     color: colors.white,
+    fontSize: 26,
+    fontFamily: 'Poppins_800ExtraBold',
+    letterSpacing: -0.5,
   },
-  summary: {
-    color: colors.navy300,
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  listTitle: {
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  bulletRow: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'flex-start',
-  },
-  bullet: {
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  bulletText: {
-    color: colors.navy300,
-    fontSize: 13,
-    lineHeight: 19,
-    flex: 1,
-  },
-  savedCard: {
-    backgroundColor: colors.navy850,
-    borderColor: colors.navy700,
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 },
+  cardHeaderIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: 'rgba(15,184,165,0.12)',
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
+    borderColor: 'rgba(15,184,165,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardTitle: { color: colors.white, fontSize: 15, fontFamily: 'Poppins_700Bold' },
+  errorText: { color: '#fecaca', fontSize: 13, fontFamily: 'Poppins_500Medium', flex: 1 },
+  pillGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+    borderColor: 'rgba(159,179,200,0.12)',
+    borderWidth: 1,
+    backgroundColor: 'rgba(20,40,58,0.55)',
   },
-  savedTitle: {
-    color: colors.white,
-    fontWeight: '700',
-    fontSize: 14,
+  pillActive: {
+    backgroundColor: 'rgba(15,184,165,0.18)',
+    borderColor: 'rgba(15,184,165,0.4)',
+  },
+  pillText: { color: colors.navy300, fontSize: 12, fontFamily: 'Poppins_600SemiBold' },
+  pillTextActive: { color: colors.teal300, fontFamily: 'Poppins_700Bold' },
+  summary: { color: colors.navy100, fontSize: 13, lineHeight: 20, fontFamily: 'Poppins_400Regular' },
+  listTitle: { fontFamily: 'Poppins_700Bold', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.6 },
+  bulletRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', paddingLeft: 2 },
+  bulletDot: { width: 5, height: 5, borderRadius: 3, marginTop: 7 },
+  bulletText: { color: colors.navy100, fontSize: 13, lineHeight: 19, flex: 1, fontFamily: 'Poppins_400Regular' },
+  savedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
+  savedDivider: { borderTopWidth: 1, borderTopColor: 'rgba(159,179,200,0.08)' },
+  savedTitle: { color: colors.white, fontFamily: 'Poppins_700Bold', fontSize: 13 },
+  shareBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(15,184,165,0.12)',
+    borderColor: 'rgba(15,184,165,0.3)',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

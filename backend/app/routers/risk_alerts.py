@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.models.web_completion import NotificationEvent, RiskAlert
+from app.services.push_service import dispatch_push
 from app.routers.auth import get_current_user
 from app.services.risk_service import evaluate_user_risks
 
@@ -58,6 +59,17 @@ async def list_risk_alerts(
                 route=item["route"],
                 priority="important" if item["severity"] == "warning" else "normal",
             ))
+            try:
+                dispatch_push(
+                    db,
+                    user_id=current_user.id,
+                    title=item["title"],
+                    body=item["message"],
+                    route=item["route"],
+                    data={"event_type": "risk_alert", "severity": item["severity"]},
+                )
+            except Exception:
+                pass
         db.commit()
 
     alerts = db.query(RiskAlert).filter(

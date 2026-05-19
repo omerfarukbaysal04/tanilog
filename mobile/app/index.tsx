@@ -14,5 +14,5 @@ export default function Index() {
     );
   }
 
-  return <Redirect href={isAuthenticated ? '/dashboard' : '/login'} />;
+  return <Redirect href={isAuthenticated ? '/dashboard' : '/landing'} />;
 }

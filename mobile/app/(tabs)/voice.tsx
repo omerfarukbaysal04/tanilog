@@ -1,10 +1,19 @@
-import { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { AppButton, Card, Field, Muted, Screen, Title } from '../../src/components/ui';
+import { AppButton, FadeIn, Field, GlassCard, LinearGradient, Muted, Screen } from '../../src/components/ui';
 import useHealthStore from '../../src/stores/healthStore';
 import useVoiceStore from '../../src/stores/voiceStore';
 import { colors } from '../../src/theme';
+
+const INTENT_META: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; accent: string }> = {
+  symptom: { label: 'Semptom', icon: 'pulse-outline', accent: '#f472b6' },
+  medication: { label: 'İlaç', icon: 'medkit-outline', accent: colors.teal300 },
+  sleep: { label: 'Uyku', icon: 'moon-outline', accent: colors.blueLight },
+  nutrition: { label: 'Beslenme', icon: 'restaurant-outline', accent: '#c084fc' },
+  unknown: { label: 'Belirsiz', icon: 'help-circle-outline', accent: colors.navy400 },
+};
 
 export default function VoiceScreen() {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
@@ -13,12 +22,28 @@ export default function VoiceScreen() {
   const { transcribeAudio, parseTranscript, parseResult, clearResult, isLoading } = useVoiceStore();
   const [transcript, setTranscript] = useState('');
 
+  const pulse = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     (async () => {
       await AudioModule.requestRecordingPermissionsAsync();
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
     })();
   }, []);
+
+  useEffect(() => {
+    if (recorderState.isRecording) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulse, { toValue: 1, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulse, { toValue: 0, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      pulse.stopAnimation();
+      pulse.setValue(0);
+    }
+  }, [recorderState.isRecording]);
 
   const startRecording = async () => {
     try {
@@ -74,35 +99,214 @@ export default function VoiceScreen() {
     }
   };
 
-  return (
-    <Screen>
-      <Title>Sesli Asistan</Title>
-      <Card>
-        <Muted>Konuşmayı kaydet, AI metne çevirsin ve sağlık kaydı taslağı oluştursun.</Muted>
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <AppButton title={recorderState.isRecording ? 'Kaydediliyor' : 'Kayda Başla'} onPress={startRecording} disabled={recorderState.isRecording} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <AppButton title="Durdur" variant="secondary" onPress={stopRecording} disabled={!recorderState.isRecording} />
-          </View>
-        </View>
-        <Field label="Metin" value={transcript} onChangeText={setTranscript} multiline />
-        <AppButton title="Analiz Et" onPress={handleParse} loading={isLoading} disabled={!transcript.trim()} />
-      </Card>
+  const intent = parseResult ? INTENT_META[parseResult.intent] ?? INTENT_META.unknown : null;
+  const isRec = recorderState.isRecording;
 
-      {parseResult && (
-        <Card>
-          <Text style={styles.resultTitle}>{parseResult.intent} - %{Math.round(parseResult.confidence * 100)}</Text>
-          {parseResult.warnings?.length ? <Muted>{parseResult.warnings.join(' ')}</Muted> : null}
-          <Muted>{JSON.stringify(parseResult.extracted_data, null, 2)}</Muted>
-          <AppButton title="Kayda Ekle" onPress={handleConfirm} disabled={parseResult.intent === 'unknown'} />
-        </Card>
+  return (
+    <Screen withOrbs>
+      <FadeIn delay={0}>
+        <View style={styles.header}>
+          <Text style={styles.headerEyebrow}>Sesli Asistan</Text>
+          <Text style={styles.headerTitle}>Konuş, AI Yazsın</Text>
+        </View>
+      </FadeIn>
+
+      {/* Mikrofon */}
+      <FadeIn delay={100}>
+        <GlassCard accent={isRec ? 'red' : 'teal'}>
+          <View style={styles.micWrap}>
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.micRing,
+                {
+                  opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.15, 0.45] }),
+                  transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] }) }],
+                  backgroundColor: isRec ? 'rgba(239,68,68,0.4)' : 'rgba(15,184,165,0.3)',
+                },
+              ]}
+            />
+            <Pressable onPress={isRec ? stopRecording : startRecording} style={styles.micBtnWrap}>
+              <LinearGradient
+                colors={isRec ? ['#ef4444', '#dc2626'] : ['#2dd4bf', '#0fb8a5']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.micBtn}
+              >
+                <Ionicons name={isRec ? 'stop' : 'mic'} color={colors.white} size={36} />
+              </LinearGradient>
+            </Pressable>
+          </View>
+          <Text style={styles.micLabel}>
+            {isRec ? 'Kaydediliyor... Durdurmak için tıkla' : 'Kayda başlamak için tıkla'}
+          </Text>
+          <Muted>
+            Örnek: "Bugün baş ağrım vardı, şiddeti 7" veya "Saat 8'de parol içtim 500mg"
+          </Muted>
+        </GlassCard>
+      </FadeIn>
+
+      {/* Transcript */}
+      {transcript ? (
+        <FadeIn delay={0}>
+          <GlassCard>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardHeaderIcon}>
+                <Ionicons name="text-outline" color={colors.teal300} size={16} />
+              </View>
+              <Text style={styles.cardTitle}>Metin</Text>
+            </View>
+            <Field label="" value={transcript} onChangeText={setTranscript} multiline />
+            <AppButton
+              title="Analiz Et"
+              onPress={handleParse}
+              loading={isLoading}
+              disabled={!transcript.trim()}
+              icon={<Ionicons name="sparkles-outline" color={colors.white} size={18} />}
+            />
+          </GlassCard>
+        </FadeIn>
+      ) : null}
+
+      {/* Sonuç */}
+      {parseResult && intent && (
+        <FadeIn delay={0}>
+          <GlassCard>
+            <View style={styles.cardHeader}>
+              <View style={[styles.cardHeaderIcon, { backgroundColor: `${intent.accent}22`, borderColor: `${intent.accent}55` }]}>
+                <Ionicons name={intent.icon} color={intent.accent} size={16} />
+              </View>
+              <Text style={styles.cardTitle}>{intent.label}</Text>
+              <View style={styles.confBadge}>
+                <Text style={styles.confText}>%{Math.round(parseResult.confidence * 100)}</Text>
+              </View>
+            </View>
+            {parseResult.warnings?.length ? (
+              <View style={styles.warnBox}>
+                <Ionicons name="warning-outline" color={colors.yellow} size={14} />
+                <Text style={styles.warnText}>{parseResult.warnings.join(' ')}</Text>
+              </View>
+            ) : null}
+            <View style={styles.jsonBox}>
+              {Object.entries(parseResult.extracted_data).map(([k, v]) => (
+                <View key={k} style={styles.jsonRow}>
+                  <Text style={styles.jsonKey}>{k}</Text>
+                  <Text style={styles.jsonValue} numberOfLines={2}>{String(v ?? '-')}</Text>
+                </View>
+              ))}
+            </View>
+            <AppButton
+              title="Kayda Ekle"
+              onPress={handleConfirm}
+              disabled={parseResult.intent === 'unknown'}
+              icon={<Ionicons name="checkmark-outline" color={colors.white} size={18} />}
+            />
+          </GlassCard>
+        </FadeIn>
       )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  resultTitle: { color: colors.white, fontSize: 17, fontWeight: '900' },
+  header: { paddingTop: 50, paddingBottom: 4, gap: 4 },
+  headerEyebrow: {
+    color: colors.teal300,
+    fontSize: 11,
+    fontFamily: 'Poppins_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  headerTitle: {
+    color: colors.white,
+    fontSize: 26,
+    fontFamily: 'Poppins_800ExtraBold',
+    letterSpacing: -0.5,
+  },
+  micWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 160,
+    marginTop: 10,
+  },
+  micRing: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+  },
+  micBtnWrap: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
+  micBtn: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.teal500,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+  micLabel: {
+    color: colors.white,
+    fontSize: 13,
+    fontFamily: 'Poppins_600SemiBold',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 },
+  cardHeaderIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: 'rgba(15,184,165,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(15,184,165,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardTitle: { color: colors.white, fontSize: 15, fontFamily: 'Poppins_700Bold', flex: 1 },
+  confBadge: {
+    backgroundColor: 'rgba(15,184,165,0.18)',
+    borderColor: 'rgba(15,184,165,0.4)',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  confText: { color: colors.teal300, fontSize: 11, fontFamily: 'Poppins_700Bold' },
+  warnBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(251,191,36,0.1)',
+    borderColor: 'rgba(251,191,36,0.3)',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+  },
+  warnText: { color: '#fcd34d', fontSize: 12, fontFamily: 'Poppins_500Medium', flex: 1 },
+  jsonBox: {
+    backgroundColor: 'rgba(10,22,34,0.6)',
+    borderColor: 'rgba(159,179,200,0.1)',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    gap: 6,
+  },
+  jsonRow: { flexDirection: 'row', gap: 10 },
+  jsonKey: {
+    color: colors.navy400,
+    fontSize: 11,
+    fontFamily: 'Poppins_600SemiBold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    width: 100,
+  },
+  jsonValue: { color: colors.white, fontSize: 13, fontFamily: 'Poppins_500Medium', flex: 1 },
 });

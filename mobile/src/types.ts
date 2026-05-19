@@ -203,3 +203,81 @@ export type SavedDoctorReport = {
   period_end: string;
   created_at: string;
 };
+
+// Billing
+export type PlanInfo = {
+  name: string;
+  price: number;
+  currency: string;
+  interval: string;
+  features: string[];
+};
+
+export type SubscriptionStatus = {
+  is_premium: boolean;
+  subscription_plan: string;
+  premium_until: string | null;
+  days_remaining: number;
+  ad_free: boolean;
+};
+
+export type SubscriptionEvent = {
+  id: number;
+  event_type: string;
+  plan: string;
+  provider: string;
+  amount: number;
+  currency: string;
+  status: string;
+  created_at: string;
+  completed_at: string | null;
+};
+
+// Family
+export type FamilyMember = {
+  id: number;
+  full_name: string;
+  relation: string;
+  birth_year: number | null;
+  phone: string | null;
+  emergency_contact: string | null;
+  notes: string | null;
+  is_active: boolean;
+  linked_user_id: number | null;
+  created_at: string;
+};
+
+export type FamilyHealthEntry = {
+  id: number;
+  entry_date: string;
+  category: string;
+  title: string;
+  severity: number | null;
+  status: string;
+  details: string | null;
+  created_at: string;
+};
+
+export type FamilyInvitation = {
+  id: number;
+  invitee_email: string;
+  relation: string;
+  can_view_documents: boolean;
+  can_add_records: boolean;
+  can_edit_records: boolean;
+  can_generate_reports: boolean;
+  message: string | null;
+  status: string;
+  created_at: string;
+};
+
+export type FamilyAccess = {
+  id: number;
+  inviter: { id: number; full_name: string; email: string };
+  relation: string;
+  can_view_documents: boolean;
+  can_add_records: boolean;
+  can_edit_records: boolean;
+  can_generate_reports: boolean;
+  created_at: string;
+};

@@ -5,16 +5,18 @@ export default function ToolsLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: colors.navy900 },
-        headerTintColor: colors.white,
+        headerStyle: { backgroundColor: 'transparent' },
+        headerTransparent: true,
+        headerTintColor: colors.teal300,
+        headerTitle: '',
         contentStyle: { backgroundColor: colors.navy950 },
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="timeline" options={{ title: 'Zaman Çizelgesi' }} />
-      <Stack.Screen name="search" options={{ title: 'Arama' }} />
-      <Stack.Screen name="ai-analysis" options={{ title: 'AI Analiz' }} />
-      <Stack.Screen name="doctor-prep" options={{ title: 'Doktora Hazırlan' }} />
+      <Stack.Screen name="timeline" />
+      <Stack.Screen name="search" />
+      <Stack.Screen name="ai-analysis" />
+      <Stack.Screen name="doctor-prep" />
     </Stack>
   );
 }

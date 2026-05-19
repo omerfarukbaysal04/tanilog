@@ -120,6 +120,19 @@ async def reminder_event_loop():
                     route="/health?tab=medications",
                     priority="important",
                 ))
+                try:
+                    from app.services.push_service import dispatch_push
+
+                    dispatch_push(
+                        db,
+                        user_id=item.user_id,
+                        title="İlaç hatırlatma",
+                        body=f"{item.name} ({item.dosage}) alma zamanı: {now_text}",
+                        route="/health",
+                        data={"event_type": "medication_reminder", "medication_id": item.id},
+                    )
+                except Exception:
+                    logger.exception("reminder_push_failed user_id=%s", item.user_id)
             db.commit()
         except Exception:
             logger.exception("reminder_loop_failed")

@@ -1,10 +1,13 @@
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { AppButton, Card, Field, Label, Muted, Screen, ToggleRow } from '../../src/components/ui';
 import useSettingsStore from '../../src/stores/settingsStore';
 import useAuthStore from '../../src/stores/authStore';
 import { UserSettings } from '../../src/types';
+import api from '../../src/lib/api';
+import { isNotificationsAvailable, registerPushToken } from '../../src/lib/notifications';
 import { colors } from '../../src/theme';
 
 export default function SettingsScreen() {
@@ -15,6 +18,28 @@ export default function SettingsScreen() {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [showDeleteForm, setShowDeleteForm] = useState(false);
+  const [testingPush, setTestingPush] = useState(false);
+
+  const handleTestPush = async () => {
+    if (!isNotificationsAvailable()) {
+      Alert.alert('Bildirim modülü yok', 'Yeni bir dev build alman gerekiyor (expo-notifications).');
+      return;
+    }
+    setTestingPush(true);
+    try {
+      await registerPushToken();
+      await api.post('/push/expo/test');
+      Alert.alert('Test gönderildi', 'Birkaç saniye içinde bir bildirim alacaksın.');
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail;
+      Alert.alert(
+        'Push gönderilemedi',
+        detail || e?.message || 'Token kaydedildi mi kontrol et.',
+      );
+    } finally {
+      setTestingPush(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -133,6 +158,18 @@ export default function SettingsScreen() {
               value={settings.family_invite_notifications_enabled}
               onValueChange={toggle('family_invite_notifications_enabled')}
             />
+            <View style={{ height: 8 }} />
+            <AppButton
+              title="Test Bildirimi Gönder"
+              variant="secondary"
+              onPress={handleTestPush}
+              loading={testingPush}
+            />
+            <Muted>
+              {isNotificationsAvailable()
+                ? 'Sunucudan bir push gönderir. Permission yoksa istenecek.'
+                : 'Push için yeni bir dev build alınması gerekir.'}
+            </Muted>
           </>
         )}
       </Card>
@@ -245,6 +282,13 @@ export default function SettingsScreen() {
           </>
         )}
         <AppButton title="Sağlık Profilini Kaydet" onPress={handleSaveHealthProfile} loading={isSaving} />
+      </Card>
+
+      {/* Hızlı Erişim */}
+      <Card>
+        <Text style={styles.sectionTitle}>Diğer</Text>
+        <AppButton title="Abonelik ve Premium" variant="secondary" onPress={() => router.push('/billing')} />
+        <AppButton title="Aile Takibi" variant="secondary" onPress={() => router.push('/family')} />
       </Card>
 
       {/* Gizlilik */}

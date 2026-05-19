@@ -45,3 +45,7 @@ mobile/dist/
 
 # User uploads
 backend/uploads/
+
+# Claude Code worktrees & temp
+.claude/
+mobile/temp-app/

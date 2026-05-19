@@ -680,6 +680,26 @@ async def create_family_invitation(
     db.add(invitation)
     db.commit()
     db.refresh(invitation)
+
+    # Davet edilen kullanıcı sistemde kayıtlıysa push + notification event gönder
+    invitee = db.query(User).filter(User.email == invitee_email).first()
+    if invitee:
+        try:
+            from app.services.push_service import emit_notification_event
+
+            emit_notification_event(
+                db,
+                user_id=invitee.id,
+                event_type="family_invitation",
+                title="Aile daveti aldın",
+                body=f"{current_user.full_name or current_user.email} seni aile takibine davet etti.",
+                route="/family/invitations",
+                priority="important",
+            )
+            db.commit()
+        except Exception:
+            pass
+
     return _invitation_to_dict(invitation, current_user)
 
 

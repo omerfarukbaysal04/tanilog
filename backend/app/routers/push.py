@@ -149,3 +149,91 @@ async def send_test_push(
         "total_subscriptions": len(subscriptions),
         "configured": bool(settings.VAPID_PUBLIC_KEY and settings.VAPID_PRIVATE_KEY and webpush),
     }
+
+
+# ============================================================================
+# EXPO PUSH (Mobil)
+# ============================================================================
+
+class ExpoTokenPayload(BaseModel):
+    token: str
+    platform: str | None = None  # "ios" | "android"
+
+
+@router.post("/expo/register", status_code=status.HTTP_201_CREATED, summary="Expo push token kaydet")
+async def register_expo_token(
+    payload: ExpoTokenPayload,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not payload.token or not payload.token.startswith("ExponentPushToken"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Geçersiz Expo push token.")
+
+    existing = db.query(PushSubscription).filter(PushSubscription.endpoint == payload.token).first()
+    if existing:
+        existing.user_id = current_user.id
+        existing.is_active = True
+        existing.provider = "expo"
+        existing.user_agent = payload.platform or existing.user_agent
+        existing.updated_at = datetime.utcnow()
+        subscription = existing
+    else:
+        subscription = PushSubscription(
+            user_id=current_user.id,
+            endpoint=payload.token,
+            p256dh="__expo__",
+            auth="__expo__",
+            provider="expo",
+            user_agent=payload.platform,
+        )
+        db.add(subscription)
+    db.commit()
+    db.refresh(subscription)
+    return {"id": subscription.id, "enabled": True}
+
+
+@router.delete("/expo/unregister", status_code=status.HTTP_204_NO_CONTENT, summary="Expo push token sil")
+async def unregister_expo_token(
+    payload: ExpoTokenPayload,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    sub = db.query(PushSubscription).filter(
+        PushSubscription.endpoint == payload.token,
+        PushSubscription.user_id == current_user.id,
+    ).first()
+    if sub:
+        sub.is_active = False
+        db.commit()
+
+
+@router.post("/expo/test", summary="Test Expo push bildirimi")
+async def send_test_expo_push(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from app.services.push_service import dispatch_push
+
+    result = dispatch_push(
+        db,
+        user_id=current_user.id,
+        title="TanıLog test bildirimi",
+        body="Push altyapısı çalışıyor. Bu bir test.",
+        route="/notifications",
+        data={"event_type": "system_test"},
+    )
+    db.add(NotificationEvent(
+        user_id=current_user.id,
+        event_type="system_test",
+        title="TanıLog test bildirimi",
+        body="Push altyapısı çalışıyor. Bu bir test.",
+        route="/notifications",
+        delivered_at=datetime.utcnow() if result["total"] else None,
+    ))
+    db.commit()
+    if result["total"] == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Aktif push aboneliği yok ya da gönderim başarısız.",
+        )
+    return result

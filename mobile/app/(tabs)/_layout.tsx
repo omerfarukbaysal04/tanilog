@@ -1,11 +1,13 @@
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, StyleSheet, Platform } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useAuthStore from '../../src/stores/authStore';
 import { colors } from '../../src/theme';
 
 export default function TabsLayout() {
   const { hasHydrated, isAuthenticated } = useAuthStore();
+  const insets = useSafeAreaInsets();
 
   if (!hasHydrated) {
     return (
@@ -20,25 +22,96 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarStyle: { backgroundColor: colors.navy900, borderTopColor: colors.navy700 },
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: (Platform.OS === 'ios' ? 60 : 60) + Math.max(insets.bottom, 8),
+            paddingBottom: Math.max(insets.bottom, 8),
+          },
+        ],
         tabBarActiveTintColor: colors.teal300,
         tabBarInactiveTintColor: colors.navy400,
-        headerStyle: { backgroundColor: colors.navy900 },
+        tabBarLabelStyle: {
+          fontFamily: 'Poppins_600SemiBold',
+          fontSize: 10,
+          marginTop: 2,
+        },
+        tabBarItemStyle: { paddingTop: 6 },
+        headerStyle: { backgroundColor: colors.navy900, borderBottomColor: 'rgba(159,179,200,0.08)', borderBottomWidth: 1 },
         headerTintColor: colors.white,
+        headerTitleStyle: { fontFamily: 'Poppins_700Bold', fontSize: 17 },
         headerShown: false,
       }}
     >
-      <Tabs.Screen name="dashboard" options={{ title: 'Dashboard', tabBarIcon: ({ color }) => <Ionicons name="home" color={color} size={21} /> }} />
-      <Tabs.Screen name="health" options={{ title: 'Sağlık', tabBarIcon: ({ color }) => <Ionicons name="heart" color={color} size={21} /> }} />
-      <Tabs.Screen name="documents" options={{ title: 'Belgeler', tabBarIcon: ({ color }) => <Ionicons name="document-text" color={color} size={21} /> }} />
-      <Tabs.Screen name="voice" options={{ title: 'Sesli', tabBarIcon: ({ color }) => <Ionicons name="mic" color={color} size={21} /> }} />
-      <Tabs.Screen name="chat" options={{ title: 'Chat', tabBarIcon: ({ color }) => <Ionicons name="chatbubble-ellipses" color={color} size={21} /> }} />
-      <Tabs.Screen name="tools" options={{ title: 'Araçlar', tabBarIcon: ({ color }) => <Ionicons name="construct-outline" color={color} size={21} /> }} />
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: 'Anasayfa',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={22} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="health"
+        options={{
+          title: 'Sağlık',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'heart' : 'heart-outline'} color={color} size={22} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="documents"
+        options={{
+          title: 'Belgeler',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'document-text' : 'document-text-outline'} color={color} size={22} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="voice"
+        options={{
+          title: 'Sesli',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'mic' : 'mic-outline'} color={color} size={22} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: 'Chat',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline'} color={color} size={22} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="tools"
+        options={{
+          title: 'Araçlar',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'apps' : 'apps-outline'} color={color} size={22} />
+          ),
+        }}
+      />
 
       {/* Stack screens: tab bar'da gizli, header'lı */}
       <Tabs.Screen name="profile" options={{ href: null, headerShown: true, title: 'Profilim' }} />
       <Tabs.Screen name="settings" options={{ href: null, headerShown: true, title: 'Ayarlar' }} />
       <Tabs.Screen name="notifications" options={{ href: null, headerShown: true, title: 'Bildirimler' }} />
+      <Tabs.Screen name="billing" options={{ href: null, headerShown: true, title: 'Abonelik' }} />
+      <Tabs.Screen name="family" options={{ href: null }} />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    backgroundColor: 'rgba(11,23,34,0.95)',
+    borderTopColor: 'rgba(159,179,200,0.08)',
+    borderTopWidth: 1,
+  },
+});

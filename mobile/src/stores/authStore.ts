@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import api from '../lib/api';
 import { clearToken, getToken, setToken } from '../lib/token';
+import { registerPushToken, unregisterPushToken } from '../lib/notifications';
 import { User } from '../types';
 
 type AuthState = {
@@ -33,6 +34,7 @@ const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { data } = await api.get<User>('/auth/me');
       set({ user: data, isAuthenticated: true, hasHydrated: true });
+      registerPushToken().catch(() => {});
     } catch {
       await clearToken();
       set({ user: null, isAuthenticated: false, hasHydrated: true });
@@ -72,6 +74,7 @@ const useAuthStore = create<AuthState>((set, get) => ({
   fetchUser: async () => {
     const { data } = await api.get<User>('/auth/me');
     set({ user: data, isAuthenticated: true });
+    registerPushToken().catch(() => {});
   },
 
   updateProfile: async (fullName) => {
@@ -94,6 +97,7 @@ const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
+    await unregisterPushToken().catch(() => {});
     await clearToken();
     set({ user: null, isAuthenticated: false });
   },

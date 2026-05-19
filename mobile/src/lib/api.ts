@@ -5,6 +5,7 @@ export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:8000/
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 20000,
   headers: {
     'Content-Type': 'application/json',
   },

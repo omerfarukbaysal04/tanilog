@@ -351,8 +351,8 @@ tanilog/
 - [x] Bildirim merkezi ekranı
 - [x] Okunmamış / okunmuş görsel ayrımı
 - [x] Tümünü okundu işaretle
-- [ ] Push notification (FCM / Expo Notifications)
-- [ ] İlaç hatırlatma bildirimleri
+- [x] Expo Notifications izin isteği (uygulama açılışında)
+- [x] İlaç hatırlatma — günlük yerel bildirim, health.tsx'ten toggle ile kurulum
 
 #### Araçlar Tab'ı (6. Tab)
 - [x] Araçlar hub ekranı (kart listesi)
@@ -363,16 +363,18 @@ tanilog/
 - [x] Premium gate (Doktora Hazırlan)
 
 #### Premium & Ödeme
-- [ ] Abonelik / plan görüntüleme ekranı
-- [ ] Mevcut plan ve bitiş tarihi gösterimi
-- [ ] RevenueCat veya benzer in-app purchase entegrasyonu
+- [x] Abonelik / plan görüntüleme ekranı
+- [x] Mevcut plan ve bitiş tarihi gösterimi
+- [x] Mock ödeme akışı (demo — gerçek ücret alınmaz)
+- [x] Abonelik iptal ve işlem geçmişi
 
 #### Aile Takibi (Premium)
-- [ ] Aile üyeleri listeleme ekranı
-- [ ] Manuel aile üyesi ekleme
-- [ ] E-posta ile davet gönderme
-- [ ] Aile üyesi sağlık kayıtlarını görüntüleme
-- [ ] İzin matrisi yönetimi
+- [x] Aile üyeleri listeleme (Premium gate ile)
+- [x] Manuel aile üyesi ekleme
+- [x] Aile üyesi detay ve sağlık kayıtları (semptom / ilaç / uyku / beslenme / not / randevu)
+- [x] E-posta ile davet gönderme (izin seçimiyle)
+- [x] Gönderilen davet iptal
+- [x] Bana erişim verenleri görme ve erişimi kaldırma
 
 #### Yayın Hazırlığı
 - [ ] Android APK / AAB build süreci

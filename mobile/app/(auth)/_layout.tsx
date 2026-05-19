@@ -10,8 +10,9 @@ export default function AuthLayout() {
         contentStyle: { backgroundColor: colors.navy950 },
       }}
     >
-      <Stack.Screen name="login" options={{ title: 'Giriş' }} />
-      <Stack.Screen name="register" options={{ title: 'Kayıt' }} />
+      <Stack.Screen name="landing" options={{ headerShown: false }} />
+      <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="register" options={{ headerShown: false }} />
       <Stack.Screen name="legal" options={{ title: 'Yasal Metinler' }} />
     </Stack>
   );
