@@ -49,7 +49,7 @@ async function setupAndroidChannel() {
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#0fb8a5',
-      sound: true,
+      // sound: undefined → sistem varsayılan zil çalar (custom dosya gerekirse string ver)
     });
   } catch {}
 }

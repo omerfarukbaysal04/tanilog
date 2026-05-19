@@ -100,7 +100,7 @@ function NotifCard({ item, onPress }: { item: Notification; onPress: () => void 
   return (
     <GlassCard
       accent={item.priority === 'important' ? 'yellow' : isUnread ? 'teal' : undefined}
-      style={[styles.card, isUnread && styles.cardUnread]}
+      style={{ ...styles.card, ...(isUnread ? styles.cardUnread : {}) }}
     >
       <View style={styles.row} onTouchEnd={onPress}>
         {/* Sol: önem çizgisi */}

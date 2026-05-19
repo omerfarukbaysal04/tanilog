@@ -157,7 +157,7 @@ export default function AIAnalysisScreen() {
             {crossAnalysis.recommendations?.length > 0 && (
               <BulletList title="Öneriler" items={crossAnalysis.recommendations} icon="bulb-outline" />
             )}
-            {crossAnalysis.doctor_questions?.length > 0 && (
+            {crossAnalysis.doctor_questions && crossAnalysis.doctor_questions.length > 0 && (
               <BulletList title="Doktora Sorular" items={crossAnalysis.doctor_questions} icon="help-circle-outline" />
             )}
           </GlassCard>
