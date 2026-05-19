@@ -185,6 +185,18 @@ async def delete_document(
 from app.models.ai_analysis import AIAnalysis
 from app.services.ai_service import analyze_medical_document
 
+def _analysis_to_dict(a: AIAnalysis) -> dict:
+    return {
+        "id": a.id,
+        "document_id": a.document_id,
+        "summary": a.summary,
+        "critical_findings": a.critical_findings,
+        "full_analysis": a.full_analysis,
+        "has_critical_alert": a.has_critical_alert,
+        "created_at": a.created_at,
+    }
+
+
 @router.post("/{doc_id}/analyze")
 async def analyze_document(
     doc_id: int,
@@ -192,44 +204,41 @@ async def analyze_document(
     db: Session = Depends(get_db)
 ):
     doc = db.query(Document).filter(
-        Document.id == doc_id, 
+        Document.id == doc_id,
         Document.user_id == current_user.id,
         Document.is_deleted == False
     ).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Belge bulunamadı")
-        
+
     # Zaten analiz edilmiş mi?
     existing_analysis = db.query(AIAnalysis).filter(AIAnalysis.document_id == doc.id).first()
     if existing_analysis:
-        return existing_analysis
-        
-    # Free tier control (günlük 1 analiz sınırı) - TEST İÇİN KALDIRILDI
-    # if not current_user.is_premium:
-    #     today = datetime.utcnow().date()
-    #     daily_count = db.query(AIAnalysis).join(Document).filter(
-    #         Document.user_id == current_user.id,
-    #         extract('year', AIAnalysis.created_at) == today.year,
-    #         extract('month', AIAnalysis.created_at) == today.month,
-    #         extract('day', AIAnalysis.created_at) == today.day
-    #     ).count()
-    #     
-    #     if daily_count >= 1:
-    #         raise HTTPException(
-    #             status_code=403, 
-    #             detail="Günlük ücretsiz yapay zeka analiz limitine (1 adet) ulaştınız. Sınırsız analiz için Premium'a geçin."
-    #         )
-            
+        return _analysis_to_dict(existing_analysis)
+
     # AI servisi çağır
     if not os.path.exists(doc.file_path):
         raise HTTPException(status_code=404, detail="Fiziksel belge bulunamadı")
-        
-    ai_result = analyze_medical_document(doc.file_path, doc.file_type)
-    
-    # DB'ye kaydet
+
+    try:
+        ai_result = analyze_medical_document(doc.file_path, doc.file_type)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"AI servisi yanıt veremedi: {str(exc)[:120]}"
+        )
+
+    summary_text = (ai_result.get("summary") or "").strip()
+    # Fallback durumu tespit et — gerçek bir analiz yapılamamışsa 502 dön
+    if not summary_text or "hata" in summary_text.lower():
+        raise HTTPException(
+            status_code=502,
+            detail=ai_result.get("critical_findings") or "AI analizi tamamlanamadı. Lütfen belgenin okunabilir olduğundan emin olun ve tekrar deneyin."
+        )
+
     db_analysis = AIAnalysis(
         document_id=doc.id,
-        summary=ai_result.get("summary", "Özet alınamadı."),
+        summary=summary_text,
         critical_findings=ai_result.get("critical_findings"),
         full_analysis=ai_result.get("full_analysis", "Detaylı analiz alınamadı."),
         has_critical_alert=ai_result.get("has_critical_alert", False)
@@ -237,8 +246,8 @@ async def analyze_document(
     db.add(db_analysis)
     db.commit()
     db.refresh(db_analysis)
-    
-    return db_analysis
+
+    return _analysis_to_dict(db_analysis)
 
 
 @router.get("/{doc_id}/analysis")

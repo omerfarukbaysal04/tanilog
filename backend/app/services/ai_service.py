@@ -49,16 +49,17 @@ def analyze_medical_document(file_path: str, mime_type: str) -> dict:
     }
     """
     
-    # Gemini 2.5 Flash hem hızlıdır hem de döküman analizi (multimodal) için çok iyidir.
-    model_name = "gemini-2.5-flash"
-    
     try:
         path = pathlib.Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"Dosya bulunamadı: {file_path}")
-            
+
         file_bytes = path.read_bytes()
-        
+
+        # Boyut kontrolü (Gemini upload limit ~20MB inline)
+        if len(file_bytes) > 18 * 1024 * 1024:
+            raise ValueError("Belge boyutu 18 MB'ı aşıyor. Daha küçük bir dosya yükleyin.")
+
         response = client.models.generate_content(
             model=MODEL_NAME,
             contents=[
@@ -70,18 +71,18 @@ def analyze_medical_document(file_path: str, mime_type: str) -> dict:
                 temperature=0.2
             )
         )
-        
-        return json.loads(response.text)
-        
+
+        text = (response.text or "").strip()
+        if not text:
+            raise ValueError("AI yanıtı boş döndü.")
+        return json.loads(text)
+
+    except json.JSONDecodeError as e:
+        print(f"AI JSON parse hatası: {str(e)}")
+        raise ValueError(f"AI yanıtı JSON olarak çözümlenemedi: {str(e)[:80]}")
     except Exception as e:
-        print(f"AI Analiz Hatası: {str(e)}")
-        # Güvenli geri dönüş (fallback)
-        return {
-            "summary": "Analiz sırasında bir hata oluştu veya belge tam okunamadı.",
-            "critical_findings": f"Sistem hatası: {str(e)}",
-            "has_critical_alert": False,
-            "full_analysis": "Lütfen belgenizin okunabilir ve desteklenen bir formatta (PDF, JPEG, PNG) olduğundan emin olup tekrar deneyin."
-        }
+        print(f"AI Analiz Hatası: {type(e).__name__}: {str(e)}")
+        raise
 
 
 def analyze_symptoms_with_document(document_context: dict, health_context: dict, days: int) -> dict:

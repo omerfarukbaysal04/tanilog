@@ -10,16 +10,17 @@ import { DocumentItem } from '../../src/types';
 import { colors } from '../../src/theme';
 
 const CATEGORIES: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'lab', label: 'Lab', icon: 'flask-outline' },
-  { key: 'imaging', label: 'Görüntüleme', icon: 'scan-outline' },
-  { key: 'prescription', label: 'Reçete', icon: 'medkit-outline' },
-  { key: 'other', label: 'Diğer', icon: 'document-outline' },
+  { key: 'tahlil', label: 'Kan/İdrar Tahlili', icon: 'flask-outline' },
+  { key: 'mr', label: 'MR/Röntgen/Tomografi', icon: 'scan-outline' },
+  { key: 'recete', label: 'Reçete', icon: 'medkit-outline' },
+  { key: 'epikriz', label: 'Epikriz/Rapor', icon: 'reader-outline' },
+  { key: 'diger', label: 'Diğer', icon: 'document-outline' },
 ];
 
 export default function DocumentsScreen() {
   const { documents, fetchDocuments, uploadDocument, analyzeDocument, renameDocument, deleteDocument, fileUrl, authHeaders, uploading } = useDocumentStore();
   const [asset, setAsset] = useState<UploadAsset | null>(null);
-  const [category, setCategory] = useState('lab');
+  const [category, setCategory] = useState('tahlil');
   const [notes, setNotes] = useState('');
   const [selected, setSelected] = useState<DocumentItem | null>(null);
   const [headers, setHeaders] = useState<Record<string, string>>({});
