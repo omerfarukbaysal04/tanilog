@@ -6,10 +6,43 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { AppButton, FadeIn, Field, GlassCard, Muted, Screen, ToggleRow } from '../../src/components/ui';
 import useHealthStore, { MedicationCandidate, MedicationScanResult } from '../../src/stores/healthStore';
-import { scheduleMedicationReminder } from '../../src/lib/notifications';
+import { scheduleMedicationReminder, scheduleMedicationReminderMultiple } from '../../src/lib/notifications';
 import { colors } from '../../src/theme';
 
 type Kind = 'symptom' | 'medication' | 'sleep' | 'nutrition';
+
+const FREQUENCIES = [
+  { key: 'once', label: 'Günde 1', count: 1 },
+  { key: 'twice', label: 'Günde 2', count: 2 },
+  { key: 'three', label: 'Günde 3', count: 3 },
+  { key: 'four', label: 'Günde 4', count: 4 },
+  { key: 'as_needed', label: 'İhtiyaç halinde', count: 0 },
+];
+
+function frequencyCount(freq: string): number {
+  return FREQUENCIES.find((f) => f.key === freq)?.count ?? 1;
+}
+
+function frequencyLabel(freq: string): string {
+  return FREQUENCIES.find((f) => f.key === freq)?.label ?? '';
+}
+
+// 1734 → 17:34 / 17.34 → 17:34 / 17-34 → 17:34 / 17:34 → 17:34
+function formatTimeInput(raw: string): string {
+  if (!raw) return '';
+  let clean = raw.replace(/[^\d]/g, '');
+  if (clean.length === 0) return '';
+  if (clean.length > 4) clean = clean.slice(0, 4);
+  if (clean.length <= 2) return clean;
+  const h = clean.slice(0, 2);
+  const m = clean.slice(2);
+  return `${h}:${m}`;
+}
+
+function currentHHMM(): string {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
 
 const KIND_META: Record<Kind, { label: string; icon: keyof typeof Ionicons.glyphMap; accent: 'pink' | 'teal' | 'blue' | 'purple' }> = {
   symptom: { label: 'Semptom', icon: 'pulse-outline', accent: 'pink' },
@@ -125,22 +158,43 @@ export default function HealthScreen() {
         await addSymptom({ date: selectedDate, symptom_name: form.symptom_name, severity: Number(form.severity || 5), notes: form.notes || '' });
       }
       if (kind === 'medication') {
+        const freq = form.frequency || 'once';
+        const freqLbl = frequencyLabel(freq);
+        // dosage'ı sıklıkla zenginleştir: "500mg • Günde 3"
+        const dosagePayload = form.dosage
+          ? freq && freq !== 'as_needed'
+            ? `${form.dosage} • ${freqLbl}`
+            : form.dosage
+          : 'Belirtilmedi';
+
         await addMedication({
           date: selectedDate,
           name: form.name,
-          dosage: form.dosage || 'Belirtilmedi',
+          dosage: dosagePayload,
           time_taken: form.time_taken || null,
           notes: form.notes || '',
           reminder_enabled: reminderEnabled,
           reminder_time: reminderEnabled ? (form.time_taken || null) : null,
           ai_scan_summary: scanSummary || null,
         });
-        if (reminderEnabled && form.time_taken) {
-          scheduleMedicationReminder({
-            medicationName: form.name,
-            dosage: form.dosage || '',
-            reminderTime: form.time_taken,
-          }).catch(() => {});
+
+        // Hatırlatıcı: ihtiyaç halinde değilse ve saat varsa
+        if (reminderEnabled && form.time_taken && freq !== 'as_needed') {
+          const count = frequencyCount(freq);
+          if (count > 1) {
+            await scheduleMedicationReminderMultiple({
+              medicationName: form.name,
+              dosage: form.dosage || '',
+              firstTime: form.time_taken,
+              timesPerDay: count,
+            }).catch(() => {});
+          } else {
+            await scheduleMedicationReminder({
+              medicationName: form.name,
+              dosage: form.dosage || '',
+              reminderTime: form.time_taken,
+            }).catch(() => {});
+          }
         }
         setScanSummary(null);
       }
@@ -303,12 +357,60 @@ export default function HealthScreen() {
 
               <Field label="İlaç adı" value={form.name || ''} onChangeText={(v) => setValue('name', v)} placeholder="Örn: Parol" />
               <Field label="Doz" value={form.dosage || ''} onChangeText={(v) => setValue('dosage', v)} placeholder="500mg" />
-              <Field label="Saat (HH:MM)" value={form.time_taken || ''} onChangeText={(v) => setValue('time_taken', v)} placeholder="08:00" />
+
+              {/* Sıklık seçici */}
+              <View style={{ gap: 6 }}>
+                <Text style={styles.miniLabel}>Sıklık</Text>
+                <View style={styles.freqRow}>
+                  {FREQUENCIES.map((f) => {
+                    const isActive = form.frequency === f.key;
+                    return (
+                      <Pressable
+                        key={f.key}
+                        onPress={() => setValue('frequency', f.key)}
+                        style={({ pressed }) => [
+                          styles.freqPill,
+                          isActive && styles.freqPillActive,
+                          pressed && { opacity: 0.85 },
+                        ]}
+                      >
+                        <Text style={[styles.freqText, isActive && styles.freqTextActive]}>{f.label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Saat input - otomatik format */}
+              <View style={{ gap: 6 }}>
+                <Text style={styles.miniLabel}>İlk doz saati</Text>
+                <View style={styles.timeInputRow}>
+                  <View style={{ flex: 1 }}>
+                    <Field
+                      value={form.time_taken || ''}
+                      onChangeText={(v) => setValue('time_taken', formatTimeInput(v))}
+                      keyboardType="numbers-and-punctuation"
+                      placeholder="08:00"
+                      icon={<Ionicons name="time-outline" color={colors.navy400} size={18} />}
+                    />
+                  </View>
+                  <Pressable onPress={() => setValue('time_taken', currentHHMM())} style={styles.nowBtn}>
+                    <Ionicons name="flash" color={colors.teal300} size={14} />
+                    <Text style={styles.nowBtnText}>Şimdi</Text>
+                  </Pressable>
+                </View>
+                <Muted>17.34 veya 1734 yazsan da otomatik 17:34'e dönüşür.</Muted>
+              </View>
+
               <ToggleRow
-                label="Günlük hatırlatıcı kur"
+                label="Hatırlatıcı kur"
                 value={reminderEnabled}
                 onValueChange={setReminderEnabled}
-                description="Her gün bu saatte bildirim al"
+                description={
+                  form.frequency && form.frequency !== 'as_needed'
+                    ? `Günde ${frequencyCount(form.frequency)} kez bildirim gelir`
+                    : 'İlk doz saatinde bildirim gelir'
+                }
               />
               {scanSummary && (
                 <View style={styles.scanSummaryBox}>
@@ -646,5 +748,59 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_500Medium',
     flex: 1,
     lineHeight: 15,
+  },
+  miniLabel: {
+    color: colors.navy300,
+    fontSize: 11,
+    fontFamily: 'Poppins_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  freqRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  freqPill: {
+    backgroundColor: 'rgba(20,40,58,0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(159,179,200,0.15)',
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 10,
+  },
+  freqPillActive: {
+    backgroundColor: 'rgba(15,184,165,0.18)',
+    borderColor: 'rgba(15,184,165,0.45)',
+  },
+  freqText: {
+    color: colors.navy300,
+    fontSize: 12,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  freqTextActive: {
+    color: colors.teal300,
+    fontFamily: 'Poppins_700Bold',
+  },
+  timeInputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  nowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(15,184,165,0.12)',
+    borderColor: 'rgba(15,184,165,0.3)',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    height: 50,
+    borderRadius: 12,
+  },
+  nowBtnText: {
+    color: colors.teal300,
+    fontSize: 12,
+    fontFamily: 'Poppins_700Bold',
   },
 });

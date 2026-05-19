@@ -60,6 +60,13 @@ const TOOLS: Tool[] = [
     premium: true,
   },
   {
+    title: 'Raporlarım',
+    description: 'Kayıtlı raporlar ve AI analizleri arşivi',
+    icon: 'folder-open-outline',
+    route: '/tools/reports',
+    accent: 'purple',
+  },
+  {
     title: 'Aile Takibi',
     description: 'Aile üyelerinin sağlık verilerini izle',
     icon: 'people-outline',

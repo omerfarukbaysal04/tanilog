@@ -166,15 +166,19 @@ export async function scheduleMedicationReminder(params: {
 }): Promise<string | null> {
   if (!Notifications) return null;
   try {
+    const granted = await requestNotificationPermission();
+    if (!granted) return null;
+
     const [hour, minute] = params.reminderTime.split(':').map(Number);
     if (isNaN(hour) || isNaN(minute)) return null;
 
     const id = await Notifications.scheduleNotificationAsync({
       identifier: params.identifier,
       content: {
-        title: 'İlaç Hatırlatıcı',
+        title: 'İlaç Hatırlatıcı 💊',
         body: `${params.medicationName}${params.dosage ? ` - ${params.dosage}` : ''} alma vakti!`,
         data: { type: 'medication_reminder', name: params.medicationName, route: '/health' },
+        sound: true,
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -186,6 +190,54 @@ export async function scheduleMedicationReminder(params: {
   } catch {
     return null;
   }
+}
+
+/**
+ * Günde N kez tekrarlayan ilaç hatırlatıcı kurar.
+ * İlk saatten itibaren 24/N saat aralıklarla.
+ */
+export async function scheduleMedicationReminderMultiple(params: {
+  medicationName: string;
+  dosage: string;
+  firstTime: string;       // "HH:MM"
+  timesPerDay: number;     // 1 / 2 / 3 / 4
+  baseIdentifier?: string;
+}): Promise<string[]> {
+  if (!Notifications) return [];
+  const granted = await requestNotificationPermission();
+  if (!granted) return [];
+
+  const [hour, minute] = params.firstTime.split(':').map(Number);
+  if (isNaN(hour) || isNaN(minute)) return [];
+
+  await setupAndroidChannel();
+
+  const ids: string[] = [];
+  const interval = Math.floor(24 / Math.max(1, params.timesPerDay));
+
+  for (let i = 0; i < params.timesPerDay; i++) {
+    const h = (hour + i * interval) % 24;
+    try {
+      const id = await Notifications.scheduleNotificationAsync({
+        identifier: params.baseIdentifier ? `${params.baseIdentifier}-${i}` : undefined,
+        content: {
+          title: 'İlaç Hatırlatıcı 💊',
+          body: `${params.medicationName}${params.dosage ? ` - ${params.dosage}` : ''} alma vakti!`,
+          data: { type: 'medication_reminder', name: params.medicationName, route: '/health' },
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: h,
+          minute,
+        },
+      });
+      ids.push(id);
+    } catch (e) {
+      console.warn('[reminder] schedule failed at index', i, e);
+    }
+  }
+  return ids;
 }
 
 export async function cancelMedicationReminder(identifier: string): Promise<void> {

@@ -5,15 +5,17 @@ export default function FamilyLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: colors.navy900 },
-        headerTintColor: colors.white,
+        headerStyle: { backgroundColor: 'transparent' },
+        headerTransparent: true,
+        headerTintColor: colors.teal300,
+        headerTitle: '',
         contentStyle: { backgroundColor: colors.navy950 },
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Aile Takibi' }} />
-      <Stack.Screen name="add-member" options={{ title: 'Üye Ekle' }} />
-      <Stack.Screen name="member" options={{ title: 'Üye Detayı' }} />
-      <Stack.Screen name="invite" options={{ title: 'Davet Gönder' }} />
+      <Stack.Screen name="index" />
+      <Stack.Screen name="add-member" />
+      <Stack.Screen name="member" />
+      <Stack.Screen name="invite" />
     </Stack>
   );
 }
