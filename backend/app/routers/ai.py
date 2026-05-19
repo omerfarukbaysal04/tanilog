@@ -4,7 +4,7 @@ import secrets
 from datetime import date, datetime, timedelta
 from typing import Literal
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -23,6 +23,7 @@ from app.services.ai_service import (
     generate_health_report,
     scan_medications_from_file,
 )
+from app.services.pdf_service import doctor_report_pdf
 from app.services.push_service import emit_notification_event
 
 router = APIRouter()
@@ -545,6 +546,31 @@ async def create_doctor_share_link(
         "expires_at": expires_at,
         "hours": payload.hours,
     }
+
+
+@router.get("/doctor-prep/saved/{report_id}/pdf")
+async def download_doctor_prep_report_pdf(
+    report_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not is_premium_active(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="PDF rapor indirme Premium kullanıcılar için kullanılabilir.")
+
+    report = db.query(DoctorPrepReport).filter(
+        DoctorPrepReport.id == report_id,
+        DoctorPrepReport.user_id == current_user.id,
+    ).first()
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rapor bulunamadı.")
+
+    payload = json.loads(report.report_json)
+    pdf_bytes, filename = doctor_report_pdf(payload, report.title)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.post("/doctor-prep/shared/{token}")

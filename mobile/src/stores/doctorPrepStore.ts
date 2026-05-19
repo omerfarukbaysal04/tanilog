@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { Share } from 'react-native';
+import { File, Paths } from 'expo-file-system';
 import api from '../lib/api';
+import { API_URL } from '../lib/api';
+import { getToken } from '../lib/token';
 import { DoctorPrepReport, SavedDoctorReport } from '../types';
 
 type DoctorPrepState = {
@@ -15,6 +18,7 @@ type DoctorPrepState = {
   openSavedReport: (reportId: number) => Promise<void>;
   saveReport: (title: string) => Promise<void>;
   shareReport: (reportId: number) => Promise<void>;
+  shareReportPdf: (reportId: number, title?: string) => Promise<void>;
   clearError: () => void;
 };
 
@@ -106,6 +110,34 @@ const useDoctorPrepStore = create<DoctorPrepState>((set, get) => ({
     await Share.share({
       message: sections,
       title: 'Doktor Hazırlık Raporumu Paylaş',
+    });
+  },
+
+  shareReportPdf: async (reportId, title = 'doktor-raporu') => {
+    const token = await getToken();
+    const safeTitle = title
+      .toLowerCase()
+      .replace(/[çÇ]/g, 'c')
+      .replace(/[ğĞ]/g, 'g')
+      .replace(/[ıİ]/g, 'i')
+      .replace(/[öÖ]/g, 'o')
+      .replace(/[şŞ]/g, 's')
+      .replace(/[üÜ]/g, 'u')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'doktor-raporu';
+    const destination = new File(Paths.cache, `${safeTitle}.pdf`);
+    const result = await File.downloadFileAsync(
+      `${API_URL}/ai/doctor-prep/saved/${reportId}/pdf`,
+      destination,
+      {
+        idempotent: true,
+        ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+      },
+    );
+    await Share.share({
+      title: `${title}.pdf`,
+      url: result.uri,
+      message: `Doktor hazırlık raporu PDF: ${result.uri}`,
     });
   },
 

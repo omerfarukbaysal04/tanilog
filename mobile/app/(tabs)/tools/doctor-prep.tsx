@@ -34,6 +34,7 @@ export default function DoctorPrepScreen() {
     openSavedReport,
     saveReport,
     shareReport,
+    shareReportPdf,
     clearError,
   } = useDoctorPrepStore();
 
@@ -72,6 +73,14 @@ export default function DoctorPrepScreen() {
       await shareReport(id);
     } catch (e: any) {
       Alert.alert('Paylaşım başarısız', e.message);
+    }
+  };
+
+  const handleSharePdf = async (id: number, title: string) => {
+    try {
+      await shareReportPdf(id, title);
+    } catch (e: any) {
+      Alert.alert('PDF paylaşımı başarısız', e.response?.data?.detail || e.message);
     }
   };
 
@@ -292,15 +301,26 @@ export default function DoctorPrepScreen() {
                     <Text style={styles.savedTitle} numberOfLines={1}>{saved.title}</Text>
                     <Muted>{new Date(saved.created_at).toLocaleDateString('tr-TR')}</Muted>
                   </View>
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation?.();
-                      handleShare(saved.id);
-                    }}
-                    style={styles.shareBtn}
-                  >
-                    <Ionicons name="share-outline" color={colors.teal300} size={18} />
-                  </Pressable>
+                  <View style={styles.savedActions}>
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation?.();
+                        handleSharePdf(saved.id, saved.title);
+                      }}
+                      style={styles.shareBtn}
+                    >
+                      <Ionicons name="document-attach-outline" color={colors.teal300} size={18} />
+                    </Pressable>
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation?.();
+                        handleShare(saved.id);
+                      }}
+                      style={styles.shareBtn}
+                    >
+                      <Ionicons name="share-outline" color={colors.teal300} size={18} />
+                    </Pressable>
+                  </View>
                 </Pressable>
               ))
             )}
@@ -417,6 +437,7 @@ const styles = StyleSheet.create({
   savedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
   savedDivider: { borderTopWidth: 1, borderTopColor: 'rgba(159,179,200,0.08)' },
   savedTitle: { color: colors.white, fontFamily: 'Poppins_700Bold', fontSize: 13 },
+  savedActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   shareBtn: {
     width: 36,
     height: 36,
