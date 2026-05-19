@@ -73,7 +73,7 @@ export default function ReportsScreen() {
     <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
       <FadeIn delay={0}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Pressable onPress={() => router.push('/tools')} style={styles.backBtn}>
             <Ionicons name="arrow-back" color={colors.teal300} size={20} />
             <Text style={styles.backText}>Araçlar</Text>
           </Pressable>
@@ -213,14 +213,20 @@ export default function ReportsScreen() {
               </Pressable>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 380 }}>
-              {selectedDoc?.ai_summary ? (
-                <View style={{ gap: 10 }}>
-                  <Text style={styles.modalSectionLabel}>AI Özet</Text>
-                  <Text style={styles.modalBody}>{selectedDoc.ai_summary}</Text>
-                </View>
-              ) : (
-                <Muted>Bu belge için analiz özeti bulunamadı.</Muted>
-              )}
+              {(() => {
+                const docSummary = selectedDoc?.ai_summary
+                  || (selectedDoc as any)?.summary
+                  || (selectedDoc as any)?.full_analysis
+                  || (selectedDoc as any)?.analysis_result;
+                return docSummary ? (
+                  <View style={{ gap: 10 }}>
+                    <Text style={styles.modalSectionLabel}>AI Özet</Text>
+                    <Text style={styles.modalBody}>{docSummary}</Text>
+                  </View>
+                ) : (
+                  <Muted>Bu belge için analiz özeti bulunamadı.</Muted>
+                );
+              })()}
               {selectedDoc?.category && (
                 <View style={styles.modalMetaRow}>
                   <Text style={styles.modalMetaLabel}>Kategori:</Text>

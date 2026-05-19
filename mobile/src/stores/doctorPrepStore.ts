@@ -31,7 +31,15 @@ const useDoctorPrepStore = create<DoctorPrepState>((set, get) => ({
       const { data } = await api.post<DoctorPrepReport>('/ai/doctor-prep', { specialty });
       set({ report: data });
     } catch (e: any) {
-      set({ error: e.response?.data?.detail || e.message });
+      const detail = e.response?.data?.detail;
+      const errorMsg = typeof detail === 'string'
+        ? detail
+        : Array.isArray(detail)
+        ? detail.map((d: any) => d.msg || String(d)).join('; ')
+        : typeof detail === 'object' && detail !== null
+        ? JSON.stringify(detail)
+        : e.message;
+      set({ error: errorMsg });
     } finally {
       set({ isGenerating: false });
     }

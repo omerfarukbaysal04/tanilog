@@ -4,7 +4,9 @@ import {
   ActivityIndicator,
   Easing,
   Image,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -47,31 +49,37 @@ export function Screen({
 }) {
   const content = <View style={styles.content}>{children}</View>;
   return (
-    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
-      {withOrbs && <FloatingOrbs />}
-      {scroll ? (
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 24 }}
-          refreshControl={
-            onRefresh ? (
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={colors.teal300}
-                colors={[colors.teal300, colors.blue]}
-                progressBackgroundColor={colors.navy850}
-              />
-            ) : undefined
-          }
-        >
-          {content}
-        </ScrollView>
-      ) : (
-        content
-      )}
-    </SafeAreaView>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
+      <SafeAreaView style={styles.safe} edges={['left', 'right']}>
+        {withOrbs && <FloatingOrbs />}
+        {scroll ? (
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 24 }}
+            refreshControl={
+              onRefresh ? (
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor={colors.teal300}
+                  colors={[colors.teal300, colors.blue]}
+                  progressBackgroundColor={colors.navy850}
+                />
+              ) : undefined
+            }
+          >
+            {content}
+          </ScrollView>
+        ) : (
+          content
+        )}
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 

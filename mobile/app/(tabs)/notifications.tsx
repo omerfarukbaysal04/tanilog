@@ -53,9 +53,14 @@ export default function NotificationsScreen() {
 
   const handlePress = (item: any) => {
     if (!item.read) markRead(item.id).catch(() => {});
-    const route = item.route;
+    let route = item.route;
     if (typeof route === 'string' && route.length > 0) {
-      try { router.push(route as any); } catch {}
+      // Backend'den gelen route'ları normalize et
+      if (route.includes('family')) route = '/family';
+      else if (route.includes('notification')) route = '/notifications';
+      try { router.push(route as any); } catch {
+        // Geçersiz route → bildirimlerde kal
+      }
     }
   };
 

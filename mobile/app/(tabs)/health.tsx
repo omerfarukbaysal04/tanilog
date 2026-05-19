@@ -212,21 +212,18 @@ export default function HealthScreen() {
           ai_scan_summary: scanSummary || null,
         });
 
-        // Hatırlatıcı: ihtiyaç halinde değilse ve saat varsa
+        // Hatırlatıcı: ihtiyaç halinde değilse ve en az bir saat varsa
         if (reminderEnabled && form.time_taken && freq !== 'as_needed') {
           const count = frequencyCount(freq);
-          if (count > 1) {
-            await scheduleMedicationReminderMultiple({
-              medicationName: form.name,
-              dosage: normalizedDosage,
-              firstTime: form.time_taken,
-              timesPerDay: count,
-            }).catch(() => {});
-          } else {
+          // Collect all entered times
+          const allTimes = [form.time_taken, form.time_2, form.time_3, form.time_4]
+            .filter(Boolean)
+            .slice(0, count) as string[];
+          for (const t of allTimes) {
             await scheduleMedicationReminder({
               medicationName: form.name,
               dosage: normalizedDosage,
-              reminderTime: form.time_taken,
+              reminderTime: t,
             }).catch(() => {});
           }
         }
@@ -236,7 +233,7 @@ export default function HealthScreen() {
         await addSleep({ date: selectedDate, hours_slept: Number(form.hours_slept || 0), quality: form.quality || 'good', notes: form.notes || '' });
       }
       if (kind === 'nutrition') {
-        await addNutrition({ date: selectedDate, meal_type: form.meal_type || 'snack', water_ml: Number(form.water_ml || 0), notes: form.notes || 'Mobil beslenme kaydı' });
+        await addNutrition({ date: selectedDate, meal_type: form.meal_type || 'snack', water_ml: Number(form.water_ml || 0), notes: form.food_items || form.notes || 'Beslenme kaydı' });
       }
       setForm({});
       setReminderEnabled(false);
@@ -263,6 +260,33 @@ export default function HealthScreen() {
       Alert.alert('Etkileşim kontrol hatası', e.response?.data?.detail || e.message);
     } finally {
       setCheckingInteractions(false);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!detailItem) return;
+    setEditSaving(true);
+    try {
+      const { kind: k, item } = detailItem;
+      const kindPath = k === 'symptom' ? 'symptoms' : k === 'medication' ? 'medications' : k === 'sleep' ? 'sleep' : 'nutrition';
+      let payload: Record<string, any> = {};
+      if (k === 'symptom') {
+        payload = { symptom_name: editForm.symptom_name, severity: Number(editForm.severity || 5), notes: editForm.notes || '' };
+      } else if (k === 'medication') {
+        payload = { name: editForm.name, dosage: normalizeDosage(editForm.dosage || ''), time_taken: editForm.time_taken || null, notes: editForm.notes || '' };
+      } else if (k === 'sleep') {
+        payload = { hours_slept: Number(editForm.hours_slept || 0), quality: editForm.quality || 'good', notes: editForm.notes || '' };
+      } else if (k === 'nutrition') {
+        payload = { meal_type: editForm.meal_type || 'snack', water_ml: Number(editForm.water_ml || 0), notes: editForm.food_items || editForm.notes || '' };
+      }
+      await api.patch(`/health/${kindPath}/${item.id}`, payload);
+      await fetchDailySummary();
+      setDetailItem(null);
+      Alert.alert('Güncellendi', 'Kayıt başarıyla güncellendi.');
+    } catch (e: any) {
+      Alert.alert('Güncelleme başarısız', e.response?.data?.detail || e.message);
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -471,33 +495,45 @@ export default function HealthScreen() {
                 </View>
               </View>
 
-              {/* Saat input - otomatik format */}
-              <View style={{ gap: 6 }}>
-                <Text style={styles.miniLabel}>İlk doz saati</Text>
-                <View style={styles.timeInputRow}>
-                  <View style={{ flex: 1 }}>
-                    <Field
-                      value={form.time_taken || ''}
-                      onChangeText={(v) => setValue('time_taken', formatTimeInput(v))}
-                      keyboardType="numbers-and-punctuation"
-                      placeholder="08:00"
-                      icon={<Ionicons name="time-outline" color={colors.navy400} size={18} />}
-                    />
+              {/* Doz saatleri - frekansa göre dinamik */}
+              {(() => {
+                const count = frequencyCount(form.frequency || 'once');
+                const timeKeys = ['time_taken', 'time_2', 'time_3', 'time_4'];
+                const doseLabels = ['1. Doz saati', '2. Doz saati', '3. Doz saati', '4. Doz saati'];
+                const slots = count > 0 ? timeKeys.slice(0, count) : timeKeys.slice(0, 1);
+                return (
+                  <View style={{ gap: 8 }}>
+                    {slots.map((key, i) => (
+                      <View key={key} style={{ gap: 4 }}>
+                        <Text style={styles.miniLabel}>{doseLabels[i]}</Text>
+                        <View style={styles.timeInputRow}>
+                          <View style={{ flex: 1 }}>
+                            <Field
+                              value={form[key] || ''}
+                              onChangeText={(v) => setValue(key, formatTimeInput(v))}
+                              keyboardType="numbers-and-punctuation"
+                              placeholder="08:00"
+                              icon={<Ionicons name="time-outline" color={colors.navy400} size={18} />}
+                            />
+                          </View>
+                          <Pressable onPress={() => setValue(key, currentHHMM())} style={styles.nowBtn}>
+                            <Ionicons name="flash" color={colors.teal300} size={14} />
+                            <Text style={styles.nowBtnText}>Şimdi</Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                    ))}
+                    <Muted>17.34 veya 1734 yazsan da otomatik 17:34'e dönüşür.</Muted>
                   </View>
-                  <Pressable onPress={() => setValue('time_taken', currentHHMM())} style={styles.nowBtn}>
-                    <Ionicons name="flash" color={colors.teal300} size={14} />
-                    <Text style={styles.nowBtnText}>Şimdi</Text>
-                  </Pressable>
-                </View>
-                <Muted>17.34 veya 1734 yazsan da otomatik 17:34'e dönüşür.</Muted>
-              </View>
+                );
+              })()}
 
               <ToggleRow
                 label="Hatırlatıcı kur"
                 value={reminderEnabled}
                 onValueChange={(v) => {
                   if (v && !form.time_taken) {
-                    Alert.alert('Saat gerekli', 'Hatırlatıcı için "İlk doz saati" alanını doldurun.');
+                    Alert.alert('Saat gerekli', 'Hatırlatıcı için doz saatlerini doldurun.');
                     setValue('time_taken', currentHHMM());
                   }
                   setReminderEnabled(v);
@@ -506,7 +542,7 @@ export default function HealthScreen() {
                   reminderEnabled && !form.time_taken
                     ? '⚠️ Saat girilmeden hatırlatıcı kurulamaz'
                     : form.frequency && form.frequency !== 'as_needed'
-                    ? `Günde ${frequencyCount(form.frequency)} kez bildirim gelir`
+                    ? `Her doz saatinde ayrı alarm kurulur (${frequencyCount(form.frequency)} adet)`
                     : 'İlk doz saatinde bildirim gelir'
                 }
               />
@@ -559,10 +595,13 @@ export default function HealthScreen() {
                   })}
                 </View>
               </View>
+              <Field label="Yediklerin" value={form.food_items || ''} onChangeText={(v) => setValue('food_items', v)} multiline placeholder="Pilav, tavuk, salata..." />
               <Field label="Su (ml)" value={form.water_ml || ''} onChangeText={(v) => setValue('water_ml', v)} keyboardType="number-pad" placeholder="500" />
             </>
           )}
-          <Field label="Not (opsiyonel)" value={form.notes || ''} onChangeText={(v) => setValue('notes', v)} multiline placeholder="Ek bilgi..." />
+          {kind !== 'nutrition' && (
+            <Field label="Not (opsiyonel)" value={form.notes || ''} onChangeText={(v) => setValue('notes', v)} multiline placeholder="Ek bilgi..." />
+          )}
           <AppButton
             title="Kaydet"
             onPress={handleSave}
@@ -648,66 +687,86 @@ export default function HealthScreen() {
               )}
               {detailItem?.kind === 'medication' && (
                 <View style={{ gap: 10, paddingBottom: 16 }}>
-                  <View style={styles.detailRow}><Text style={styles.detailLabel}>İlaç:</Text><Text style={styles.detailVal}>{detailItem.item.name}</Text></View>
-                  <View style={styles.detailRow}><Text style={styles.detailLabel}>Doz:</Text><Text style={styles.detailVal}>{detailItem.item.dosage}</Text></View>
-                  {detailItem.item.time_taken && <View style={styles.detailRow}><Text style={styles.detailLabel}>Saat:</Text><Text style={styles.detailVal}>{detailItem.item.time_taken}</Text></View>}
-                  {detailItem.item.notes ? <View style={styles.detailRow}><Text style={styles.detailLabel}>Not:</Text><Text style={styles.detailVal}>{detailItem.item.notes}</Text></View> : null}
                   {detailItem.item.is_taken && (
                     <View style={[styles.takenBadge]}>
                       <Ionicons name="checkmark-circle" color={colors.teal300} size={14} />
                       <Text style={styles.takenText}>Alındı olarak işaretlendi</Text>
                     </View>
                   )}
+                  <Field label="İlaç adı" value={editForm.name || ''} onChangeText={(v) => setEditForm((p) => ({ ...p, name: v }))} />
+                  <Field label="Doz" value={editForm.dosage || ''} onChangeText={(v) => setEditForm((p) => ({ ...p, dosage: v }))} placeholder="500mg" />
+                  <Field label="Saat" value={editForm.time_taken || ''} onChangeText={(v) => setEditForm((p) => ({ ...p, time_taken: formatTimeInput(v) }))} keyboardType="numbers-and-punctuation" placeholder="08:00" />
+                  <Field label="Not" value={editForm.notes || ''} onChangeText={(v) => setEditForm((p) => ({ ...p, notes: v }))} multiline />
                 </View>
               )}
               {detailItem?.kind === 'sleep' && (
                 <View style={{ gap: 10, paddingBottom: 16 }}>
-                  <View style={styles.detailRow}><Text style={styles.detailLabel}>Süre:</Text><Text style={styles.detailVal}>{detailItem.item.hours_slept} saat</Text></View>
-                  <View style={styles.detailRow}><Text style={styles.detailLabel}>Kalite:</Text><Text style={styles.detailVal}>{qualityLabels[detailItem.item.quality] || detailItem.item.quality}</Text></View>
-                  {detailItem.item.notes ? <View style={styles.detailRow}><Text style={styles.detailLabel}>Not:</Text><Text style={styles.detailVal}>{detailItem.item.notes}</Text></View> : null}
+                  <Field label="Süre (saat)" value={editForm.hours_slept || ''} onChangeText={(v) => setEditForm((p) => ({ ...p, hours_slept: v }))} keyboardType="decimal-pad" />
+                  <View style={{ gap: 6 }}>
+                    <Text style={styles.miniLabel}>Kalite</Text>
+                    <View style={styles.freqRow}>
+                      {QUALITY_OPTIONS.map((q) => {
+                        const isActive = (editForm.quality || 'good') === q;
+                        return (
+                          <Pressable key={q} onPress={() => setEditForm((p) => ({ ...p, quality: q }))} style={[styles.freqPill, isActive && styles.freqPillActive]}>
+                            <Text style={[styles.freqText, isActive && styles.freqTextActive]}>{qualityLabels[q]}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                  <Field label="Not" value={editForm.notes || ''} onChangeText={(v) => setEditForm((p) => ({ ...p, notes: v }))} multiline />
                 </View>
               )}
               {detailItem?.kind === 'nutrition' && (
                 <View style={{ gap: 10, paddingBottom: 16 }}>
-                  <View style={styles.detailRow}><Text style={styles.detailLabel}>Öğün:</Text><Text style={styles.detailVal}>{mealLabels[detailItem.item.meal_type] || detailItem.item.meal_type}</Text></View>
-                  <View style={styles.detailRow}><Text style={styles.detailLabel}>Su:</Text><Text style={styles.detailVal}>{detailItem.item.water_ml} ml</Text></View>
-                  {detailItem.item.notes ? <View style={styles.detailRow}><Text style={styles.detailLabel}>Not:</Text><Text style={styles.detailVal}>{detailItem.item.notes}</Text></View> : null}
+                  <View style={{ gap: 6 }}>
+                    <Text style={styles.miniLabel}>Öğün</Text>
+                    <View style={styles.freqRow}>
+                      {MEAL_OPTIONS.map((m) => {
+                        const isActive = (editForm.meal_type || 'snack') === m;
+                        return (
+                          <Pressable key={m} onPress={() => setEditForm((p) => ({ ...p, meal_type: m }))} style={[styles.freqPill, isActive && styles.freqPillActive]}>
+                            <Text style={[styles.freqText, isActive && styles.freqTextActive]}>{mealLabels[m]}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                  <Field label="Yediklerin" value={editForm.food_items || editForm.notes || ''} onChangeText={(v) => setEditForm((p) => ({ ...p, food_items: v, notes: v }))} multiline placeholder="Pilav, tavuk..." />
+                  <Field label="Su (ml)" value={editForm.water_ml || ''} onChangeText={(v) => setEditForm((p) => ({ ...p, water_ml: v }))} keyboardType="number-pad" />
                 </View>
               )}
             </ScrollView>
 
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
-              <View style={{ flex: 1 }}>
-                <AppButton
-                  title="Sil"
-                  variant="secondary"
-                  icon={<Ionicons name="trash-outline" color={colors.red} size={16} />}
-                  onPress={() => {
-                    if (!detailItem) return;
-                    const kindKey = detailItem.kind === 'symptom' ? 'symptoms'
-                      : detailItem.kind === 'medication' ? 'medications'
-                      : detailItem.kind === 'sleep' ? 'sleep'
-                      : 'nutrition';
-                    Alert.alert('Kaydı Sil', 'Bu kayıt silinsin mi?', [
-                      { text: 'İptal', style: 'cancel' },
-                      {
-                        text: 'Sil',
-                        style: 'destructive',
-                        onPress: async () => {
-                          try {
-                            await deleteItem(kindKey as any, detailItem.item.id);
-                            setDetailItem(null);
-                          } catch (e: any) {
-                            Alert.alert('Hata', e.message);
-                          }
-                        },
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+              <Pressable
+                onPress={() => {
+                  if (!detailItem) return;
+                  const kindKey = detailItem.kind === 'symptom' ? 'symptoms'
+                    : detailItem.kind === 'medication' ? 'medications'
+                    : detailItem.kind === 'sleep' ? 'sleep'
+                    : 'nutrition';
+                  Alert.alert('Kaydı Sil', 'Bu kayıt silinsin mi?', [
+                    { text: 'İptal', style: 'cancel' },
+                    {
+                      text: 'Sil', style: 'destructive',
+                      onPress: async () => {
+                        try { await deleteItem(kindKey as any, detailItem.item.id); setDetailItem(null); }
+                        catch (e: any) { Alert.alert('Hata', e.message); }
                       },
-                    ]);
-                  }}
-                />
+                    },
+                  ]);
+                }}
+                style={styles.deleteModalBtn}
+              >
+                <Ionicons name="trash-outline" color={colors.red} size={18} />
+              </Pressable>
+              <View style={{ flex: 1 }}>
+                <AppButton title="Güncelle" onPress={handleSaveEdit} loading={editSaving} />
               </View>
               <View style={{ flex: 1 }}>
-                <AppButton title="Kapat" onPress={() => setDetailItem(null)} />
+                <AppButton title="Kapat" variant="secondary" onPress={() => setDetailItem(null)} />
               </View>
             </View>
           </View>
@@ -1137,5 +1196,15 @@ const styles = StyleSheet.create({
     color: colors.teal300,
     fontSize: 12,
     fontFamily: 'Poppins_600SemiBold',
+  },
+  deleteModalBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    borderColor: 'rgba(239,68,68,0.3)',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

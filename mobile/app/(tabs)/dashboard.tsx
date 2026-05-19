@@ -254,7 +254,7 @@ export default function DashboardScreen() {
                   </View>
                   <View style={{ flex: 1, gap: 3 }}>
                     <Text style={styles.alertTitle}>{alert.title}</Text>
-                    <Muted>{alert.description}</Muted>
+                    <Muted>{alert.description || (alert as any).message || (alert as any).detail || 'Risk uyarısı'}</Muted>
                   </View>
                   <Pressable onPress={() => dismissAlert(alert.id)} style={styles.dismissBtn}>
                     <Ionicons name="close" color={colors.navy400} size={18} />
@@ -338,14 +338,35 @@ function QuickActionCard({ action, delay }: { action: QuickAction; delay: number
   );
 }
 
+const TR: Record<string, string> = {
+  'Symptom logged': 'Semptom kaydedildi',
+  'Medication logged': 'İlaç kaydedildi',
+  'Sleep logged': 'Uyku kaydedildi',
+  'Nutrition logged': 'Beslenme kaydedildi',
+  'Medication taken': 'İlaç alındı',
+  'Document uploaded': 'Belge yüklendi',
+  'Health record added': 'Sağlık kaydı eklendi',
+  breakfast: 'Kahvaltı', lunch: 'Öğle', dinner: 'Akşam Yemeği', snack: 'Atıştırmalık',
+  morning: 'Sabah', afternoon: 'Öğleden sonra', evening: 'Akşam', night: 'Gece',
+  medication: 'ilaç', symptom: 'semptom', sleep: 'uyku', nutrition: 'beslenme',
+};
+function trText(text: string): string {
+  if (!text) return text;
+  let t = text;
+  for (const [en, tr] of Object.entries(TR)) {
+    t = t.replace(new RegExp(`\\b${en}\\b`, 'gi'), tr);
+  }
+  return t;
+}
+
 function ActivityRow({ item, isLast }: { item: any; isLast: boolean }) {
   const timeLabel = item.created_at ? fmtShortTR(item.created_at) : null;
   return (
     <View style={[styles.activityRow, !isLast && styles.activityDivider]}>
       <View style={styles.activityDot} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={styles.activityTitle}>{item.title}</Text>
-        <Muted>{item.description}</Muted>
+        <Text style={styles.activityTitle}>{trText(item.title)}</Text>
+        <Muted>{trText(item.description)}</Muted>
       </View>
       {timeLabel ? (
         <View style={styles.activityTime}>

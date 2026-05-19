@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -288,26 +288,12 @@ export default function DocumentsScreen() {
                 <Text style={styles.analysisText}>{analysis}</Text>
               </View>
             ) : null}
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <View style={{ flex: 1 }}>
-                <AppButton
-                  title="AI Analiz"
-                  onPress={() => handleAnalyze(selected.id)}
-                  loading={analyzing}
-                  icon={<Ionicons name="sparkles-outline" color={colors.white} size={16} />}
-                />
-              </View>
-              {!selected.file_type.startsWith('image/') && (
-                <View style={{ flex: 1 }}>
-                  <AppButton
-                    title="Sistem'de Aç"
-                    variant="secondary"
-                    onPress={() => Linking.openURL(fileUrl(selected.id))}
-                    icon={<Ionicons name="open-outline" color={colors.white} size={16} />}
-                  />
-                </View>
-              )}
-            </View>
+            <AppButton
+              title="AI Analiz"
+              onPress={() => handleAnalyze(selected.id)}
+              loading={analyzing}
+              icon={<Ionicons name="sparkles-outline" color={colors.white} size={16} />}
+            />
             <AppButton
               title="Kapat"
               variant="ghost"
