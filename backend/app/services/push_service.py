@@ -51,10 +51,16 @@ def _send_web_push(subscription: PushSubscription, title: str, body: str, route:
         return False
 
 
-def _send_expo_push(tokens: list[str], title: str, body: str, data: dict[str, Any] | None = None) -> int:
-    """Expo Push API'ye toplu gönderim. Başarılı gönderim sayısını döner."""
-    if not httpx or not tokens:
-        return 0
+def _send_expo_push(tokens: list[str], title: str, body: str, data: dict[str, Any] | None = None) -> tuple[int, list[str]]:
+    """Expo Push API'ye toplu gönderim. (başarılı_sayı, hata_listesi) döner."""
+    errors: list[str] = []
+    if not httpx:
+        errors.append("httpx kütüphanesi yok (backend kurulum eksik)")
+        return 0, errors
+    if not tokens:
+        errors.append("Aktif Expo token bulunamadı")
+        return 0, errors
+
     messages = [
         {
             "to": token,
@@ -68,7 +74,7 @@ def _send_expo_push(tokens: list[str], title: str, body: str, data: dict[str, An
         for token in tokens
     ]
     try:
-        with httpx.Client(timeout=10.0) as client:
+        with httpx.Client(timeout=15.0) as client:
             response = client.post(
                 EXPO_PUSH_URL,
                 json=messages,
@@ -82,13 +88,17 @@ def _send_expo_push(tokens: list[str], title: str, body: str, data: dict[str, An
             payload = response.json()
             tickets = payload.get("data", [])
             sent = sum(1 for t in tickets if isinstance(t, dict) and t.get("status") == "ok")
-            errors = [t for t in tickets if isinstance(t, dict) and t.get("status") == "error"]
-            if errors:
-                logger.warning("expo_push_partial_errors count=%d sample=%s", len(errors), errors[:2])
-            return sent
-    except Exception:
+            ticket_errors = [t for t in tickets if isinstance(t, dict) and t.get("status") == "error"]
+            for err in ticket_errors:
+                msg = err.get("message") or err.get("details", {}).get("error") or "bilinmeyen hata"
+                errors.append(str(msg))
+            if ticket_errors:
+                logger.warning("expo_push_partial_errors count=%d sample=%s", len(ticket_errors), ticket_errors[:2])
+            return sent, errors
+    except Exception as e:
         logger.exception("expo_push_failed token_count=%d", len(tokens))
-        return 0
+        errors.append(f"Expo API isteği başarısız: {type(e).__name__}: {str(e)[:120]}")
+        return 0, errors
 
 
 def dispatch_push(
@@ -98,7 +108,7 @@ def dispatch_push(
     body: str,
     route: str | None = None,
     data: dict[str, Any] | None = None,
-) -> dict[str, int]:
+) -> dict[str, Any]:
     """Kullanıcının aktif tüm push abonelikleriyle (web + expo) bildirim gönderir."""
     subs = (
         db.query(PushSubscription)
@@ -106,21 +116,30 @@ def dispatch_push(
         .all()
     )
     if not subs:
-        return {"web": 0, "expo": 0, "total": 0}
+        return {"web": 0, "expo": 0, "total": 0, "errors": ["Aktif abonelik yok"], "subscriptions": 0}
 
     web_sent = 0
     expo_tokens: list[str] = []
     for sub in subs:
-        if sub.provider == "expo":
+        # Provider None ise endpoint format'ından çıkar (eski kayıtlar için)
+        provider = sub.provider or ("expo" if (sub.endpoint or "").startswith("ExponentPushToken") else "web")
+        if provider == "expo":
             expo_tokens.append(sub.endpoint)
         else:
             if _send_web_push(sub, title, body, route):
                 web_sent += 1
 
     expo_payload = {"route": route or "/dashboard", **(data or {})}
-    expo_sent = _send_expo_push(expo_tokens, title, body, expo_payload)
+    expo_sent, expo_errors = _send_expo_push(expo_tokens, title, body, expo_payload)
 
-    return {"web": web_sent, "expo": expo_sent, "total": web_sent + expo_sent}
+    return {
+        "web": web_sent,
+        "expo": expo_sent,
+        "total": web_sent + expo_sent,
+        "errors": expo_errors,
+        "subscriptions": len(subs),
+        "expo_subscriptions": len(expo_tokens),
+    }
 
 
 def emit_notification_event(
@@ -152,7 +171,7 @@ def emit_notification_event(
     if push:
         try:
             result = dispatch_push(db, user_id, title, body, route, {"event_type": event_type})
-            if result["total"] > 0:
+            if result.get("total", 0) > 0:
                 from datetime import datetime
 
                 event.delivered_at = datetime.utcnow()

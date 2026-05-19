@@ -164,6 +164,30 @@ export default function AIAnalysisScreen() {
               </View>
               <Text style={styles.cardTitle}>Analiz Sonucu</Text>
             </View>
+
+            {/* Hangi belge için yapılmış */}
+            {crossAnalysis.document && (
+              <View style={styles.docInfoRow}>
+                <View style={styles.docInfoIcon}>
+                  <Ionicons name="document-text" color={colors.blueLight} size={14} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.docInfoLabel}>Analiz edilen belge</Text>
+                  <Text style={styles.docInfoName} numberOfLines={1}>
+                    {crossAnalysis.document.original_filename}
+                  </Text>
+                  {crossAnalysis.document.category && (
+                    <Text style={styles.docInfoMeta}>{crossAnalysis.document.category}</Text>
+                  )}
+                </View>
+                {crossAnalysis.days && (
+                  <View style={styles.daysBadge}>
+                    <Text style={styles.daysBadgeText}>{crossAnalysis.days} gün</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
             {crossAnalysis.has_critical_alert && (
               <View style={styles.criticalAlert}>
                 <Ionicons name="warning" color={colors.red} size={16} />
@@ -171,10 +195,10 @@ export default function AIAnalysisScreen() {
               </View>
             )}
             <Text style={styles.summary}>{crossAnalysis.summary}</Text>
-            {crossAnalysis.linked_findings?.length > 0 && (
+            {crossAnalysis.linked_findings && crossAnalysis.linked_findings.length > 0 && (
               <BulletList title="Bağlantılı Bulgular" items={crossAnalysis.linked_findings} icon="link-outline" />
             )}
-            {crossAnalysis.recommendations?.length > 0 && (
+            {crossAnalysis.recommendations && crossAnalysis.recommendations.length > 0 && (
               <BulletList title="Öneriler" items={crossAnalysis.recommendations} icon="bulb-outline" />
             )}
             {crossAnalysis.doctor_questions && crossAnalysis.doctor_questions.length > 0 && (
@@ -265,7 +289,57 @@ function BulletList({ title, items, icon }: { title: string; items: string[]; ic
 }
 
 const styles = StyleSheet.create({
-  header: { paddingTop: 50, paddingBottom: 4, gap: 4 },
+  header: { paddingTop: 12, paddingBottom: 4, gap: 4 },
+  docInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(59,130,246,0.08)',
+    borderColor: 'rgba(59,130,246,0.25)',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 10,
+  },
+  docInfoIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: 'rgba(59,130,246,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  docInfoLabel: {
+    color: colors.navy400,
+    fontSize: 10,
+    fontFamily: 'Poppins_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  docInfoName: {
+    color: colors.white,
+    fontSize: 13,
+    fontFamily: 'Poppins_700Bold',
+  },
+  docInfoMeta: {
+    color: colors.blueLight,
+    fontSize: 11,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  daysBadge: {
+    backgroundColor: 'rgba(15,184,165,0.15)',
+    borderColor: 'rgba(15,184,165,0.3)',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  daysBadgeText: {
+    color: colors.teal300,
+    fontSize: 10,
+    fontFamily: 'Poppins_800ExtraBold',
+  },
   headerEyebrow: {
     color: colors.teal300,
     fontSize: 11,

@@ -23,6 +23,7 @@ from app.services.ai_service import (
     generate_health_report,
     scan_medications_from_file,
 )
+from app.services.push_service import emit_notification_event
 
 router = APIRouter()
 
@@ -245,6 +246,22 @@ async def create_cross_analysis(
     }
     result["days"] = payload.days
     result["date_range"] = health_context["date_range"]
+
+    # Notification event tetikle
+    try:
+        emit_notification_event(
+            db,
+            user_id=current_user.id,
+            event_type="cross_analysis_ready",
+            title="Çapraz analiz hazır",
+            body=f"{document.original_filename} için son {payload.days} günlük çapraz analiz tamamlandı.",
+            route="/tools/reports",
+            priority="normal",
+        )
+        db.commit()
+    except Exception:
+        pass
+
     return result
 
 
@@ -259,12 +276,27 @@ async def create_health_report(
     start_date = end_date - timedelta(days=days - 1)
     health_context = _health_context(db, current_user.id, start_date, end_date)
 
-    return generate_health_report(
+    result = generate_health_report(
         health_context,
         payload.period,
         start_date.isoformat(),
         end_date.isoformat()
     )
+    try:
+        period_lbl = "haftalık" if payload.period == "weekly" else "aylık"
+        emit_notification_event(
+            db,
+            user_id=current_user.id,
+            event_type="health_report_ready",
+            title=f"{period_lbl.capitalize()} sağlık raporu hazır",
+            body=f"{start_date.isoformat()} - {end_date.isoformat()} dönemi için {period_lbl} rapor oluşturuldu.",
+            route="/tools/reports",
+            priority="normal",
+        )
+        db.commit()
+    except Exception:
+        pass
+    return result
 
 
 @router.post("/doctor-prep")
@@ -337,6 +369,19 @@ async def create_doctor_prep_report(
         "nutrition": len(health_context["nutrition"]),
         "documents": len(document_context),
     }
+    try:
+        emit_notification_event(
+            db,
+            user_id=current_user.id,
+            event_type="doctor_prep_ready",
+            title="Doktora hazırlık raporu hazır",
+            body=f"{payload.specialty} için son {payload.days} günlük rapor oluşturuldu.",
+            route="/tools/doctor-prep",
+            priority="normal",
+        )
+        db.commit()
+    except Exception:
+        pass
     return result
 
 

@@ -232,8 +232,15 @@ async def send_test_expo_push(
     ))
     db.commit()
     if result["total"] == 0:
+        detail_parts = [
+            f"Toplam abonelik: {result.get('subscriptions', 0)}",
+            f"Expo abonelik: {result.get('expo_subscriptions', 0)}",
+        ]
+        errors = result.get("errors") or []
+        if errors:
+            detail_parts.append("Sebep: " + "; ".join(errors[:3]))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Aktif push aboneliği yok ya da gönderim başarısız.",
+            detail="Bildirim gönderilemedi. " + " | ".join(detail_parts),
         )
     return result

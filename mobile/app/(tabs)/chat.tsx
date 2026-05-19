@@ -3,9 +3,10 @@ import { ActivityIndicator, Alert, Animated, Easing, Pressable, StyleSheet, Text
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { AppButton, FadeIn, Field, GlassCard, LinearGradient, Muted, Screen } from '../../src/components/ui';
+import { AppButton, FadeIn, Field, GlassCard, LinearGradient, Muted, PremiumGate, Screen } from '../../src/components/ui';
 import useChatStore from '../../src/stores/chatStore';
 import useVoiceStore from '../../src/stores/voiceStore';
+import useAuthStore from '../../src/stores/authStore';
 import { colors } from '../../src/theme';
 
 const SUGGESTIONS = [
@@ -16,6 +17,7 @@ const SUGGESTIONS = [
 ];
 
 export default function ChatScreen() {
+  const { user } = useAuthStore();
   const { sessions, activeSession, messages, fetchSessions, openSession, sendMessage, isSending } = useChatStore();
   const { transcribeAudio } = useVoiceStore();
   const [message, setMessage] = useState('');
@@ -75,8 +77,13 @@ export default function ChatScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchSessions().catch((error) => Alert.alert('Sohbetler alınamadı', error.message));
-    }, [fetchSessions]),
+      if (!user?.is_premium) return; // Free için chat premium gerektiriyor
+      fetchSessions().catch((error) => {
+        if (error?.response?.status !== 403) {
+          Alert.alert('Sohbetler alınamadı', error.message);
+        }
+      });
+    }, [fetchSessions, user?.is_premium]),
   );
 
   const handleRefresh = async () => {
@@ -98,6 +105,34 @@ export default function ChatScreen() {
       Alert.alert('Mesaj gönderilemedi', error.response?.data?.detail || error.message);
     }
   };
+
+  if (!user?.is_premium) {
+    return (
+      <Screen withOrbs>
+        <FadeIn delay={0}>
+          <View style={styles.headerRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.headerEyebrow}>AI Asistan</Text>
+              <Text style={styles.headerTitle}>Asistan</Text>
+            </View>
+          </View>
+        </FadeIn>
+        <FadeIn delay={80}>
+          <PremiumGate
+            title="AI Asistan"
+            icon="chatbubble-ellipses"
+            description="Sağlık verilerinin ışığında konuşabileceğin kişisel AI sohbet ortağı."
+            bullets={[
+              'Sınırsız mesaj',
+              'Tüm sağlık geçmişine erişim',
+              'Sesli giriş + transkripsiyon',
+              'Sohbet geçmişi kaydı',
+            ]}
+          />
+        </FadeIn>
+      </Screen>
+    );
+  }
 
   return (
     <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
