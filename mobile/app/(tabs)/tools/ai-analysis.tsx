@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton, FadeIn, GlassCard, Muted, PremiumGate, Screen } from '../../../src/components/ui';
@@ -109,25 +109,40 @@ export default function AIAnalysisScreen() {
               <Text style={styles.infoText}>Analiz edilmiş belge yok. Belgeler sekmesinden bir belgeyi AI ile analiz et.</Text>
             </View>
           ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }}>
-              <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 4 }}>
-                {analyzedDocuments.map((doc) => {
-                  const active = selectedDocId === doc.id;
-                  return (
-                    <Pressable
-                      key={doc.id}
-                      style={[styles.docPill, active && styles.docPillActive]}
-                      onPress={() => setSelectedDocId(doc.id)}
-                    >
-                      <Ionicons name="document-text-outline" color={active ? colors.teal300 : colors.navy400} size={13} />
-                      <Text style={[styles.docPillText, active && styles.docPillTextActive]} numberOfLines={1}>
+            <View style={{ gap: 6 }}>
+              {analyzedDocuments.map((doc) => {
+                const active = selectedDocId === doc.id;
+                return (
+                  <Pressable
+                    key={doc.id}
+                    style={[styles.docRow, active && styles.docRowActive]}
+                    onPress={() => setSelectedDocId(doc.id)}
+                  >
+                    <View style={[styles.docRowIcon, active && styles.docRowIconActive]}>
+                      <Ionicons
+                        name="document-text"
+                        color={active ? colors.teal300 : colors.navy400}
+                        size={16}
+                      />
+                    </View>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text
+                        style={[styles.docRowName, active && styles.docRowNameActive]}
+                        numberOfLines={2}
+                      >
                         {doc.original_filename}
                       </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </ScrollView>
+                      {doc.category ? (
+                        <Text style={styles.docRowMeta}>{doc.category}</Text>
+                      ) : null}
+                    </View>
+                    {active && (
+                      <Ionicons name="checkmark-circle" color={colors.teal300} size={18} />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
           )}
 
           <View style={styles.pillRow}>
@@ -381,24 +396,51 @@ const styles = StyleSheet.create({
   },
   pillText: { color: colors.navy300, fontFamily: 'Poppins_600SemiBold', fontSize: 12 },
   pillTextActive: { color: colors.teal300, fontFamily: 'Poppins_700Bold' },
-  docPill: {
+  docRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 10,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(159,179,200,0.12)',
     backgroundColor: 'rgba(20,40,58,0.55)',
-    maxWidth: 200,
   },
-  docPillActive: {
-    backgroundColor: 'rgba(15,184,165,0.18)',
+  docRowActive: {
+    backgroundColor: 'rgba(15,184,165,0.15)',
     borderColor: 'rgba(15,184,165,0.4)',
   },
-  docPillText: { color: colors.navy300, fontSize: 11, fontFamily: 'Poppins_600SemiBold', flex: 1 },
-  docPillTextActive: { color: colors.teal300 },
+  docRowIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: 'rgba(59,130,246,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  docRowIconActive: {
+    backgroundColor: 'rgba(15,184,165,0.2)',
+    borderColor: 'rgba(15,184,165,0.45)',
+  },
+  docRowName: {
+    color: colors.navy200,
+    fontSize: 13,
+    fontFamily: 'Poppins_600SemiBold',
+    lineHeight: 18,
+  },
+  docRowNameActive: {
+    color: colors.white,
+    fontFamily: 'Poppins_700Bold',
+  },
+  docRowMeta: {
+    color: colors.navy400,
+    fontSize: 11,
+    fontFamily: 'Poppins_500Medium',
+  },
   infoBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
