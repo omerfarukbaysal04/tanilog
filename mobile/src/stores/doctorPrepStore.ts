@@ -209,10 +209,16 @@ const useDoctorPrepStore = create<DoctorPrepState>((set, get) => ({
   },
 
   shareReport: async (reportId) => {
-    // Metin paylaşımı — kaydedilmiş raporu text olarak paylaş
-    const { data } = await api.get(`/ai/doctor-prep/saved/${reportId}`);
-    const title = data.saved_title || 'Doktor Hazırlık Raporu';
-    await Share.share({ message: buildText(data, title), title });
+    // Rastgele kısa şifre üret — hardcoded credential olmaması için
+    const password = Math.random().toString(36).slice(2, 8).toUpperCase();
+    const { data } = await api.post<{ share_url: string }>(
+      `/ai/doctor-prep/saved/${reportId}/share`,
+      { password, hours: 24 },
+    );
+    await Share.share({
+      message: `TanıLog doktor raporum:\n${data.share_url}\nŞifre: ${password}`,
+      title: 'Doktor Hazırlık Raporumu Paylaş',
+    });
   },
 
   shareReportPdf: async (reportId, title) => {
