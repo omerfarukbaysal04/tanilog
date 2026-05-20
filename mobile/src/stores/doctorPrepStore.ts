@@ -11,7 +11,7 @@ try { Print = require('expo-print'); } catch { /* Yeni build'de kullanılabilir 
 try { Sharing = require('expo-sharing'); } catch { /* Yeni build'de kullanılabilir */ }
 
 // ─── Yardımcılar ────────────────────────────────────────────────────────────────
-function buildHtml(report: any, title: string): string {
+export function buildHtml(report: any, title: string): string {
   const ul = (items: string[]) => items.map((i) => `<li style="margin-bottom:6px">${i}</li>`).join('');
   return `<!DOCTYPE html><html lang="tr">
 <head><meta charset="utf-8"><title>${title}</title>
@@ -36,7 +36,7 @@ ${report.preparation_checklist?.length ? `<h2>✅ Hazırlık Listesi</h2><ul>${u
 </body></html>`;
 }
 
-function buildText(report: any, title: string): string {
+export function buildText(report: any, title: string): string {
   return [
     `📋 ${title}`,
     report.date_range ? `Dönem: ${report.date_range.start} – ${report.date_range.end}` : '',
@@ -49,7 +49,7 @@ function buildText(report: any, title: string): string {
   ].filter(Boolean).join('\n');
 }
 
-async function shareAsPdf(report: any, title: string): Promise<void> {
+export async function shareAsPdf(report: any, title: string): Promise<void> {
   // expo-print mevcut ise PDF oluştur
   if (Print) {
     try {

@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton, EmptyState, FadeIn, GlassCard, Muted, Screen } from '../../../src/components/ui';
 import api from '../../../src/lib/api';
 import { isTTSAvailable, speak } from '../../../src/lib/tts';
+import { shareAsPdf } from '../../../src/stores/doctorPrepStore';
 import { colors } from '../../../src/theme';
 import { DocumentItem, SavedDoctorReport } from '../../../src/types';
 
@@ -151,11 +152,11 @@ export default function ReportsScreen() {
                   icon="medical"
                   onShare={async () => {
                     try {
-                      await Share.share({
-                        title: rep.title,
-                        message: `${rep.title}\n\n${rep.summary}\n\nDönem: ${rep.period_start} → ${rep.period_end}`,
-                      });
-                    } catch {}
+                      const { data } = await api.get(`/ai/doctor-prep/saved/${rep.id}`);
+                      await shareAsPdf(data, rep.title);
+                    } catch (e: any) {
+                      Alert.alert('PDF Hazırlanamadı', e?.message || 'Bilinmeyen hata');
+                    }
                   }}
                 />
               </Pressable>
@@ -189,11 +190,17 @@ export default function ReportsScreen() {
                 icon="document-text"
                 onShare={async () => {
                   try {
-                    await Share.share({
-                      title: doc.original_filename,
-                      message: `${doc.original_filename}\n\n${doc.ai_summary || ''}`,
-                    });
-                  } catch {}
+                    const reportLike = {
+                      summary: doc.ai_summary || doc.notes || 'AI analiz özeti mevcut değil.',
+                      key_findings: doc.category ? [`Kategori: ${doc.category}`] : [],
+                      risk_flags: [],
+                      doctor_questions: [],
+                      preparation_checklist: [],
+                    };
+                    await shareAsPdf(reportLike, doc.original_filename);
+                  } catch (e: any) {
+                    Alert.alert('PDF Hazırlanamadı', e?.message || 'Bilinmeyen hata');
+                  }
                 }}
               />
             </Pressable>
@@ -242,7 +249,18 @@ export default function ReportsScreen() {
                   icon={<Ionicons name="share-outline" color={colors.teal300} size={16} />}
                   onPress={async () => {
                     if (!selectedDoc) return;
-                    await Share.share({ title: selectedDoc.original_filename, message: `${selectedDoc.original_filename}\n\n${selectedDoc.ai_summary || ''}` }).catch(() => {});
+                    try {
+                      const reportLike = {
+                        summary: selectedDoc.ai_summary || selectedDoc.notes || 'AI analiz özeti mevcut değil.',
+                        key_findings: selectedDoc.category ? [`Kategori: ${selectedDoc.category}`] : [],
+                        risk_flags: [],
+                        doctor_questions: [],
+                        preparation_checklist: [],
+                      };
+                      await shareAsPdf(reportLike, selectedDoc.original_filename);
+                    } catch (e: any) {
+                      Alert.alert('PDF Hazırlanamadı', e?.message || 'Bilinmeyen hata');
+                    }
                   }}
                 />
               </View>
@@ -281,7 +299,12 @@ export default function ReportsScreen() {
                   icon={<Ionicons name="share-outline" color={colors.teal300} size={16} />}
                   onPress={async () => {
                     if (!selectedReport) return;
-                    await Share.share({ title: selectedReport.title, message: `${selectedReport.title}\n\n${selectedReport.summary}\n\nDönem: ${selectedReport.period_start} → ${selectedReport.period_end}` }).catch(() => {});
+                    try {
+                      const { data } = await api.get(`/ai/doctor-prep/saved/${selectedReport.id}`);
+                      await shareAsPdf(data, selectedReport.title);
+                    } catch (e: any) {
+                      Alert.alert('PDF Hazırlanamadı', e?.message || 'Bilinmeyen hata');
+                    }
                   }}
                 />
               </View>
