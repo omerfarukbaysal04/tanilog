@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import useAuthStore from './stores/authStore';
 
@@ -147,6 +147,23 @@ function App() {
           element={
             <ProtectedRoute>
               <FamilyPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* /family/invitations → /family yönlendirme (bildirimden gelen route) */}
+        <Route
+          path="/family/invitations"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/family" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/family/*"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/family" replace />
             </ProtectedRoute>
           }
         />

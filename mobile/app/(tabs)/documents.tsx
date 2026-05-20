@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
-import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { AppButton, EmptyState, FadeIn, Field, GlassCard, Muted, RenamePrompt, Screen } from '../../src/components/ui';
 import useDocumentStore, { UploadAsset } from '../../src/stores/documentStore';
 import useAuthStore from '../../src/stores/authStore';
@@ -97,6 +98,8 @@ export default function DocumentsScreen() {
     }
   };
 
+  const [pdfLoading, setPdfLoading] = useState(false);
+
   const selectDocument = async (item: DocumentItem) => {
     setSelected(item);
     setAnalysis(null);
@@ -108,7 +111,7 @@ export default function DocumentsScreen() {
         const url = fileUrl(item.id);
         const response = await fetch(url, { headers: h });
         if (response.ok) {
-          // Convert ArrayBuffer → base64 data URI using btoa (available in Hermes/React Native)
+          // Convert ArrayBuffer → base64 data URI using btoa (Hermes/React Native'de mevcut)
           const arrayBuffer = await response.arrayBuffer();
           const bytes = new Uint8Array(arrayBuffer);
           let binary = '';
@@ -127,6 +130,34 @@ export default function DocumentsScreen() {
       } finally {
         setImageLoading(false);
       }
+    }
+  };
+
+  const handleOpenPdf = async (item: DocumentItem) => {
+    setPdfLoading(true);
+    try {
+      const h = await authHeaders();
+      const url = fileUrl(item.id);
+      const safeName = item.original_filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const localUri = `${FileSystem.cacheDirectory}${safeName}`;
+
+      // Cache'de varsa tekrar indirme
+      const info = await FileSystem.getInfoAsync(localUri);
+      const finalUri = info.exists
+        ? localUri
+        : await FileSystem.downloadAsync(url, localUri, { headers: h }).then((r) => r.uri);
+
+      // Android content URI gerektiriyor, iOS file:// ile açar
+      const canOpen = await Linking.canOpenURL(finalUri);
+      if (canOpen) {
+        await Linking.openURL(finalUri);
+      } else {
+        Alert.alert('PDF Açılamadı', 'Cihazında PDF görüntüleyici bulunamadı. Bir PDF uygulaması yükleyebilirsin.');
+      }
+    } catch (e: any) {
+      Alert.alert('Hata', 'PDF indirilemedi veya açılamadı: ' + e.message);
+    } finally {
+      setPdfLoading(false);
     }
   };
 
@@ -276,7 +307,13 @@ export default function DocumentsScreen() {
                   <Ionicons name="document-attach" color={colors.blueLight} size={28} />
                 </View>
                 <Text style={styles.pdfTitle}>PDF Belgesi</Text>
-                <Muted>Bu dosya formatı için önizleme desteklenmiyor. Cihazının PDF okuyucusunda açabilirsin.</Muted>
+                <Muted>Dosyayı cihazındaki PDF uygulamasında açabilirsin.</Muted>
+                <AppButton
+                  title={pdfLoading ? 'İndiriliyor...' : 'Cihazda Aç'}
+                  loading={pdfLoading}
+                  onPress={() => handleOpenPdf(selected!)}
+                  icon={<Ionicons name="open-outline" color={colors.white} size={16} />}
+                />
               </View>
             )}
             {analysis ? (

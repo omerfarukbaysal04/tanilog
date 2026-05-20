@@ -28,6 +28,7 @@ export default function DoctorPrepScreen() {
     isGenerating,
     isLoadingSaved,
     isSaving,
+    isSharingPdf,
     error,
     createReport,
     fetchSavedReports,
@@ -35,6 +36,7 @@ export default function DoctorPrepScreen() {
     saveReport,
     shareReport,
     shareReportPdf,
+    shareCurrentAsPdf,
     clearError,
   } = useDoctorPrepStore();
 
@@ -215,7 +217,17 @@ export default function DoctorPrepScreen() {
                 )}
                 <Pressable onPress={handleShareFull} style={styles.actionBtn}>
                   <Ionicons name="share-outline" color={colors.teal300} size={16} />
-                  <Text style={styles.actionBtnText}>Tümünü Paylaş</Text>
+                  <Text style={styles.actionBtnText}>Metin Paylaş</Text>
+                </Pressable>
+                <Pressable
+                  onPress={async () => {
+                    try { await shareCurrentAsPdf(); } catch (e: any) { Alert.alert('PDF Paylaşım', e.message); }
+                  }}
+                  style={[styles.actionBtn, isSharingPdf && { opacity: 0.6 }]}
+                  disabled={isSharingPdf}
+                >
+                  <Ionicons name="document-attach-outline" color={colors.teal300} size={16} />
+                  <Text style={styles.actionBtnText}>{isSharingPdf ? 'Hazırlanıyor...' : 'PDF Kaydet'}</Text>
                 </Pressable>
               </View>
             </GlassCard>
