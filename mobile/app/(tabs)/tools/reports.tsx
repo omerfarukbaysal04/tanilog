@@ -73,7 +73,7 @@ export default function ReportsScreen() {
     <Screen withOrbs onRefresh={handleRefresh} refreshing={refreshing}>
       <FadeIn delay={0}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.push('/tools')} style={styles.backBtn}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" color={colors.teal300} size={20} />
             <Text style={styles.backText}>Araçlar</Text>
           </Pressable>

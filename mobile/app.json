@@ -35,10 +35,14 @@
           "icon": "./assets/icon.png",
           "color": "#0fb8a5"
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -53,7 +57,8 @@
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
       "package": "com.baysalsoft.tanilogmobile",
-      "googleServicesFile": "./android/app/google-services.json"
+      "googleServicesFile": "./android/app/google-services.json",
+      "runtimeVersion": "1.0.0"
     },
     "experiments": {
       "typedRoutes": true
@@ -63,6 +68,9 @@
       "eas": {
         "projectId": "03375845-8b34-4ec3-a99f-4030f49f5481"
       }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/03375845-8b34-4ec3-a99f-4030f49f5481"
     }
   }
 }
